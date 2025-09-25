@@ -7,7 +7,7 @@ import 'i_weather_service.dart';
 
 class WeatherApiService implements IWeatherService {
   static const String _baseUrl = 'https://api.weatherapi.com/v1';
-  static const String _apiKey = '725bd54f9a1b458884f85421252509'; // Replace with actual API key
+  static const String _apiKey = '725bd54f9a1b458884f85421252509';
   
   // WeatherAPI.com provides excellent European coverage and all required features
   // Free tier includes: current weather, 3-day forecast, hourly data, AQI, astronomy

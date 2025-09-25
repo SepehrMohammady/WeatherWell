@@ -53,8 +53,8 @@ A comprehensive cross-platform weather application built with Flutter for Window
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/weatherwell.git
-   cd weatherwell
+   git clone https://github.com/SepehrMohammady/WeatherWell.git
+   cd WeatherWell
    ```
 
 2. **Install dependencies**
@@ -62,13 +62,10 @@ A comprehensive cross-platform weather application built with Flutter for Window
    flutter pub get
    ```
 
-3. **Set up API Key**
-   - Sign up for a free API key at [WeatherAPI.com](https://www.weatherapi.com/)
-   - Open `lib/services/weather_service.dart`
-   - Replace `YOUR_API_KEY_HERE` with your actual API key:
-     ```dart
-     static const String _apiKey = 'your_actual_api_key_here';
-     ```
+3. **API Keys**
+   The app comes pre-configured with API keys for WeatherAPI.com and OpenWeatherMap. If you need to update them:
+   - WeatherAPI.com: Open `lib/services/weather_service.dart`
+   - OpenWeatherMap: Open `lib/services/openweathermap_service.dart`
 
 4. **Generate model files**
    ```bash
@@ -216,7 +213,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, email weatherwell.support@example.com or create an issue in this repository.
+For support, create an issue in this repository.
 
 ---
 

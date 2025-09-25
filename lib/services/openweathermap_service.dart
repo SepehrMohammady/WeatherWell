@@ -8,8 +8,7 @@ import 'i_weather_service.dart';
 class OpenWeatherMapService implements IWeatherService {
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
   static const String _geoUrl = 'https://api.openweathermap.org/geo/1.0';
-  // Note: This is a demo API key - in production, users should provide their own
-  static const String _apiKey = 'demo_key_please_get_your_own'; // Free tier available
+  static const String _apiKey = '2f16c38d61c17ac94d944a5a66ca0e96';
   
   @override
   Future<WeatherData> getCurrentWeather(double lat, double lon) async {
@@ -111,8 +110,7 @@ class OpenWeatherMapService implements IWeatherService {
   }
 
   WeatherData _parseOpenWeatherMapForecast(Map<String, dynamic> data) {
-    // This would parse the full forecast response from One Call API
-    // For demo purposes, returning basic structure
+    // Parse the full forecast response from One Call API
     final current = data['current'];
     final dailyData = data['daily'] as List<dynamic>? ?? [];
     final hourlyData = data['hourly'] as List<dynamic>? ?? [];
@@ -230,5 +228,5 @@ class OpenWeatherMapService implements IWeatherService {
   String get apiName => 'OpenWeatherMap';
 
   @override
-  bool get isAvailable => _apiKey != 'demo_key_please_get_your_own';
+  bool get isAvailable => true;
 }
