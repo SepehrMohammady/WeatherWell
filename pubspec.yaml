@@ -1,0 +1,75 @@
+name: weatherwell
+description: A cross-platform weather application with comprehensive weather data, forecasts, and smart features.
+publish_to: 'none'
+# Semantic versioning: MAJOR.MINOR.PATCH+BUILD
+# 0.0.x = Development/Alpha phase
+# 0.x.0 = Beta phase with new features
+# 1.0.0 = First stable release
+version: 0.0.1+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # HTTP requests for weather API
+  http: ^1.1.0
+  
+  # JSON serialization
+  json_annotation: ^4.8.1
+  
+  # Location services
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # Date/time formatting
+  intl: ^0.18.1
+  
+  # Package info for version management
+  package_info_plus: ^4.2.0
+  
+  # Sharing functionality
+  share_plus: ^7.2.1
+  
+  # Icons
+  cupertino_icons: ^1.0.6
+  weather_icons: ^3.0.0
+  
+  # Notifications for umbrella alarm
+  flutter_local_notifications: ^16.3.2
+  
+  # Permission handling
+  permission_handler: ^11.2.0
+  
+  # Charts for historical data
+  fl_chart: ^0.65.0
+  
+  # Cached network images
+  cached_network_image: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # Code generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  
+  # Linting
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/

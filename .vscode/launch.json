@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "WeatherWell (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [],
+            "console": "debugConsole",
+            "flutterMode": "debug"
+        },
+        {
+            "name": "WeatherWell (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [],
+            "console": "debugConsole",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "WeatherWell (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [],
+            "console": "debugConsole",
+            "flutterMode": "release"
+        }
+    ]
+}
