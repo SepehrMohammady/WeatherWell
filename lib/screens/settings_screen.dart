@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../providers/weather_provider.dart';
-import '../services/i_weather_service.dart';
+import 'package:weatherwell/providers/weather_provider.dart';
+import 'package:weatherwell/services/i_weather_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -57,12 +57,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   border: Border.all(color: Theme.of(context).colorScheme.primary),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: ListTile(
-                  leading: const Icon(Icons.verified, color: Colors.green),
-                  title: const Text('WeatherAPI.com'),
-                  subtitle: const Text('✓ Comprehensive European coverage\n✓ Air quality data\n✓ 7-day forecasts\n✓ Currently active'),
-                  trailing: const Icon(Icons.check_circle, color: Colors.green),
-                  contentPadding: const EdgeInsets.all(12),
+                child: const ListTile(
+                  leading: Icon(Icons.verified, color: Colors.green),
+                  title: Text('WeatherAPI.com'),
+                  subtitle: Text('✓ Comprehensive European coverage\n✓ Air quality data\n✓ 7-day forecasts\n✓ Currently active'),
+                  trailing: Icon(Icons.check_circle, color: Colors.green),
+                  contentPadding: EdgeInsets.all(12),
                 ),
               ),
               
@@ -74,12 +74,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: ListTile(
-                  leading: const Icon(Icons.cloud_outlined, color: Colors.grey),
-                  title: const Text('OpenWeatherMap'),
-                  subtitle: const Text('⏳ Coming in future update\n• Global weather coverage\n• Historical data support'),
-                  trailing: const Icon(Icons.schedule, color: Colors.grey),
-                  contentPadding: const EdgeInsets.all(12),
+                child: const ListTile(
+                  leading: Icon(Icons.cloud_outlined, color: Colors.grey),
+                  title: Text('OpenWeatherMap'),
+                  subtitle: Text('⏳ Coming in future update\n• Global weather coverage\n• Historical data support'),
+                  trailing: Icon(Icons.schedule, color: Colors.grey),
+                  contentPadding: EdgeInsets.all(12),
                   enabled: false,
                 ),
               ),

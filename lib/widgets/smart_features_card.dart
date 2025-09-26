@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../providers/weather_provider.dart';
+import 'package:weatherwell/providers/weather_provider.dart';
 
 class SmartFeaturesCard extends StatelessWidget {
   final WeatherProvider weatherProvider;
 
   const SmartFeaturesCard({
-    super.key,
-    required this.weatherProvider,
+    required this.weatherProvider, super.key,
   });
 
   @override

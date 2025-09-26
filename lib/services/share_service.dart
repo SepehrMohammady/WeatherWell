@@ -1,9 +1,9 @@
 import 'package:share_plus/share_plus.dart';
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class ShareService {
   static Future<void> shareWeatherBasic(WeatherData weather, String locationName) async {
-    final String message = 
+    final message = 
         '🌤️ Weather in $locationName\n'
         '${weather.current.temperature.round()}°C - ${weather.current.condition}\n'
         'Feels like ${weather.current.feelsLike.round()}°C\n'
@@ -14,7 +14,7 @@ class ShareService {
   }
 
   static Future<void> shareWeatherDetailed(WeatherData weather, String locationName) async {
-    final String message = 
+    final message = 
         '🌤️ Detailed Weather Report for $locationName\n'
         '\n'
         '🌡️ Temperature: ${weather.current.temperature.round()}°C\n'
@@ -32,12 +32,12 @@ class ShareService {
   }
 
   static Future<void> shareWeatherForecast(WeatherData weather, String locationName) async {
-    String forecastText = '';
+    var forecastText = '';
     
     // Add 3-day forecast
     if (weather.daily.isNotEmpty) {
       forecastText = '\n\n📅 3-Day Forecast:\n';
-      for (int i = 0; i < (weather.daily.length > 3 ? 3 : weather.daily.length); i++) {
+      for (var i = 0; i < (weather.daily.length > 3 ? 3 : weather.daily.length); i++) {
         final day = weather.daily[i];
         final dayName = i == 0 ? 'Today' : 
                        i == 1 ? 'Tomorrow' : 
@@ -46,7 +46,7 @@ class ShareService {
       }
     }
     
-    final String message = 
+    final message = 
         '🌤️ Weather Forecast for $locationName\n'
         '\n'
         '🌡️ Current: ${weather.current.temperature.round()}°C - ${weather.current.condition}\n'

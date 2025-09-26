@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geocoding/geocoding.dart' as geocoding;
-import '../models/weather_data.dart';
-import '../models/location.dart';
-import 'i_weather_service.dart';
+import 'package:weatherwell/models/weather_data.dart';
+import 'package:weatherwell/models/location.dart';
+import 'package:weatherwell/services/i_weather_service.dart';
 
 class WeatherApiService implements IWeatherService {
   static const String _baseUrl = 'https://api.weatherapi.com/v1';
@@ -13,6 +13,7 @@ class WeatherApiService implements IWeatherService {
   // Free tier includes: current weather, 3-day forecast, hourly data, AQI, astronomy
   // For historical data, you may need a paid plan
 
+  @override
   Future<WeatherData> getCurrentWeather(double lat, double lon) async {
     try {
       final response = await http.get(
@@ -30,6 +31,7 @@ class WeatherApiService implements IWeatherService {
     }
   }
 
+  @override
   Future<WeatherData> getForecast(double lat, double lon, {int days = 7}) async {
     try {
       final response = await http.get(
@@ -47,6 +49,7 @@ class WeatherApiService implements IWeatherService {
     }
   }
 
+  @override
   Future<List<WeatherData>> getHistoricalData(
     double lat, 
     double lon, 
@@ -54,9 +57,9 @@ class WeatherApiService implements IWeatherService {
     DateTime endDate,
   ) async {
     try {
-      List<WeatherData> historicalData = [];
+      var historicalData = <WeatherData>[];
       
-      DateTime currentDate = startDate;
+      var currentDate = startDate;
       while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
         final dateString = '${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}';
         
@@ -78,6 +81,7 @@ class WeatherApiService implements IWeatherService {
     }
   }
 
+  @override
   Future<List<Location>> searchLocations(String query) async {
     try {
       // First try WeatherAPI.com search
@@ -87,7 +91,7 @@ class WeatherApiService implements IWeatherService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        List<Location> results = data.map((json) => Location.fromJson(json)).toList();
+        var results = data.map((json) => Location.fromJson(json)).toList();
         
         // If WeatherAPI.com returns results, use them
         if (results.isNotEmpty) {
@@ -114,13 +118,13 @@ class WeatherApiService implements IWeatherService {
 
   Future<List<Location>> _searchUsingGeocoding(String query) async {
     try {
-      final List<geocoding.Location> geocodingLocations = await geocoding.locationFromAddress(query);
+      final geocodingLocations = await geocoding.locationFromAddress(query);
       
-      List<Location> results = [];
+      var results = <Location>[];
       
       for (var geocodingLocation in geocodingLocations.take(5)) { // Limit to 5 results
         try {
-          final List<geocoding.Placemark> placemarks = 
+          final placemarks = 
               await geocoding.placemarkFromCoordinates(geocodingLocation.latitude, geocodingLocation.longitude);
           
           if (placemarks.isNotEmpty) {
@@ -153,7 +157,7 @@ class WeatherApiService implements IWeatherService {
 
   String _getTimezoneFromCountry(String country) {
     // Enhanced timezone mapping for better European coverage
-    const Map<String, String> countryTimezones = {
+    const countryTimezones = <String, String>{
       'United Kingdom': 'Europe/London',
       'France': 'Europe/Paris',
       'Germany': 'Europe/Berlin',
@@ -225,7 +229,7 @@ class WeatherApiService implements IWeatherService {
     final airQuality = data['current']['air_quality'];
 
     // Parse daily forecasts
-    final List<DailyForecast> dailyForecasts = [];
+    final dailyForecasts = <DailyForecast>[];
     for (var day in forecast['forecastday']) {
       final dayData = day['day'];
       dailyForecasts.add(DailyForecast(
@@ -242,7 +246,7 @@ class WeatherApiService implements IWeatherService {
     }
 
     // Parse hourly forecasts
-    final List<HourlyForecast> hourlyForecasts = [];
+    final hourlyForecasts = <HourlyForecast>[];
     for (var day in forecast['forecastday']) {
       for (var hour in day['hour']) {
         hourlyForecasts.add(HourlyForecast(
@@ -313,7 +317,7 @@ class WeatherApiService implements IWeatherService {
     final minute = int.parse(timeParts[1]);
     final isPM = parts[1] == 'PM';
     
-    int adjustedHour = hour;
+    var adjustedHour = hour;
     if (isPM && hour != 12) {
       adjustedHour += 12;
     } else if (!isPM && hour == 12) {

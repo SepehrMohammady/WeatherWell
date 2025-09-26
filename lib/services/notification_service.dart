@@ -1,24 +1,24 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    const AndroidInitializationSettings androidSettings =
+    const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings iosSettings =
+    const iosSettings =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const InitializationSettings settings = InitializationSettings(
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
@@ -46,10 +46,10 @@ class NotificationService {
     DateTime scheduledTime,
   ) async {
     // Check if umbrella is needed based on weather conditions
-    bool needsUmbrella = _shouldTakeUmbrella(weatherData);
+    var needsUmbrella = _shouldTakeUmbrella(weatherData);
 
     if (needsUmbrella) {
-      const AndroidNotificationDetails androidDetails =
+      const androidDetails =
           AndroidNotificationDetails(
         'umbrella_alarm',
         'Umbrella Alarms',
@@ -59,13 +59,13 @@ class NotificationService {
         icon: '@mipmap/ic_launcher',
       );
 
-      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
       );
 
-      const NotificationDetails details = NotificationDetails(
+      const details = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
       );
@@ -88,7 +88,7 @@ class NotificationService {
     WeatherData weatherData,
     DateTime scheduledTime,
   ) async {
-    const AndroidNotificationDetails androidDetails =
+    const androidDetails =
         AndroidNotificationDetails(
       'clothes_recommendation',
       'Clothing Suggestions',
@@ -98,13 +98,13 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+    const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
 
-    const NotificationDetails details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -169,7 +169,7 @@ class NotificationService {
     final condition = weatherData.current.condition.toLowerCase();
     final windSpeed = weatherData.current.windSpeed;
 
-    List<String> recommendations = [];
+    var recommendations = <String>[];
 
     // Temperature-based recommendations
     if (temp < 0) {

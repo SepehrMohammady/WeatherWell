@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geocoding/geocoding.dart' as geocoding;
-import '../models/weather_data.dart';
-import '../models/location.dart';
-import 'i_weather_service.dart';
+import 'package:weatherwell/models/weather_data.dart';
+import 'package:weatherwell/models/location.dart';
+import 'package:weatherwell/services/i_weather_service.dart';
 
 class OpenWeatherMapService implements IWeatherService {
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
@@ -185,13 +185,13 @@ class OpenWeatherMapService implements IWeatherService {
 
   Future<List<Location>> _searchUsingGeocoding(String query) async {
     try {
-      final List<geocoding.Location> geocodingLocations = await geocoding.locationFromAddress(query);
+      final geocodingLocations = await geocoding.locationFromAddress(query);
       
-      List<Location> results = [];
+      var results = <Location>[];
       
       for (var geocodingLocation in geocodingLocations.take(5)) {
         try {
-          final List<geocoding.Placemark> placemarks = 
+          final placemarks = 
               await geocoding.placemarkFromCoordinates(geocodingLocation.latitude, geocodingLocation.longitude);
           
           if (placemarks.isNotEmpty) {

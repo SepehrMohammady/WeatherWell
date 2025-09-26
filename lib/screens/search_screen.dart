@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/weather_provider.dart';
-import '../models/location.dart' as app_location;
+import 'package:weatherwell/providers/weather_provider.dart';
+import 'package:weatherwell/models/location.dart' as app_location;
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

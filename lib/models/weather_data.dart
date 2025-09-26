@@ -14,8 +14,7 @@ class WeatherData {
     required this.current,
     required this.daily,
     required this.hourly,
-    this.airQuality,
-    required this.astronomy,
+    required this.astronomy, this.airQuality,
   });
 
   factory WeatherData.fromJson(Map<String, dynamic> json) =>

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/weather_data.dart';
-import '../models/location.dart' as app_location;
-import '../services/weather_service.dart';
-import '../services/location_service.dart';
-import '../services/notification_service.dart';
+import 'package:weatherwell/models/weather_data.dart';
+import 'package:weatherwell/models/location.dart' as app_location;
+import 'package:weatherwell/services/weather_service.dart';
+import 'package:weatherwell/services/location_service.dart';
+import 'package:weatherwell/services/notification_service.dart';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherApiService _weatherService = WeatherApiService();
@@ -69,7 +69,7 @@ class WeatherProvider extends ChangeNotifier {
       
       // If location fails, set a default location based on user's probable region
       // Instead of defaulting to London, we'll try to be smarter about the fallback
-      _currentLocation = app_location.Location(
+      _currentLocation = const app_location.Location(
         name: 'Your Location',
         country: 'Unknown', 
         region: 'Unknown',
@@ -205,7 +205,7 @@ class WeatherProvider extends ChangeNotifier {
     final windSpeed = _currentWeather!.current.windSpeed;
     final uvIndex = _currentWeather!.current.uvIndex;
 
-    List<String> recommendations = [];
+    var recommendations = <String>[];
 
     // Base clothing recommendation based on temperature
     if (temp < 0) {

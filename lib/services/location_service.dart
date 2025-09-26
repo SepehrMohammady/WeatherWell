@@ -1,6 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import '../models/location.dart' as app_location;
+import 'package:weatherwell/models/location.dart' as app_location;
 
 class LocationService {
   static Future<bool> isLocationServiceEnabled() async {
@@ -16,12 +16,12 @@ class LocationService {
   }
 
   static Future<Position> getCurrentPosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    var serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw Exception('Location services are disabled.');
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
@@ -62,7 +62,7 @@ class LocationService {
     double longitude,
   ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
+      var placemarks = await placemarkFromCoordinates(
         latitude,
         longitude,
       );
@@ -89,11 +89,11 @@ class LocationService {
     String locationName,
   ) async {
     try {
-      List<Location> locations = await locationFromAddress(locationName);
-      List<app_location.Location> results = [];
+      var locations = await locationFromAddress(locationName);
+      var results = <app_location.Location>[];
 
-      for (Location location in locations) {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
+      for (var location in locations) {
+        var placemarks = await placemarkFromCoordinates(
           location.latitude,
           location.longitude,
         );
@@ -119,7 +119,7 @@ class LocationService {
 
   static String _getTimezoneFromCountry(String country) {
     // Simple mapping for European countries
-    const Map<String, String> countryTimezones = {
+    const countryTimezones = <String, String>{
       'United Kingdom': 'Europe/London',
       'France': 'Europe/Paris',
       'Germany': 'Europe/Berlin',

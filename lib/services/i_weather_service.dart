@@ -1,5 +1,5 @@
-import '../models/weather_data.dart';
-import '../models/location.dart';
+import 'package:weatherwell/models/weather_data.dart';
+import 'package:weatherwell/models/location.dart';
 
 enum WeatherApiProvider {
   weatherApi('WeatherAPI.com', 'Comprehensive weather data with excellent European coverage'),

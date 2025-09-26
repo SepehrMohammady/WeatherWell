@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class HourlyForecastList extends StatelessWidget {
   final List<HourlyForecast> forecasts;
   final bool showAllHours;
 
   const HourlyForecastList({
-    super.key,
-    required this.forecasts,
+    required this.forecasts, super.key,
     this.showAllHours = false,
   });
 
@@ -55,7 +54,7 @@ class HourlyForecastList extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.water_drop,
                             size: 12,
                             color: Colors.blue,

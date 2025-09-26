@@ -1,5 +1,5 @@
-import '../services/weather_service.dart';
-import '../services/i_weather_service.dart';
+import 'package:weatherwell/services/weather_service.dart';
+import 'package:weatherwell/services/i_weather_service.dart';
 
 class WeatherServiceFactory {
   static IWeatherService createService(WeatherApiProvider provider) {

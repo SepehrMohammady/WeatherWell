@@ -93,7 +93,9 @@ class WeatherUtils {
     if (windSpeed > 25) return false;
     if (precipitation > 2) return false;
     if (condition.toLowerCase().contains('storm') || 
-        condition.toLowerCase().contains('heavy')) return false;
+        condition.toLowerCase().contains('heavy')) {
+      return false;
+    }
     
     return true;
   }

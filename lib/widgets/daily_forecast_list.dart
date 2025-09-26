@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class DailyForecastList extends StatelessWidget {
   final List<DailyForecast> forecasts;
 
   const DailyForecastList({
-    super.key,
-    required this.forecasts,
+    required this.forecasts, super.key,
   });
 
   @override
@@ -51,7 +50,7 @@ class DailyForecastList extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             if (forecast.precipitation > 0) ...[
-              Icon(
+              const Icon(
                 Icons.water_drop,
                 size: 16,
                 color: Colors.blue,

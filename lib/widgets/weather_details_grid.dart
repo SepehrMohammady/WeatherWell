@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class WeatherDetailsGrid extends StatelessWidget {
   final WeatherData weather;
 
   const WeatherDetailsGrid({
-    super.key,
-    required this.weather,
+    required this.weather, super.key,
   });
 
   @override
@@ -14,8 +13,8 @@ class WeatherDetailsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Determine number of columns based on screen width
-        int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-        double aspectRatio = constraints.maxWidth > 600 ? 1.2 : 1.1;
+        var crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+        var aspectRatio = constraints.maxWidth > 600 ? 1.2 : 1.1;
         
         return GridView.count(
           crossAxisCount: crossAxisCount,

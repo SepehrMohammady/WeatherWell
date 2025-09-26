@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/weather_data.dart';
+import 'package:weatherwell/models/weather_data.dart';
 
 class CurrentWeatherCard extends StatelessWidget {
   final WeatherData weather;
 
   const CurrentWeatherCard({
-    super.key,
-    required this.weather,
+    required this.weather, super.key,
   });
 
   @override

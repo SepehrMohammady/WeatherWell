@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../providers/weather_provider.dart';
-import '../models/weather_data.dart';
-import '../widgets/current_weather_card.dart';
-import '../widgets/hourly_forecast_list.dart';
-import '../widgets/daily_forecast_list.dart';
-import '../widgets/weather_details_grid.dart';
-import '../widgets/smart_features_card.dart';
-import '../services/share_service.dart';
-import 'search_screen.dart';
-import 'settings_screen.dart';
+import 'package:weatherwell/providers/weather_provider.dart';
+import 'package:weatherwell/models/weather_data.dart';
+import 'package:weatherwell/widgets/current_weather_card.dart';
+import 'package:weatherwell/widgets/hourly_forecast_list.dart';
+import 'package:weatherwell/widgets/daily_forecast_list.dart';
+import 'package:weatherwell/widgets/weather_details_grid.dart';
+import 'package:weatherwell/widgets/smart_features_card.dart';
+import 'package:weatherwell/services/share_service.dart';
+import 'package:weatherwell/screens/search_screen.dart';
+import 'package:weatherwell/screens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

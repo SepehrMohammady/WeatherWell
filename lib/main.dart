@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/weather_provider.dart';
-import 'screens/home_screen.dart';
-import 'screens/search_screen.dart';
-import 'screens/settings_screen.dart';
+import 'package:weatherwell/providers/weather_provider.dart';
+import 'package:weatherwell/screens/home_screen.dart';
+import 'package:weatherwell/screens/search_screen.dart';
+import 'package:weatherwell/screens/settings_screen.dart';
 
 void main() {
   runApp(const WeatherWellApp());
