@@ -1,12 +1,22 @@
 {
   "expo": {
-    "name": "WeatherWellRN",
-    "slug": "WeatherWellRN",
+    "name": "WeatherWell",
+    "slug": "weatherwell",
+    "owner": "sepehrmohammady",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "description": "A comprehensive cross-platform weather application with European focus",
+    "keywords": [
+      "weather",
+      "forecast",
+      "react-native",
+      "expo",
+      "europe"
+    ],
+    "githubUrl": "https://github.com/SepehrMohammady/WeatherWell",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -25,6 +35,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ef4ea8a1-1435-4cfb-a53d-51bdaf92b008"
+      }
     }
   }
 }
