@@ -1,33 +1,43 @@
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
-- [x] Verify that the copilot-instructions.md file in the .github directory is created.
 
-- [ ] Clarify Project Requirements
-	<!-- Project type: Flutter cross-platform weather app called WeatherWell for Windows, Android, and iOS -->
+## WeatherWell - React Native/Expo Project
 
-- [ ] Scaffold the Project
-	<!--
-	Create Flutter project structure with appropriate dependencies for weather data, location services, and cross-platform support.
-	-->
+✅ **Project Setup Complete**
 
-- [ ] Customize the Project
-	<!--
-	Implement WeatherWell features: daily/hourly forecasts, historical data, AQI, temperature, wind, precipitation, UV, visibility, humidity, sunrise/sunset, moon phases, umbrella alarms, and clothes suggestions with European weather focus and minimal design.
-	-->
+### Project Type
+Cross-platform weather application built with React Native and Expo for Android, iOS, and Web.
 
-- [ ] Install Required Extensions
-	<!-- Install Flutter and Dart extensions for VS Code development. -->
+### Features Implemented
+- ✅ Settings screen with theme management and customization
+- ✅ Location search with autocomplete and popular cities fallback
+- ✅ Weather sharing with customizable options
+- ✅ Daily and hourly forecasts
+- ✅ Complete weather metrics (temperature, wind, precipitation, UV, visibility, humidity)
+- ✅ Smart features: umbrella alarms and clothing suggestions
+- ✅ Light/dark theme support with persistent storage
+- ✅ European weather focus with accurate APIs
+- ✅ Minimal and clean design
 
-- [ ] Compile the Project
-	<!--
-	Ensure Flutter project builds successfully for all target platforms.
-	-->
+### Tech Stack
+- **Framework**: React Native with Expo
+- **Language**: TypeScript
+- **State Management**: React Context API
+- **Storage**: AsyncStorage
+- **Weather APIs**: WeatherAPI.com + OpenWeatherMap with fallback
 
-- [ ] Create and Run Task
-	<!--
-	Create VS Code tasks for Flutter development workflow.
-	 -->
+### Development Commands
+```bash
+npm start          # Start development server
+npm run android    # Run on Android
+npm run ios        # Run on iOS  
+npm run web        # Run on web
+```
 
-- [ ] Launch the Project
+### Architecture
+- `src/components/` - Reusable UI components
+- `src/screens/` - Main app screens (Home, Settings, Search)
+- `src/services/` - API services and business logic
+- `src/contexts/` - React Context providers (Theme, Settings)
 	<!--
 	Set up debugging configuration for Flutter app.
 	 -->
