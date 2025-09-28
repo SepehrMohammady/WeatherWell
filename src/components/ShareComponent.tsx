@@ -208,7 +208,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
         >
           <Ionicons name="options-outline" size={20} color={colors.primary} />
           <Text style={[styles.customShareText, { color: colors.primary }]}>
-            Customize
+            Customize Share
           </Text>
         </TouchableOpacity>
       </View>

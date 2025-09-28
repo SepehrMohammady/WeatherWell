@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { WeatherData } from '../services/types';
+import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { formatTemperature } from '../utils/temperatureUtils';
 
 interface CurrentWeatherCardProps {
   weatherData: WeatherData;
@@ -8,51 +11,61 @@ interface CurrentWeatherCardProps {
 
 export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherData }) => {
   const { location, current } = weatherData;
+  const { colors } = useTheme();
+  const { settings } = useSettings();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={styles.location}>📍 {location.name}</Text>
-        <Text style={styles.country}>{location.country}</Text>
+        <Text style={[styles.location, { color: colors.text }]}>📍 {location.name}</Text>
+        <Text style={[styles.country, { color: colors.text + '80' }]}>{location.country}</Text>
       </View>
       
       <View style={styles.mainInfo}>
-        <Text style={styles.temperature}>{Math.round(current.temperature)}°C</Text>
+        <Text style={styles.temperature}>{formatTemperature(current.temperature, settings.temperatureUnit)}</Text>
         <View style={styles.conditionContainer}>
           <Image 
             source={{ uri: current.icon.startsWith('http') ? current.icon : `https:${current.icon}` }}
             style={styles.conditionIcon}
           />
-          <Text style={styles.condition}>{current.condition}</Text>
+          <Text style={[styles.condition, { color: colors.text + '80' }]}>{current.condition}</Text>
         </View>
       </View>
 
-      <Text style={styles.feelsLike}>Feels like {Math.round(current.feelsLike)}°C</Text>
+      {settings.showFeelsLike && (
+        <Text style={[styles.feelsLike, { color: colors.text + '80' }]}>Feels like {formatTemperature(current.feelsLike, settings.temperatureUnit)}</Text>
+      )}
       
       <View style={styles.detailsGrid}>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Humidity</Text>
-          <Text style={styles.detailValue}>{current.humidity}%</Text>
+        {settings.showHumidity && (
+          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Humidity</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.humidity}%</Text>
+          </View>
+        )}
+        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind</Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{Math.round(current.windSpeed)} km/h</Text>
         </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Wind</Text>
-          <Text style={styles.detailValue}>{Math.round(current.windSpeed)} km/h</Text>
+        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>UV Index</Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{current.uvIndex}</Text>
         </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>UV Index</Text>
-          <Text style={styles.detailValue}>{current.uvIndex}</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Pressure</Text>
-          <Text style={styles.detailValue}>{current.pressure} hPa</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Visibility</Text>
-          <Text style={styles.detailValue}>{current.visibility} km</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailLabel}>Wind Dir</Text>
-          <Text style={styles.detailValue}>{current.windDirection}</Text>
+        {settings.showPressure && (
+          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Pressure</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.pressure} hPa</Text>
+          </View>
+        )}
+        {settings.showVisibility && (
+          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Visibility</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.visibility} km</Text>
+          </View>
+        )}
+        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind Dir</Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
         </View>
       </View>
     </View>
@@ -61,18 +74,9 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 24,
     margin: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   header: {
     alignItems: 'center',
@@ -81,12 +85,10 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2d3436',
     marginBottom: 4,
   },
   country: {
     fontSize: 14,
-    color: '#636e72',
   },
   mainInfo: {
     alignItems: 'center',
@@ -109,12 +111,10 @@ const styles = StyleSheet.create({
   },
   condition: {
     fontSize: 16,
-    color: '#636e72',
     textTransform: 'capitalize',
   },
   feelsLike: {
     fontSize: 14,
-    color: '#636e72',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -126,21 +126,18 @@ const styles = StyleSheet.create({
   detailItem: {
     width: '30%',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
   },
   detailLabel: {
     fontSize: 12,
-    color: '#636e72',
     fontWeight: '600',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 16,
-    color: '#2d3436',
     fontWeight: 'bold',
   },
 });

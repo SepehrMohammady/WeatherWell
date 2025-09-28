@@ -66,10 +66,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     const settingsJson = exportSettings();
     Alert.alert(
       'Export Settings',
-      'Copy the settings data below:',
-      [{ text: 'OK' }]
+      'Your settings have been exported. You can copy the JSON data from this alert.',
+      [
+        { text: 'Cancel' },
+        { 
+          text: 'Copy', 
+          onPress: () => {
+            // In a real app, you'd use Clipboard.setString(settingsJson)
+            Alert.alert('Settings Data', settingsJson, [
+              { text: 'Close' }
+            ]);
+          }
+        }
+      ]
     );
-    console.log('Settings Export:', settingsJson);
   };
 
   const handleImport = async () => {

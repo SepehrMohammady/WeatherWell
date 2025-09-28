@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { WeatherData } from '../services/types';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SmartFeaturesCardProps {
   weatherData: WeatherData;
@@ -13,6 +14,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   onUmbrellaAlert,
   onClothingSuggestion 
 }) => {
+  const { colors } = useTheme();
   const getUmbrellaRecommendation = () => {
     const precipChance = weatherData.forecast.daily[0]?.precipitationChance || 0;
     if (precipChance > 70) {
@@ -58,88 +60,105 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const airQuality = getAirQualityStatus();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🤖 Smart Recommendations</Text>
-      
-      <TouchableOpacity style={styles.featureCard} onPress={onUmbrellaAlert}>
-        <View style={[styles.featureIcon, { backgroundColor: umbrella.color + '20' }]}>
-          <Text style={styles.featureEmoji}>{umbrella.emoji}</Text>
-        </View>
-        <View style={styles.featureContent}>
-          <Text style={styles.featureTitle}>Umbrella Alert</Text>
-          <Text style={styles.featureDescription}>{umbrella.text}</Text>
-          <Text style={styles.featureDetail}>
-            {weatherData.forecast.daily[0]?.precipitationChance || 0}% chance of rain
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.featureCard} onPress={onClothingSuggestion}>
-        <View style={[styles.featureIcon, { backgroundColor: clothing.color + '20' }]}>
-          <Text style={styles.featureEmoji}>{clothing.emoji}</Text>
-        </View>
-        <View style={styles.featureContent}>
-          <Text style={styles.featureTitle}>Clothing Suggestion</Text>
-          <Text style={styles.featureDescription}>{clothing.text}</Text>
-          <Text style={styles.featureDetail}>
-            {Math.round(weatherData.current.temperature)}°C, feels like {Math.round(weatherData.current.feelsLike)}°C
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      {weatherData.airQuality && (
-        <View style={styles.featureCard}>
-          <View style={[styles.featureIcon, { backgroundColor: airQuality.color + '20' }]}>
-            <Text style={styles.featureEmoji}>{airQuality.emoji}</Text>
+    <>
+      {/* Smart Recommendations Section */}
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.title, { color: colors.text }]}>🤖 Smart Recommendations</Text>
+        
+        <TouchableOpacity style={styles.featureCard} onPress={onUmbrellaAlert}>
+          <View style={[styles.featureIcon, { backgroundColor: umbrella.color + '20' }]}>
+            <Text style={styles.featureEmoji}>{umbrella.emoji}</Text>
           </View>
           <View style={styles.featureContent}>
-            <Text style={styles.featureTitle}>Air Quality</Text>
-            <Text style={styles.featureDescription}>{airQuality.text}</Text>
-            <Text style={styles.featureDetail}>
-              AQI: {weatherData.airQuality.aqi} • PM2.5: {Math.round(weatherData.airQuality.pm2_5)}μg/m³
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Umbrella Alert</Text>
+            <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{umbrella.text}</Text>
+            <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+              {weatherData.forecast.daily[0]?.precipitationChance || 0}% chance of rain
             </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.featureCard} onPress={onClothingSuggestion}>
+          <View style={[styles.featureIcon, { backgroundColor: clothing.color + '20' }]}>
+            <Text style={styles.featureEmoji}>{clothing.emoji}</Text>
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Clothing Suggestion</Text>
+            <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{clothing.text}</Text>
+            <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+              {Math.round(weatherData.current.temperature)}°C, feels like {Math.round(weatherData.current.feelsLike)}°C
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Air Quality Section */}
+      {weatherData.airQuality && (
+        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.title, { color: colors.text }]}>💨 Air Quality</Text>
+          <View style={styles.featureCard}>
+            <View style={[styles.featureIcon, { backgroundColor: airQuality.color + '20' }]}>
+              <Text style={styles.featureEmoji}>{airQuality.emoji}</Text>
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={[styles.featureTitle, { color: colors.text }]}>Air Quality Index</Text>
+              <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{airQuality.text}</Text>
+              <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+                AQI: {weatherData.airQuality.aqi} • PM2.5: {Math.round(weatherData.airQuality.pm2_5)}μg/m³
+              </Text>
+            </View>
           </View>
         </View>
       )}
 
-      <View style={styles.featureCard}>
-        <View style={[styles.featureIcon, { backgroundColor: '#74b9ff20' }]}>
-          <Text style={styles.featureEmoji}>🌅</Text>
-        </View>
-        <View style={styles.featureContent}>
-          <Text style={styles.featureTitle}>Sun & Moon</Text>
-          <Text style={styles.featureDescription}>
-            Sunrise: {weatherData.astronomy.sunrise} • Sunset: {weatherData.astronomy.sunset}
-          </Text>
-          <Text style={styles.featureDetail}>
-            Moon: {weatherData.astronomy.moonPhase} ({Math.round(weatherData.astronomy.moonIllumination * 100)}% illuminated)
-          </Text>
+      {/* Sun & Moon Section */}
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.title, { color: colors.text }]}>☀️ Sun & Moon</Text>
+        <View style={styles.featureCard}>
+          <View style={[styles.featureIcon, { backgroundColor: '#74b9ff20' }]}>
+            <Text style={styles.featureEmoji}>🌅</Text>
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Solar Times</Text>
+            <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
+              Sunrise: {weatherData.astronomy.sunrise} • Sunset: {weatherData.astronomy.sunset}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+
+      {/* Moon Phases Section */}
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.title, { color: colors.text }]}>🌙 Moon Phases</Text>
+        <View style={styles.featureCard}>
+          <View style={[styles.featureIcon, { backgroundColor: '#fd79a820' }]}>
+            <Text style={styles.featureEmoji}>🌙</Text>
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Current Phase</Text>
+            <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
+              {weatherData.astronomy.moonPhase}
+            </Text>
+            <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+              {Math.round(weatherData.astronomy.moonIllumination * 100)}% illuminated
+            </Text>
+          </View>
+        </View>
+      </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     borderRadius: 20,
     margin: 16,
     marginTop: 8,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2d3436',
     padding: 20,
     paddingBottom: 12,
   },
@@ -148,8 +167,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
   },
   featureIcon: {
     width: 48,
@@ -168,17 +185,14 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3436',
     marginBottom: 4,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#636e72',
     marginBottom: 4,
   },
   featureDetail: {
     fontSize: 12,
-    color: '#b2bec3',
     fontWeight: '500',
   },
 });

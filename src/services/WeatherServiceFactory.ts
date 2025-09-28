@@ -1,6 +1,7 @@
 import { WeatherAPIService } from './WeatherAPIService';
 import { OpenWeatherMapService } from './OpenWeatherMapService';
 import { WeatherService } from './types';
+import { WeatherProvider } from '../contexts/SettingsContext';
 
 export class WeatherServiceFactory {
   private static weatherApiService: WeatherAPIService;
@@ -18,6 +19,23 @@ export class WeatherServiceFactory {
       this.openWeatherMapService = new OpenWeatherMapService();
     }
     return this.openWeatherMapService;
+  }
+
+  static getServiceByProvider(provider: WeatherProvider): WeatherService {
+    if (provider === 'weatherapi') {
+      const service = this.getWeatherAPIService();
+      if (service.isAvailable()) {
+        return service;
+      }
+    } else if (provider === 'openweathermap') {
+      const service = this.getOpenWeatherMapService();
+      if (service.isAvailable()) {
+        return service;
+      }
+    }
+    
+    // Fallback to any available service
+    return this.getPrimaryService();
   }
 
   static getPrimaryService(): WeatherService {
@@ -48,9 +66,16 @@ export class WeatherServiceFactory {
     throw new Error('No secondary weather service is available');
   }
 
-  static async getWeatherWithFallback(lat: number, lon: number): Promise<any> {
+  static async getWeatherWithFallback(lat: number, lon: number, preferredProvider?: WeatherProvider): Promise<any> {
     try {
-      const primaryService = this.getPrimaryService();
+      // Use preferred provider if specified, otherwise use default primary service
+      let primaryService: WeatherService;
+      if (preferredProvider) {
+        primaryService = this.getServiceByProvider(preferredProvider);
+      } else {
+        primaryService = this.getPrimaryService();
+      }
+      
       return await primaryService.getForecast(lat, lon);
     } catch (error) {
       console.warn('Primary weather service failed, trying secondary:', error);

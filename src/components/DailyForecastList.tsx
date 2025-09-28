@@ -1,12 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { DailyForecast } from '../services/types';
+import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { formatTemperature } from '../utils/temperatureUtils';
 
 interface DailyForecastListProps {
   dailyData: DailyForecast[];
 }
 
 export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData }) => {
+  const { colors } = useTheme();
+  const { settings } = useSettings();
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -23,12 +29,12 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>📅 7-Day Forecast</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.title, { color: colors.text }]}>📅 7-Day Forecast</Text>
       {dailyData.slice(0, 7).map((day, index) => (
         <View key={index} style={styles.dayItem}>
           <View style={styles.leftSection}>
-            <Text style={styles.dayName}>{formatDate(day.date)}</Text>
+            <Text style={[styles.dayName, { color: colors.text }]}>{formatDate(day.date)}</Text>
             <View style={styles.conditionContainer}>
               <Image 
                 source={{ 
@@ -36,25 +42,25 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
                 }}
                 style={styles.icon}
               />
-              <Text style={styles.condition}>{day.condition}</Text>
+              <Text style={[styles.condition, { color: colors.text + '80' }]}>{day.condition}</Text>
             </View>
           </View>
           
           <View style={styles.rightSection}>
             <View style={styles.temperatureContainer}>
-              <Text style={styles.maxTemp}>{Math.round(day.maxTemp)}°</Text>
-              <Text style={styles.minTemp}>{Math.round(day.minTemp)}°</Text>
+              <Text style={[styles.maxTemp, { color: colors.primary }]}>{formatTemperature(day.maxTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
+              <Text style={[styles.minTemp, { color: colors.text + '60' }]}>{formatTemperature(day.minTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
             </View>
             
             <View style={styles.detailsContainer}>
               <View style={styles.detailItem}>
-                <Text style={styles.detailText}>💧 {day.precipitationChance}%</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>💧 {day.precipitationChance}%</Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={styles.detailText}>🌬️ {Math.round(day.windSpeed)} km/h</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>🌬️ {Math.round(day.windSpeed)} km/h</Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={styles.detailText}>💦 {day.humidity}%</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>💦 {day.humidity}%</Text>
               </View>
             </View>
           </View>
@@ -66,24 +72,14 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     borderRadius: 20,
     margin: 16,
     marginTop: 8,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2d3436',
     padding: 20,
     paddingBottom: 12,
   },
@@ -92,8 +88,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
   },
   leftSection: {
     flex: 2,
@@ -101,7 +95,6 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3436',
     marginBottom: 4,
   },
   conditionContainer: {
@@ -115,7 +108,6 @@ const styles = StyleSheet.create({
   },
   condition: {
     fontSize: 14,
-    color: '#636e72',
     textTransform: 'capitalize',
     flex: 1,
   },
@@ -132,12 +124,10 @@ const styles = StyleSheet.create({
   maxTemp: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0984e3',
     marginRight: 8,
   },
   minTemp: {
     fontSize: 16,
-    color: '#636e72',
   },
   detailsContainer: {
     alignItems: 'flex-end',
@@ -147,7 +137,6 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    color: '#636e72',
     fontWeight: '500',
   },
 });

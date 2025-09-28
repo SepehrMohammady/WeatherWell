@@ -63,10 +63,11 @@ export const HomeScreen: React.FC = () => {
         longitude = location.longitude;
       }
       
-      // Fetch weather data
+      // Fetch weather data using preferred provider from settings
       const data = await WeatherServiceFactory.getWeatherWithFallback(
         latitude, 
-        longitude
+        longitude,
+        settings.weatherProvider
       );
       
       setWeatherData(data);
