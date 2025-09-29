@@ -15,6 +15,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   onClothingSuggestion 
 }) => {
   const { colors } = useTheme();
+
   const getUmbrellaRecommendation = () => {
     const precipChance = weatherData.forecast.daily[0]?.precipitationChance || 0;
     if (precipChance > 70) {
@@ -42,6 +43,30 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     }
   };
 
+  const getUVRecommendation = () => {
+    const uvIndex = weatherData.current.uvIndex;
+    if (uvIndex >= 8) {
+      return { text: "Wear sunglasses & sunscreen SPF 30+", emoji: "🕶️", color: "#e17055" };
+    } else if (uvIndex >= 6) {
+      return { text: "Consider sunglasses & sunscreen", emoji: "🧴", color: "#fdcb6e" };
+    } else if (uvIndex >= 3) {
+      return { text: "Light sun protection recommended", emoji: "☀️", color: "#00b894" };
+    } else {
+      return { text: "No sun protection needed", emoji: "🌤️", color: "#74b9ff" };
+    }
+  };
+
+  const getMaskRecommendation = () => {
+    const aqi = weatherData.airQuality?.aqi || 1;
+    if (aqi >= 4) {
+      return { text: "Wear a mask outdoors", emoji: "😷", color: "#e17055" };
+    } else if (aqi >= 3) {
+      return { text: "Consider wearing a mask", emoji: "😐", color: "#fdcb6e" };
+    } else {
+      return { text: "No mask needed", emoji: "😊", color: "#00b894" };
+    }
+  };
+
   const getAirQualityStatus = () => {
     const aqi = weatherData.airQuality?.aqi || 1;
     if (aqi <= 2) {
@@ -57,13 +82,15 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
 
   const umbrella = getUmbrellaRecommendation();
   const clothing = getClothingRecommendation();
+  const uvProtection = getUVRecommendation();
+  const maskAdvice = getMaskRecommendation();
   const airQuality = getAirQualityStatus();
 
   return (
     <>
-      {/* Smart Recommendations Section */}
+      {/* Recommendations Section */}
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🤖 Smart Recommendations</Text>
+        <Text style={[styles.title, { color: colors.text }]}>💡 Recommendations</Text>
         
         <TouchableOpacity style={styles.featureCard} onPress={onUmbrellaAlert}>
           <View style={[styles.featureIcon, { backgroundColor: umbrella.color + '20' }]}>
@@ -90,6 +117,34 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             </Text>
           </View>
         </TouchableOpacity>
+
+        <View style={styles.featureCard}>
+          <View style={[styles.featureIcon, { backgroundColor: uvProtection.color + '20' }]}>
+            <Text style={styles.featureEmoji}>{uvProtection.emoji}</Text>
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>UV Protection</Text>
+            <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{uvProtection.text}</Text>
+            <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+              UV Index: {weatherData.current.uvIndex}
+            </Text>
+          </View>
+        </View>
+
+        {weatherData.airQuality && (
+          <View style={styles.featureCard}>
+            <View style={[styles.featureIcon, { backgroundColor: maskAdvice.color + '20' }]}>
+              <Text style={styles.featureEmoji}>{maskAdvice.emoji}</Text>
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={[styles.featureTitle, { color: colors.text }]}>Air Quality Advisory</Text>
+              <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{maskAdvice.text}</Text>
+              <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+                AQI: {weatherData.airQuality?.aqi || 'N/A'} • PM2.5: {weatherData.airQuality ? Math.round(weatherData.airQuality.pm2_5) : 'N/A'}μg/m³
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Air Quality Section */}
@@ -111,36 +166,43 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
         </View>
       )}
 
-      {/* Sun & Moon Section */}
+      {/* Astronomy Section */}
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.text }]}>☀️ Sun & Moon</Text>
+        <Text style={[styles.title, { color: colors.text }]}>🌟 Astronomy</Text>
+        
         <View style={styles.featureCard}>
-          <View style={[styles.featureIcon, { backgroundColor: '#74b9ff20' }]}>
-            <Text style={styles.featureEmoji}>🌅</Text>
+          <View style={[styles.featureIcon, { backgroundColor: '#fdcb6e20' }]}>
+            <Text style={styles.featureEmoji}>☀️</Text>
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Solar Times</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Sun Times</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
               Sunrise: {weatherData.astronomy.sunrise} • Sunset: {weatherData.astronomy.sunset}
             </Text>
+            <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
+              Daylight: {(() => {
+                const sunrise = new Date(`1970-01-01T${weatherData.astronomy.sunrise}`);
+                const sunset = new Date(`1970-01-01T${weatherData.astronomy.sunset}`);
+                const diff = sunset.getTime() - sunrise.getTime();
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                return `${hours}h ${minutes}m`;
+              })()}
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Moon Phases Section */}
-      <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🌙 Moon Phases</Text>
         <View style={styles.featureCard}>
-          <View style={[styles.featureIcon, { backgroundColor: '#fd79a820' }]}>
+          <View style={[styles.featureIcon, { backgroundColor: '#74b9ff20' }]}>
             <Text style={styles.featureEmoji}>🌙</Text>
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Current Phase</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>Moon Phase</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
               {weatherData.astronomy.moonPhase}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              {Math.round(weatherData.astronomy.moonIllumination * 100)}% illuminated
+              Illumination: {Math.round(weatherData.astronomy.moonIllumination * 100)}%
             </Text>
           </View>
         </View>

@@ -92,6 +92,13 @@ export const HomeScreen: React.FC = () => {
     loadWeatherData();
   }, []);
 
+  // Auto-refresh when weather provider changes
+  useEffect(() => {
+    if (weatherData) { // Only refresh if we already have data loaded
+      loadWeatherData(selectedLocation || undefined);
+    }
+  }, [settings.weatherProvider]);
+
   const onRefresh = () => {
     setRefreshing(true);
     loadWeatherData(selectedLocation || undefined);

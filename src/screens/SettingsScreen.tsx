@@ -591,12 +591,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   section: {
-    marginBottom: 30,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 15,
+    marginBottom: 12,
     color: 'white',
   },
   settingItem: {
@@ -610,9 +610,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   settingContent: {
     flex: 1,
@@ -630,9 +630,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   providerButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   providerText: {
     fontSize: 14,
