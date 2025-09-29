@@ -9,7 +9,10 @@ import {
   TextInput,
   Alert,
   Modal,
-  Pressable
+  Pressable,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -124,16 +127,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   );
 
   return (
-    <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={styles.placeholder} />
+        </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView 
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Theme Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -370,7 +378,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
 
         <View style={styles.bottomSpacing} />
-      </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
       {/* Import Modal */}
       <Modal
@@ -414,12 +423,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
         </View>
       </Modal>
-    </LinearGradient>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
+    flex: 1,
+  },
+  keyboardContainer: {
     flex: 1,
   },
   header: {

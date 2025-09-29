@@ -24,6 +24,7 @@ import { Location } from '../services/LocationSearchService';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 export const HomeScreen: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -36,6 +37,7 @@ export const HomeScreen: React.FC = () => {
 
   const { colors } = useTheme();
   const { settings } = useSettings();
+  const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const locationService = LocationService.getInstance();
 
   const loadWeatherData = async (customLocation?: Location) => {
@@ -99,6 +101,17 @@ export const HomeScreen: React.FC = () => {
     setSelectedLocation(null);
     setLoading(true);
     loadWeatherData();
+  };
+
+  const handleToggleFavorite = async () => {
+    if (selectedLocation) {
+      const locationId = `${selectedLocation.name}-${selectedLocation.country}-${selectedLocation.latitude}-${selectedLocation.longitude}`;
+      if (isFavorite(locationId)) {
+        await removeFromFavorites(locationId);
+      } else {
+        await addToFavorites(selectedLocation);
+      }
+    }
   };
 
   const handleUmbrellaAlert = () => {
@@ -213,14 +226,23 @@ export const HomeScreen: React.FC = () => {
             
             <View style={styles.headerCenter}>
               <Text style={styles.appTitle}>WeatherWell</Text>
-              <Text style={styles.locationText}>
-                {locationName}
+              <View style={styles.locationContainer}>
+                <Text style={styles.locationText}>{locationName}</Text>
                 {selectedLocation && (
-                  <TouchableOpacity onPress={handleBackToCurrentLocation}>
-                    <Text style={styles.currentLocationButton}> • Use Current Location</Text>
-                  </TouchableOpacity>
+                  <View style={styles.locationActions}>
+                    <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
+                      <Ionicons 
+                        name={isFavorite(`${selectedLocation.name}-${selectedLocation.country}-${selectedLocation.latitude}-${selectedLocation.longitude}`) ? "heart" : "heart-outline"} 
+                        size={16} 
+                        color="rgba(255, 255, 255, 0.8)" 
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
+                      <Text style={styles.currentLocationText}>Use Current Location</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </Text>
+              </View>
             </View>
             
             <TouchableOpacity
@@ -265,17 +287,21 @@ export const HomeScreen: React.FC = () => {
         </ScrollView>
       </LinearGradient>
       
-      {/* Settings Screen Modal */}
+      {/* Settings Screen - Full Screen */}
       {showSettings && (
-        <SettingsScreen onClose={() => setShowSettings(false)} />
+        <View style={StyleSheet.absoluteFillObject}>
+          <SettingsScreen onClose={() => setShowSettings(false)} />
+        </View>
       )}
       
-      {/* Search Screen Modal */}
+      {/* Search Screen - Full Screen */}
       {showSearch && (
-        <SearchScreen 
-          onClose={() => setShowSearch(false)}
-          onLocationSelect={handleLocationSelect}
-        />
+        <View style={StyleSheet.absoluteFillObject}>
+          <SearchScreen 
+            onClose={() => setShowSearch(false)}
+            onLocationSelect={handleLocationSelect}
+          />
+        </View>
       )}
     </>
   );
@@ -317,12 +343,29 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 4,
   },
+  locationContainer: {
+    alignItems: 'center',
+  },
   locationText: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  locationActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoriteButton: {
+    marginRight: 8,
+    padding: 2,
   },
   currentLocationButton: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  currentLocationText: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)',
     textDecorationLine: 'underline',

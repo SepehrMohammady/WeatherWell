@@ -7,11 +7,15 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { LocationSearchService, Location } from '../services/LocationSearchService';
 
 interface SearchScreenProps {
@@ -21,6 +25,7 @@ interface SearchScreenProps {
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationSelect }) => {
   const { colors } = useTheme();
+  const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Location[]>([]);
   const [recentSearches, setRecentSearches] = useState<Location[]>([]);
@@ -104,27 +109,63 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
     );
   };
 
-  const renderLocationItem = ({ item }: { item: Location }) => (
-    <TouchableOpacity
-      style={[styles.locationItem, { backgroundColor: colors.surface }]}
-      onPress={() => handleLocationSelect(item)}
-    >
-      <View style={styles.locationInfo}>
-        <View style={styles.locationIcon}>
-          <Ionicons name="location-outline" size={20} color={colors.primary} />
+  const generateLocationId = (location: Location): string => {
+    return `${location.name}-${location.country}-${location.latitude}-${location.longitude}`;
+  };
+
+  const handleToggleFavorite = async (location: Location, event: any) => {
+    event.stopPropagation(); // Prevent location selection when tapping favorite
+    const locationId = generateLocationId(location);
+    
+    try {
+      if (isFavorite(locationId)) {
+        await removeFromFavorites(locationId);
+      } else {
+        await addToFavorites(location);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  const renderLocationItem = ({ item }: { item: Location }) => {
+    const locationId = generateLocationId(item);
+    const isItemFavorite = isFavorite(locationId);
+    
+    return (
+      <TouchableOpacity
+        style={[styles.locationItem, { backgroundColor: colors.surface }]}
+        onPress={() => handleLocationSelect(item)}
+      >
+        <View style={styles.locationInfo}>
+          <View style={styles.locationIcon}>
+            <Ionicons name="location-outline" size={20} color={colors.primary} />
+          </View>
+          <View style={styles.locationDetails}>
+            <Text style={[styles.locationName, { color: colors.text }]}>
+              {item.name}
+            </Text>
+            <Text style={[styles.locationSubtext, { color: colors.textSecondary }]}>
+              {item.region ? `${item.region}, ${item.country}` : item.country}
+            </Text>
+          </View>
         </View>
-        <View style={styles.locationDetails}>
-          <Text style={[styles.locationName, { color: colors.text }]}>
-            {item.name}
-          </Text>
-          <Text style={[styles.locationSubtext, { color: colors.textSecondary }]}>
-            {item.region ? `${item.region}, ${item.country}` : item.country}
-          </Text>
+        <View style={styles.locationActions}>
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={(e) => handleToggleFavorite(item, e)}
+          >
+            <Ionicons 
+              name={isItemFavorite ? "heart" : "heart-outline"} 
+              size={20} 
+              color={isItemFavorite ? colors.error : colors.textSecondary} 
+            />
+          </TouchableOpacity>
+          <Ionicons name="chevron-forward-outline" size={20} color={colors.textSecondary} />
         </View>
-      </View>
-      <Ionicons name="chevron-forward-outline" size={20} color={colors.textSecondary} />
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmptyState = () => {
     if (loading) {
@@ -158,14 +199,20 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
   const displayData = searchQuery.trim().length >= 2 ? searchResults : [];
   
   return (
-    <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Search Location</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Search Location</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <KeyboardAvoidingView 
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
 
       <View style={styles.searchContainer}>
         <View style={[styles.searchBox, { backgroundColor: colors.surface }]}>
@@ -196,6 +243,23 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
       </View>
 
       <View style={styles.content}>
+        {/* Favorites Section */}
+        {searchQuery.trim().length < 2 && favorites.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Favorite Places
+              </Text>
+            </View>
+            <FlatList
+              data={favorites}
+              renderItem={renderLocationItem}
+              keyExtractor={(item) => generateLocationId(item)}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        )}
+
         {/* Recent Searches Section */}
         {searchQuery.trim().length < 2 && recentSearches.length > 0 && (
           <View style={styles.section}>
@@ -257,13 +321,21 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
             </Text>
           </View>
         )}
-      </View>
-    </LinearGradient>
+        </View>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
+    flex: 1,
+  },
+  keyboardContainer: {
     flex: 1,
   },
   header: {
@@ -363,6 +435,14 @@ const styles = StyleSheet.create({
   },
   locationSubtext: {
     fontSize: 14,
+  },
+  locationActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteButton: {
+    padding: 8,
+    marginRight: 4,
   },
   emptyState: {
     flex: 1,
