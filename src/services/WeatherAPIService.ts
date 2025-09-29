@@ -2,8 +2,13 @@ import axios from 'axios';
 import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
 
 export class WeatherAPIService implements WeatherService {
-  private readonly apiKey = '725bd54f9a1b458884f85421252509';
+  private apiKey: string;
   private readonly baseUrl = 'https://api.weatherapi.com/v1';
+  private readonly fallbackApiKey = '725bd54f9a1b458884f85421252509'; // Demo key
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || this.fallbackApiKey;
+  }
 
   async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
     try {
@@ -81,7 +86,11 @@ export class WeatherAPIService implements WeatherService {
   }
 
   isAvailable(): boolean {
-    return this.apiKey !== '';
+    return this.apiKey !== '' && this.apiKey.length > 10;
+  }
+
+  getApiSource(): string {
+    return this.apiKey === this.fallbackApiKey ? 'WeatherAPI (Demo)' : 'WeatherAPI (Custom)';
   }
 
   private transformCurrentWeatherData(data: any): WeatherData {

@@ -77,4 +77,5 @@ export interface WeatherService {
   searchLocations(query: string): Promise<Location[]>;
   getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData>;
   isAvailable(): boolean;
+  getApiSource(): string;
 }

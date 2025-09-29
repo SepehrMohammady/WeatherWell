@@ -2,9 +2,14 @@ import axios from 'axios';
 import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
 
 export class OpenWeatherMapService implements WeatherService {
-  private readonly apiKey = '2f16c38d61c17ac94d944a5a66ca0e96';
+  private apiKey: string;
   private readonly baseUrl = 'https://api.openweathermap.org/data/2.5';
   private readonly geocodingUrl = 'https://api.openweathermap.org/geo/1.0';
+  private readonly fallbackApiKey = '2f16c38d61c17ac94d944a5a66ca0e96'; // Demo key
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || this.fallbackApiKey;
+  }
 
   async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
     try {
@@ -97,6 +102,10 @@ export class OpenWeatherMapService implements WeatherService {
 
   isAvailable(): boolean {
     return this.apiKey.length > 0;
+  }
+
+  getApiSource(): string {
+    return this.apiKey === this.fallbackApiKey ? 'OpenWeatherMap (Demo)' : 'OpenWeatherMap (Custom)';
   }
 
   private transformCurrentWeatherData(weatherData: any, airQualityData?: any): WeatherData {

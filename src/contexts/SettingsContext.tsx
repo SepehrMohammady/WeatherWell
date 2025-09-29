@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type WeatherProvider = 'weatherapi' | 'openweathermap';
+export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing';
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 
 export interface AppSettings {
@@ -10,6 +10,7 @@ export interface AppSettings {
   enableNotifications: boolean;
   weatherApiKey: string | null;
   openWeatherMapApiKey: string | null;
+  visualCrossingApiKey: string | null;
   refreshInterval: number; // in minutes
   showFeelsLike: boolean;
   showHumidity: boolean;
@@ -24,6 +25,7 @@ const defaultSettings: AppSettings = {
   enableNotifications: true,
   weatherApiKey: null,
   openWeatherMapApiKey: null,
+  visualCrossingApiKey: null,
   refreshInterval: 30,
   showFeelsLike: true,
   showHumidity: true,

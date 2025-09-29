@@ -34,6 +34,7 @@ export const HomeScreen: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [apiSource, setApiSource] = useState<string>('');
 
   const { colors } = useTheme();
   const { settings } = useSettings();
@@ -66,13 +67,18 @@ export const HomeScreen: React.FC = () => {
       }
       
       // Fetch weather data using preferred provider from settings
-      const data = await WeatherServiceFactory.getWeatherWithFallback(
+      const result = await WeatherServiceFactory.getWeatherWithFallback(
         latitude, 
         longitude,
-        settings.weatherProvider
+        settings.weatherProvider,
+        settings.weatherApiKey || undefined,
+        settings.openWeatherMapApiKey || undefined,
+        settings.visualCrossingApiKey || undefined
       );
       
-      setWeatherData(data);
+      setWeatherData(result.data);
+      setApiSource(result.source);
+      console.log('Using weather source:', result.source);
     } catch (err) {
       console.error('Error loading weather data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load weather data');
@@ -266,7 +272,7 @@ export const HomeScreen: React.FC = () => {
             />
           }
         >
-          <CurrentWeatherCard weatherData={weatherData} />
+          <CurrentWeatherCard weatherData={weatherData} apiSource={apiSource} />
           <HourlyForecastList hourlyData={weatherData.forecast.hourly} />
           <DailyForecastList dailyData={weatherData.forecast.daily} />
           <SmartFeaturesCard 

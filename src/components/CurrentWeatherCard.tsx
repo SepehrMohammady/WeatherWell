@@ -7,9 +7,10 @@ import { formatTemperature } from '../utils/temperatureUtils';
 
 interface CurrentWeatherCardProps {
   weatherData: WeatherData;
+  apiSource?: string;
 }
 
-export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherData }) => {
+export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherData, apiSource }) => {
   const { location, current } = weatherData;
   const { colors } = useTheme();
   const { settings } = useSettings();
@@ -68,6 +69,12 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
           <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
         </View>
       </View>
+      
+      {apiSource && (
+        <View style={styles.apiSourceContainer}>
+          <Text style={[styles.apiSource, { color: colors.text + '60' }]}>{apiSource}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -77,10 +84,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     margin: 16,
+    position: 'relative',
   },
   header: {
     alignItems: 'center',
     marginBottom: 20,
+  },
+  apiSourceContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+  },
+  apiSource: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    opacity: 0.8,
   },
   location: {
     fontSize: 18,

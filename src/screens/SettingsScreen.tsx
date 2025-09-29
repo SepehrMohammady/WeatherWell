@@ -10,10 +10,10 @@ import {
   Alert,
   Modal,
   Pressable,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
@@ -28,6 +28,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing'>('weatherapi');
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
 
@@ -39,8 +40,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     updateSetting('temperatureUnit', unit);
   };
 
-  const handleApiKeyUpdate = (provider: 'weatherapi' | 'openweathermap') => {
-    const key = provider === 'weatherapi' ? 'weatherApiKey' : 'openWeatherMapApiKey';
+  const handleApiKeyUpdate = (provider: 'weatherapi' | 'openweathermap' | 'visualcrossing') => {
+    const key = provider === 'weatherapi' 
+      ? 'weatherApiKey' 
+      : provider === 'openweathermap'
+        ? 'openWeatherMapApiKey'
+        : 'visualCrossingApiKey';
     updateSetting(key, tempApiKey || null);
     setTempApiKey('');
     setShowApiKeyInput(false);
@@ -106,9 +111,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     subtitle?: string;
     rightElement: React.ReactNode;
     onPress?: () => void;
-  }> = ({ title, subtitle, rightElement, onPress }) => (
+    compact?: boolean;
+  }> = ({ title, subtitle, rightElement, onPress, compact = false }) => (
     <TouchableOpacity
-      style={[styles.settingItem, { backgroundColor: colors.surface }]}
+      style={[compact ? styles.settingItemCompact : styles.settingItem, { backgroundColor: colors.surface }]}
       onPress={onPress}
       disabled={!onPress}
     >
@@ -168,7 +174,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="Weather Provider"
-            subtitle={`Currently using ${settings.weatherProvider === 'weatherapi' ? 'WeatherAPI' : 'OpenWeatherMap'}`}
+            subtitle={`Currently using ${
+              settings.weatherProvider === 'weatherapi' 
+                ? 'WeatherAPI' 
+                : settings.weatherProvider === 'openweathermap'
+                  ? 'OpenWeatherMap'
+                  : 'Visual Crossing'
+            }`}
+            compact={true}
             rightElement={
               <View style={styles.providerButtons}>
                 <TouchableOpacity
@@ -193,12 +206,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                     OpenWeather
                   </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'visualcrossing' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('visualcrossing')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'visualcrossing' ? 'white' : colors.text }]}>
+                    Visual Crossing
+                  </Text>
+                </TouchableOpacity>
               </View>
             }
           />
 
           <SettingItem
             title="Temperature Unit"
+            compact={true}
             rightElement={
               <View style={styles.providerButtons}>
                 <TouchableOpacity
@@ -230,6 +255,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <SettingItem
             title="Refresh Interval"
             subtitle={`Update every ${settings.refreshInterval} minutes`}
+            compact={true}
             rightElement={
               <View style={styles.intervalButtons}>
                 {[15, 30, 60].map(interval => (
@@ -247,6 +273,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   </TouchableOpacity>
                 ))}
               </View>
+            }
+          />
+
+          {/* API Keys Configuration */}
+          <SettingItem
+            title="WeatherAPI Key"
+            subtitle={settings.weatherApiKey ? 'Custom key configured' : 'Using demo key'}
+            rightElement={
+              <TouchableOpacity
+                onPress={() => {
+                  setTempApiKey(settings.weatherApiKey || '');
+                  setShowApiKeyInput(true);
+                  setSelectedProvider('weatherapi');
+                }}
+              >
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingItem
+            title="OpenWeatherMap Key"
+            subtitle={settings.openWeatherMapApiKey ? 'Custom key configured' : 'Using demo key'}
+            rightElement={
+              <TouchableOpacity
+                onPress={() => {
+                  setTempApiKey(settings.openWeatherMapApiKey || '');
+                  setShowApiKeyInput(true);
+                  setSelectedProvider('openweathermap');
+                }}
+              >
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingItem
+            title="Visual Crossing Key"
+            subtitle={settings.visualCrossingApiKey ? 'Custom key configured' : 'Requires custom API key (free at visualcrossing.com)'}
+            rightElement={
+              <TouchableOpacity
+                onPress={() => {
+                  setTempApiKey(settings.visualCrossingApiKey || '');
+                  setShowApiKeyInput(true);
+                  setSelectedProvider('visualcrossing');
+                }}
+              >
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
             }
           />
         </View>
@@ -381,6 +456,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </ScrollView>
         </KeyboardAvoidingView>
 
+      {/* API Key Input Modal */}
+      <Modal
+        visible={showApiKeyInput}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowApiKeyInput(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {selectedProvider === 'weatherapi' 
+                ? 'WeatherAPI Key' 
+                : selectedProvider === 'openweathermap'
+                  ? 'OpenWeatherMap Key'
+                  : 'Visual Crossing Key'}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+              Enter your API key or leave blank to use demo key
+            </Text>
+            <TextInput
+              style={[styles.importInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              placeholder="Enter API key..."
+              placeholderTextColor={colors.textSecondary}
+              value={tempApiKey}
+              onChangeText={setTempApiKey}
+              secureTextEntry
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.border }]}
+                onPress={() => setShowApiKeyInput(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                onPress={() => handleApiKeyUpdate(selectedProvider)}
+              >
+                <Text style={[styles.modalButtonText, { color: 'white' }]}>
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Import Modal */}
       <Modal
         visible={showImportModal}
@@ -482,6 +606,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
   },
+  settingItemCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
   settingContent: {
     flex: 1,
   },
@@ -537,8 +669,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   importInput: {
     borderWidth: 1,
