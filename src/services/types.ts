@@ -61,6 +61,9 @@ export interface HourlyForecast {
   windSpeed: number;
   precipitationChance: number;
   precipitationMm: number;
+  uvIndex?: number;
+  pressure?: number;
+  visibility?: number;
 }
 
 export interface Location {

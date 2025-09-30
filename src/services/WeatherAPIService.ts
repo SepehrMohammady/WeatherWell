@@ -161,7 +161,10 @@ export class WeatherAPIService implements WeatherService {
         humidity: hour.humidity,
         windSpeed: hour.wind_kph,
         precipitationChance: hour.chance_of_rain,
-        precipitationMm: hour.precip_mm
+        precipitationMm: hour.precip_mm,
+        uvIndex: hour.uv || 0,
+        pressure: hour.pressure_mb || 1013,
+        visibility: hour.vis_km || 10
       }));
 
     const currentDay = data.forecast.forecastday[0];

@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { formatTemperature } from '../utils/temperatureUtils';
+import { WeatherDetailModal } from './WeatherDetailModal';
 
 interface CurrentWeatherCardProps {
   weatherData: WeatherData;
@@ -14,6 +15,18 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
   const { location, current } = weatherData;
   const { colors } = useTheme();
   const { settings } = useSettings();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | null>(null);
+
+  const handleMetricPress = (metric: 'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility') => {
+    setSelectedMetric(metric);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedMetric(null);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -39,35 +52,59 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
       
       <View style={styles.detailsGrid}>
         {settings.showHumidity && (
-          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('humidity')}
+            activeOpacity={0.7}
+          >
             <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Humidity</Text>
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.humidity}%</Text>
-          </View>
+          </TouchableOpacity>
         )}
-        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+        <TouchableOpacity 
+          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+          onPress={() => handleMetricPress('wind')}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>{Math.round(current.windSpeed)} km/h</Text>
-        </View>
-        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+          onPress={() => handleMetricPress('uv')}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>UV Index</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>{current.uvIndex}</Text>
-        </View>
+        </TouchableOpacity>
         {settings.showPressure && (
-          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('pressure')}
+            activeOpacity={0.7}
+          >
             <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Pressure</Text>
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.pressure} hPa</Text>
-          </View>
+          </TouchableOpacity>
         )}
-        {settings.showVisibility && (
-          <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Visibility</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{current.visibility} km</Text>
-          </View>
-        )}
-        <View style={[styles.detailItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}>
+        <TouchableOpacity 
+          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+          onPress={() => handleMetricPress('windDir')}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind Dir</Text>
           <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
-        </View>
+        </TouchableOpacity>
+        {settings.showVisibility && (
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('visibility')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Visibility</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.visibility} km</Text>
+          </TouchableOpacity>
+        )}
       </View>
       
       {apiSource && (
@@ -75,6 +112,13 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
           <Text style={[styles.apiSource, { color: colors.text + '60' }]}>{apiSource}</Text>
         </View>
       )}
+
+      <WeatherDetailModal
+        visible={modalVisible}
+        onClose={closeModal}
+        weatherData={weatherData}
+        metricType={selectedMetric}
+      />
     </View>
   );
 };
@@ -157,5 +201,8 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  clickableItem: {
+    transform: [{ scale: 1 }],
   },
 });

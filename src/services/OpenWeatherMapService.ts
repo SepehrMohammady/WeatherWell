@@ -160,7 +160,10 @@ export class OpenWeatherMapService implements WeatherService {
       humidity: item.main.humidity,
       windSpeed: item.wind.speed * 3.6,
       precipitationChance: (item.pop || 0) * 100,
-      precipitationMm: item.rain?.['3h'] || item.snow?.['3h'] || 0
+      precipitationMm: item.rain?.['3h'] || item.snow?.['3h'] || 0,
+      uvIndex: 0, // Not available in forecast endpoint
+      pressure: item.main.pressure || 1013,
+      visibility: 10 // Default visibility for OpenWeatherMap
     }));
 
     // Group by day for daily forecast

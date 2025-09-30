@@ -146,7 +146,10 @@ export class VisualCrossingService implements WeatherService {
             precipitationChance: hour.precipprob || 0,
             precipitationMm: hour.precip || 0,
             windSpeed: hour.windspeed || 0,
-            humidity: hour.humidity || 0
+            humidity: hour.humidity || 0,
+            uvIndex: hour.uvindex || 0,
+            pressure: hour.pressure || 1013,
+            visibility: hour.visibility || 10
           });
         });
       }
