@@ -174,13 +174,32 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'humidity' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                🌡️ Comfort Levels
+                🌡️ Humidity Comfort Guide
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • 30-50%: Optimal for comfort{'\n'}
-                • 50-70%: Still comfortable{'\n'}
-                • Above 70%: May feel muggy{'\n'}
-                • Below 30%: May feel dry
+                • Below 30%: Too dry - may cause skin/throat irritation{'\n'}
+                • 30-50%: Ideal comfort zone - perfect conditions{'\n'}
+                • 50-65%: Comfortable for most people{'\n'}
+                • 65-75%: Slightly humid - may feel warm{'\n'}
+                • Above 75%: Very humid - feels muggy and sticky
+              </Text>
+            </View>
+          )}
+
+          {metricType === 'wind' && (
+            <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.insightTitle, { color: colors.text }]}>
+                💨 Wind Speed Guide
+              </Text>
+              <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
+                • 0-5 km/h: Calm - smoke rises vertically{'\n'}
+                • 6-11 km/h: Light air - leaves rustle gently{'\n'}
+                • 12-19 km/h: Light breeze - perfect for outdoor activities{'\n'}
+                • 20-28 km/h: Gentle breeze - branches move, flags flutter{'\n'}
+                • 29-38 km/h: Moderate breeze - small trees sway{'\n'}
+                • 39-49 km/h: Fresh breeze - large branches move{'\n'}
+                • 50-61 km/h: Strong breeze - difficult to use umbrellas{'\n'}
+                • 62+ km/h: High wind - avoid outdoor activities
               </Text>
             </View>
           )}

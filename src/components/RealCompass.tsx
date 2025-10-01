@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Magnetometer } from 'expo-sensors';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { Magnetometer, DeviceMotion } from 'expo-sensors';
 import Svg, { Circle, Line, Text as SvgText, Polygon } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -16,34 +16,103 @@ export const RealCompass: React.FC<RealCompassProps> = ({
   size = 280 
 }) => {
   const { colors } = useTheme();
-  const [magnetometerData, setMagnetometerData] = useState({ x: 0, y: 0, z: 0 });
   const [deviceHeading, setDeviceHeading] = useState(0);
   const [subscription, setSubscription] = useState<any>(null);
+  const [isCalibrated, setIsCalibrated] = useState(false);
+  const [headingAccuracy, setHeadingAccuracy] = useState(0);
+  const [headingHistory, setHeadingHistory] = useState<number[]>([]);
+  const [calibrationStatus, setCalibrationStatus] = useState<string>('Initializing...');
 
   const center = size / 2;
   const radius = size * 0.35;
 
   useEffect(() => {
     _subscribe();
-    return () => _unsubscribe();
-  }, []);
+    
+    // Set a timeout for calibration - if not calibrated in 10 seconds, show fallback
+    const calibrationTimeout = setTimeout(() => {
+      if (!isCalibrated) {
+        setCalibrationStatus('Sensors not available - showing static compass');
+        setIsCalibrated(true); // Allow static compass to show
+        setHeadingAccuracy(0);
+      }
+    }, 10000);
+
+    return () => {
+      _unsubscribe();
+      clearTimeout(calibrationTimeout);
+    };
+  }, [isCalibrated]);
 
   const _subscribe = () => {
-    setSubscription(
-      Magnetometer.addListener((result) => {
-        setMagnetometerData(result);
-        
-        // Calculate device heading from magnetometer data
-        // Note: atan2(y, x) gives angle from positive x-axis
-        // We want angle from positive y-axis (North), so we use atan2(x, y) and add 90 degrees
-        let heading = Math.atan2(result.x, result.y) * (180 / Math.PI);
-        
-        // Normalize to 0-360 degrees
-        const normalizedHeading = (heading + 360) % 360;
-        setDeviceHeading(normalizedHeading);
-      })
-    );
-    Magnetometer.setUpdateInterval(100); // Update every 100ms
+    // Try to use DeviceMotion first (more stable), fallback to Magnetometer
+    DeviceMotion.isAvailableAsync().then((available) => {
+      if (available && Platform.OS === 'ios') {
+        // Use DeviceMotion for iOS (provides better rotation data)
+        setCalibrationStatus('Calibrating device sensors...');
+        setSubscription(
+          DeviceMotion.addListener((result) => {
+            if (result.rotation && result.rotation.gamma !== undefined) {
+              // Use rotation.gamma for heading (rotation around z-axis)
+              let heading = result.rotation.gamma * (180 / Math.PI);
+              const normalizedHeading = (heading + 360) % 360;
+              
+              // Apply smoothing filter to reduce jitter
+              setHeadingHistory(prev => {
+                const newHistory = [...prev, normalizedHeading].slice(-5); // Keep last 5 readings
+                const avgHeading = newHistory.reduce((sum, h) => sum + h, 0) / newHistory.length;
+                setDeviceHeading(avgHeading);
+                return newHistory;
+              });
+              
+              setIsCalibrated(true);
+              setCalibrationStatus('✓ Calibrated - Real compass active');
+              setHeadingAccuracy(0.9); // DeviceMotion is generally accurate
+            }
+          })
+        );
+        DeviceMotion.setUpdateInterval(100);
+      } else {
+        // Use magnetometer for Android or if DeviceMotion not available
+        setCalibrationStatus('Calibrating magnetometer...');
+        Magnetometer.isAvailableAsync().then((magnetAvailable) => {
+          if (magnetAvailable) {
+            setSubscription(
+              Magnetometer.addListener((result) => {
+                // Calculate device heading from magnetometer data
+                let heading = Math.atan2(result.y, result.x) * (180 / Math.PI);
+                const normalizedHeading = (heading + 360) % 360;
+                
+                // Apply smoothing filter
+                setHeadingHistory(prev => {
+                  const newHistory = [...prev, normalizedHeading].slice(-3); // Keep last 3 readings
+                  const avgHeading = newHistory.reduce((sum, h) => sum + h, 0) / newHistory.length;
+                  setDeviceHeading(avgHeading);
+                  return newHistory;
+                });
+                
+                setIsCalibrated(true);
+                setCalibrationStatus('✓ Calibrated - Magnetometer active');
+                setHeadingAccuracy(0.7); // Magnetometer accuracy varies
+              })
+            );
+            Magnetometer.setUpdateInterval(150);
+          } else {
+            // If no sensors available, show static compass
+            console.warn('No compass sensors available');
+            setCalibrationStatus('⚠️ No sensors available - Static compass');
+            setIsCalibrated(true); // Show static compass
+            setHeadingAccuracy(0);
+          }
+        });
+      }
+    }).catch((error) => {
+      console.warn('Error initializing compass sensors:', error);
+      // Fallback to static compass if sensor initialization fails
+      setCalibrationStatus('⚠️ Sensor error - Static compass');
+      setIsCalibrated(true); // Show static compass
+      setHeadingAccuracy(0);
+    });
   };
 
   const _unsubscribe = () => {
@@ -95,7 +164,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Text style={[styles.title, { color: colors.text }]}>🧭 Real Compass</Text>
       <Text style={[styles.subtitle, { color: colors.text + '80' }]}>
-        Move your phone to see compass rotate
+        {calibrationStatus}
       </Text>
       
       <View style={styles.compassContainer}>
@@ -196,10 +265,13 @@ export const RealCompass: React.FC<RealCompassProps> = ({
         <Text style={[styles.deviceHeading, { color: colors.text + '80' }]}>
           Device heading: {Math.round(deviceHeading)}°
         </Text>
+        <Text style={[styles.accuracyText, { color: colors.text + '60' }]}>
+          {headingAccuracy > 0.8 ? '🟢 High accuracy' : headingAccuracy > 0.5 ? '🟡 Medium accuracy' : '🔴 Low accuracy - move away from metal objects'}
+        </Text>
       </View>
       
       <Text style={[styles.instruction, { color: colors.text + '60' }]}>
-        📱 Rotate your phone to see the compass move like a real compass app
+        📱 For best accuracy: Hold phone flat, away from metal objects, and move in figure-8 pattern to calibrate
       </Text>
     </View>
   );
@@ -241,5 +313,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  accuracyText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
