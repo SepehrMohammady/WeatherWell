@@ -8,6 +8,14 @@ export interface AppSettings {
   weatherProvider: WeatherProvider;
   temperatureUnit: TemperatureUnit;
   enableNotifications: boolean;
+  enableSevereWeatherAlerts: boolean;
+  enableDailyForecast: boolean;
+  enableTemperatureAlerts: boolean;
+  enableUVAlerts: boolean;
+  dailyForecastTime: string;
+  temperatureThresholdHigh: number;
+  temperatureThresholdLow: number;
+  uvThreshold: number;
   weatherApiKey: string | null;
   openWeatherMapApiKey: string | null;
   visualCrossingApiKey: string | null;
@@ -25,6 +33,14 @@ const defaultSettings: AppSettings = {
   weatherProvider: 'weatherapi',
   temperatureUnit: 'celsius',
   enableNotifications: true,
+  enableSevereWeatherAlerts: true,
+  enableDailyForecast: true,
+  enableTemperatureAlerts: false,
+  enableUVAlerts: true,
+  dailyForecastTime: '08:00',
+  temperatureThresholdHigh: 35,
+  temperatureThresholdLow: 0,
+  uvThreshold: 8,
   weatherApiKey: null,
   openWeatherMapApiKey: null,
   visualCrossingApiKey: null,

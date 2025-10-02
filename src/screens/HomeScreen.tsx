@@ -25,6 +25,7 @@ import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useNotifications } from '../contexts/NotificationContext';
 
 export const HomeScreen: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -39,6 +40,7 @@ export const HomeScreen: React.FC = () => {
   const { colors } = useTheme();
   const { settings } = useSettings();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
+  const { checkWeatherAlerts, isInitialized } = useNotifications();
   const locationService = LocationService.getInstance();
 
   const loadWeatherData = async (customLocation?: Location) => {
@@ -79,6 +81,11 @@ export const HomeScreen: React.FC = () => {
       setWeatherData(result.data);
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
+      
+      // Check for weather alerts after loading data
+      if (isInitialized && settings.enableNotifications) {
+        await checkWeatherAlerts(result.data);
+      }
     } catch (err) {
       console.error('Error loading weather data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load weather data');

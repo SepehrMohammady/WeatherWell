@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/SettingsContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { APP_VERSION } from '../config/version';
 
 interface SettingsScreenProps {
@@ -30,6 +31,7 @@ interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
+  const { sendTestNotification, isInitialized } = useNotifications();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing'>('weatherapi');
@@ -420,7 +422,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="Enable Notifications"
-            subtitle="Weather alerts and updates"
+            subtitle="Master switch for all weather notifications"
             rightElement={
               <Switch
                 value={settings.enableNotifications}
@@ -430,6 +432,62 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
             }
           />
+          
+          {settings.enableNotifications && (
+            <>
+              <SettingItem
+                title="Severe Weather Alerts"
+                subtitle="Thunderstorms, heavy rain, strong winds"
+                rightElement={
+                  <Switch
+                    value={settings.enableSevereWeatherAlerts}
+                    onValueChange={(value) => updateSetting('enableSevereWeatherAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableSevereWeatherAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="Daily Forecast"
+                subtitle={`Daily weather summary at ${settings.dailyForecastTime}`}
+                rightElement={
+                  <Switch
+                    value={settings.enableDailyForecast}
+                    onValueChange={(value) => updateSetting('enableDailyForecast', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableDailyForecast ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="Temperature Alerts"
+                subtitle={`High: ${settings.temperatureThresholdHigh}°C, Low: ${settings.temperatureThresholdLow}°C`}
+                rightElement={
+                  <Switch
+                    value={settings.enableTemperatureAlerts}
+                    onValueChange={(value) => updateSetting('enableTemperatureAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableTemperatureAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="UV Index Alerts"
+                subtitle={`Alert when UV index exceeds ${settings.uvThreshold}`}
+                rightElement={
+                  <Switch
+                    value={settings.enableUVAlerts}
+                    onValueChange={(value) => updateSetting('enableUVAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableUVAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+            </>
+          )}
         </View>
 
         {/* Privacy */}
@@ -475,6 +533,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </TouchableOpacity>
             }
             onPress={() => setShowImportModal(true)}
+          />
+          <SettingItem
+            title="Test Notification"
+            subtitle="Send a test notification to verify functionality"
+            rightElement={
+              <TouchableOpacity 
+                onPress={sendTestNotification}
+                disabled={!isInitialized || !settings.enableNotifications}
+              >
+                <Ionicons 
+                  name="notifications-outline" 
+                  size={24} 
+                  color={isInitialized && settings.enableNotifications ? colors.primary : colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            }
+            onPress={sendTestNotification}
           />
           <SettingItem
             title="Reset to Defaults"
