@@ -106,7 +106,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   };
 
   const handleOpenWebsite = () => {
-    Linking.openURL('https://sepehrmohammady.com');
+    Linking.openURL('https://sepehrmohammady.ir/');
   };
 
   const handleOpenGitHub = () => {
@@ -185,51 +185,56 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Weather Data
           </Text>
-          <SettingItem
-            title="Weather Provider"
-            subtitle={`Currently using ${
-              settings.weatherProvider === 'weatherapi' 
-                ? 'WeatherAPI' 
-                : settings.weatherProvider === 'openweathermap'
-                  ? 'OpenWeatherMap'
-                  : 'Visual Crossing'
-            }`}
-            rightElement={null}
-          />
-          <View style={styles.providerContainer}>
-            <TouchableOpacity
-              style={[
-                styles.providerButton,
-                { backgroundColor: settings.weatherProvider === 'weatherapi' ? colors.primary : colors.border }
-              ]}
-              onPress={() => handleProviderChange('weatherapi')}
-            >
-              <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
-                WeatherAPI
+          <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>
+                Weather Provider
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.providerButton,
-                { backgroundColor: settings.weatherProvider === 'openweathermap' ? colors.primary : colors.border }
-              ]}
-              onPress={() => handleProviderChange('openweathermap')}
-            >
-              <Text style={[styles.providerText, { color: settings.weatherProvider === 'openweathermap' ? 'white' : colors.text }]}>
-                OpenWeather
+              <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
+                Currently using {
+                  settings.weatherProvider === 'weatherapi' 
+                    ? 'WeatherAPI' 
+                    : settings.weatherProvider === 'openweathermap'
+                      ? 'OpenWeatherMap'
+                      : 'Visual Crossing'
+                }
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.providerButton,
-                { backgroundColor: settings.weatherProvider === 'visualcrossing' ? colors.primary : colors.border }
-              ]}
-              onPress={() => handleProviderChange('visualcrossing')}
-            >
-              <Text style={[styles.providerText, { color: settings.weatherProvider === 'visualcrossing' ? 'white' : colors.text }]}>
-                Visual Crossing
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.providerButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'weatherapi' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('weatherapi')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
+                    WeatherAPI
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'openweathermap' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('openweathermap')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'openweathermap' ? 'white' : colors.text }]}>
+                    OpenWeather
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'visualcrossing' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('visualcrossing')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'visualcrossing' ? 'white' : colors.text }]}>
+                    Visual Crossing
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           <SettingItem
@@ -518,6 +523,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
         </View>
 
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+            WeatherWell provides accurate weather forecasts with privacy-first approach. No personal data is collected or shared.
+          </Text>
+          <Text style={[styles.copyrightText, { color: colors.textSecondary }]}>
+            © 2025 Sepehr Mohammady. Open source under MIT License.
+          </Text>
+        </View>
+
         <View style={styles.bottomSpacing} />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -698,12 +712,10 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 14,
   },
-  providerContainer: {
+  providerButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginBottom: 16,
     gap: 8,
+    marginTop: 12,
   },
   providerButton: {
     flex: 1,
@@ -792,5 +804,22 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  copyrightText: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.7,
   },
 });
