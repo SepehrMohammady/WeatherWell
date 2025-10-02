@@ -11,13 +11,17 @@ import {
   Modal,
   Pressable,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Linking,
+  Share
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/SettingsContext';
+import { APP_VERSION } from '../config/version';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -31,6 +35,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing'>('weatherapi');
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
+
 
   const handleProviderChange = (provider: WeatherProvider) => {
     updateSetting('weatherProvider', provider);
@@ -70,24 +75,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     );
   };
 
-  const handleExport = () => {
-    const settingsJson = exportSettings();
-    Alert.alert(
-      'Export Settings',
-      'Your settings have been exported. You can copy the JSON data from this alert.',
-      [
-        { text: 'Cancel' },
-        { 
-          text: 'Copy', 
-          onPress: () => {
-            // In a real app, you'd use Clipboard.setString(settingsJson)
-            Alert.alert('Settings Data', settingsJson, [
-              { text: 'Close' }
-            ]);
-          }
-        }
-      ]
-    );
+  const handleExport = async () => {
+    try {
+      const settingsJson = exportSettings();
+      const fileName = `WeatherWell_Settings_${new Date().toISOString().split('T')[0]}.json`;
+      
+      await Share.share({
+        message: settingsJson,
+        title: 'WeatherWell Settings Export',
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export settings');
+    }
   };
 
   const handleImport = async () => {
@@ -106,15 +105,29 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     }
   };
 
+  const handleOpenWebsite = () => {
+    Linking.openURL('https://sepehrmohammady.com');
+  };
+
+  const handleOpenGitHub = () => {
+    Linking.openURL('https://github.com/SepehrMohammady/WeatherWell');
+  };
+
   const SettingItem: React.FC<{
     title: string;
     subtitle?: string;
-    rightElement: React.ReactNode;
+    description?: string;
+    rightElement?: React.ReactNode;
     onPress?: () => void;
     compact?: boolean;
-  }> = ({ title, subtitle, rightElement, onPress, compact = false }) => (
+    isLast?: boolean;
+  }> = ({ title, subtitle, description, rightElement, onPress, compact = false, isLast = false }) => (
     <TouchableOpacity
-      style={[compact ? styles.settingItemCompact : styles.settingItem, { backgroundColor: colors.surface }]}
+      style={[
+        compact ? styles.settingItemCompact : styles.settingItem, 
+        { backgroundColor: colors.surface },
+        isLast && styles.settingItemLast
+      ]}
       onPress={onPress}
       disabled={!onPress}
     >
@@ -122,9 +135,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <Text style={[styles.settingTitle, { color: colors.text }]}>
           {title}
         </Text>
-        {subtitle && (
+        {(subtitle || description) && (
           <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
-            {subtitle}
+            {subtitle || description}
           </Text>
         )}
       </View>
@@ -181,70 +194,67 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   ? 'OpenWeatherMap'
                   : 'Visual Crossing'
             }`}
-            compact={true}
-            rightElement={
-              <View style={styles.providerButtons}>
-                <TouchableOpacity
-                  style={[
-                    styles.providerButton,
-                    { backgroundColor: settings.weatherProvider === 'weatherapi' ? colors.primary : colors.border }
-                  ]}
-                  onPress={() => handleProviderChange('weatherapi')}
-                >
-                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
-                    WeatherAPI
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.providerButton,
-                    { backgroundColor: settings.weatherProvider === 'openweathermap' ? colors.primary : colors.border }
-                  ]}
-                  onPress={() => handleProviderChange('openweathermap')}
-                >
-                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'openweathermap' ? 'white' : colors.text }]}>
-                    OpenWeather
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.providerButton,
-                    { backgroundColor: settings.weatherProvider === 'visualcrossing' ? colors.primary : colors.border }
-                  ]}
-                  onPress={() => handleProviderChange('visualcrossing')}
-                >
-                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'visualcrossing' ? 'white' : colors.text }]}>
-                    Visual Crossing
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            }
+            rightElement={null}
           />
+          <View style={styles.providerContainer}>
+            <TouchableOpacity
+              style={[
+                styles.providerButton,
+                { backgroundColor: settings.weatherProvider === 'weatherapi' ? colors.primary : colors.border }
+              ]}
+              onPress={() => handleProviderChange('weatherapi')}
+            >
+              <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
+                WeatherAPI
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.providerButton,
+                { backgroundColor: settings.weatherProvider === 'openweathermap' ? colors.primary : colors.border }
+              ]}
+              onPress={() => handleProviderChange('openweathermap')}
+            >
+              <Text style={[styles.providerText, { color: settings.weatherProvider === 'openweathermap' ? 'white' : colors.text }]}>
+                OpenWeather
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.providerButton,
+                { backgroundColor: settings.weatherProvider === 'visualcrossing' ? colors.primary : colors.border }
+              ]}
+              onPress={() => handleProviderChange('visualcrossing')}
+            >
+              <Text style={[styles.providerText, { color: settings.weatherProvider === 'visualcrossing' ? 'white' : colors.text }]}>
+                Visual Crossing
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <SettingItem
             title="Temperature Unit"
-            compact={true}
             rightElement={
-              <View style={styles.providerButtons}>
+              <View style={styles.unitButtons}>
                 <TouchableOpacity
                   style={[
-                    styles.providerButton,
+                    styles.unitButton,
                     { backgroundColor: settings.temperatureUnit === 'celsius' ? colors.primary : colors.border }
                   ]}
                   onPress={() => handleUnitChange('celsius')}
                 >
-                  <Text style={[styles.providerText, { color: settings.temperatureUnit === 'celsius' ? 'white' : colors.text }]}>
+                  <Text style={[styles.unitText, { color: settings.temperatureUnit === 'celsius' ? 'white' : colors.text }]}>
                     °C
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
-                    styles.providerButton,
+                    styles.unitButton,
                     { backgroundColor: settings.temperatureUnit === 'fahrenheit' ? colors.primary : colors.border }
                   ]}
                   onPress={() => handleUnitChange('fahrenheit')}
                 >
-                  <Text style={[styles.providerText, { color: settings.temperatureUnit === 'fahrenheit' ? 'white' : colors.text }]}>
+                  <Text style={[styles.unitText, { color: settings.temperatureUnit === 'fahrenheit' ? 'white' : colors.text }]}>
                     °F
                   </Text>
                 </TouchableOpacity>
@@ -255,7 +265,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <SettingItem
             title="Refresh Interval"
             subtitle={`Update every ${settings.refreshInterval} minutes`}
-            compact={true}
             rightElement={
               <View style={styles.intervalButtons}>
                 {[15, 30, 60].map(interval => (
@@ -279,7 +288,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           {/* API Keys Configuration */}
           <SettingItem
             title="WeatherAPI Key"
-            subtitle={settings.weatherApiKey ? 'Custom key configured' : 'Using demo key'}
+            subtitle={settings.weatherApiKey ? 'Custom key configured' : 'Using default key'}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -295,7 +304,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <SettingItem
             title="OpenWeatherMap Key"
-            subtitle={settings.openWeatherMapApiKey ? 'Custom key configured' : 'Using demo key'}
+            subtitle={settings.openWeatherMapApiKey ? 'Custom key configured' : 'Using default key'}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -311,7 +320,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <SettingItem
             title="Visual Crossing Key"
-            subtitle={settings.visualCrossingApiKey ? 'Custom key configured' : 'Requires custom API key (free at visualcrossing.com)'}
+            subtitle={settings.visualCrossingApiKey ? 'Custom key configured' : 'Using default key'}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -375,6 +384,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
             }
           />
+          <SettingItem
+            title="Show UV Index"
+            rightElement={
+              <Switch
+                value={settings.showUVIndex}
+                onValueChange={(value) => updateSetting('showUVIndex', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={settings.showUVIndex ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
+          <SettingItem
+            title="Show Wind Speed"
+            rightElement={
+              <Switch
+                value={settings.showWindSpeed}
+                onValueChange={(value) => updateSetting('showWindSpeed', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={settings.showWindSpeed ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
         </View>
 
         {/* Notifications */}
@@ -422,7 +453,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="Export Settings"
-            subtitle="Save your settings configuration"
+            subtitle="Save settings as file for backup"
             rightElement={
               <TouchableOpacity onPress={handleExport}>
                 <Ionicons name="download-outline" size={24} color={colors.primary} />
@@ -449,6 +480,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </TouchableOpacity>
             }
             onPress={handleReset}
+          />
+        </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            About
+          </Text>
+          <SettingItem
+            title="WeatherWell"
+            description="Cross-platform weather app with European focus"
+            rightElement={null}
+          />
+          <SettingItem
+            title="Version"
+            description={APP_VERSION}
+            rightElement={null}
+          />
+          <SettingItem
+            title="Developer"
+            description="Sepehr Mohammady"
+            onPress={handleOpenWebsite}
+            rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
+          />
+          <SettingItem
+            title="Source Code"
+            description="github.com/SepehrMohammady/WeatherWell"
+            onPress={handleOpenGitHub}
+            rightElement={<Ionicons name="logo-github" size={20} color={colors.primary} />}
+          />
+          <SettingItem
+            title="Privacy"
+            description="No personal data is collected or shared"
+            isLast={true}
+            rightElement={null}
           />
         </View>
 
@@ -517,6 +583,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               Import Settings
             </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+              Paste your exported settings data below
+            </Text>
             <TextInput
               style={[styles.importInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
               placeholder="Paste your settings JSON here..."
@@ -547,6 +616,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
         </View>
       </Modal>
+
       </LinearGradient>
     </SafeAreaView>
   );
@@ -614,6 +684,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 6,
   },
+  settingItemLast: {
+    marginBottom: 0,
+  },
   settingContent: {
     flex: 1,
   },
@@ -625,18 +698,38 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 14,
   },
-  providerButtons: {
+  providerContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 16,
     gap: 8,
   },
   providerButton: {
+    flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   providerText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  unitButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  unitButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  unitText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   intervalButtons: {
     flexDirection: 'row',

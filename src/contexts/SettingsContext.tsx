@@ -16,6 +16,8 @@ export interface AppSettings {
   showHumidity: boolean;
   showPressure: boolean;
   showVisibility: boolean;
+  showUVIndex: boolean;
+  showWindSpeed: boolean;
   enableShareLocation: boolean;
 }
 
@@ -31,6 +33,8 @@ const defaultSettings: AppSettings = {
   showHumidity: true,
   showPressure: true,
   showVisibility: true,
+  showUVIndex: true,
+  showWindSpeed: true,
   enableShareLocation: true
 };
 
