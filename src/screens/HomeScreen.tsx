@@ -247,9 +247,8 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.headerCenter}>
               <Text style={styles.appTitle}>WeatherWell</Text>
               <View style={styles.locationContainer}>
-                <Text style={styles.locationText}>{locationName}</Text>
-                {selectedLocation && (
-                  <View style={styles.locationActions}>
+                <View style={styles.locationWithFavorite}>
+                  {selectedLocation && (
                     <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
                       <Ionicons 
                         name={isFavorite(`${selectedLocation.name}-${selectedLocation.country}-${selectedLocation.latitude}-${selectedLocation.longitude}`) ? "heart" : "heart-outline"} 
@@ -257,10 +256,13 @@ export const HomeScreen: React.FC = () => {
                         color="rgba(255, 255, 255, 0.8)" 
                       />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
-                      <Text style={styles.currentLocationText}>Use Current Location</Text>
-                    </TouchableOpacity>
-                  </View>
+                  )}
+                  <Text style={styles.locationText}>{locationName}</Text>
+                </View>
+                {selectedLocation && (
+                  <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
+                    <Text style={styles.currentLocationText}>Use Current Location</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
@@ -366,11 +368,16 @@ const styles = StyleSheet.create({
   locationContainer: {
     alignItems: 'center',
   },
+  locationWithFavorite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
   locationText: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginBottom: 4,
   },
   locationActions: {
     flexDirection: 'row',
@@ -378,7 +385,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   favoriteButton: {
-    marginRight: 8,
+    marginRight: 6,
     padding: 2,
   },
   currentLocationButton: {
