@@ -124,7 +124,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
 
     // Daily Forecast
     if (shareOptions.includeDaily && forecast.daily.length > 0) {
-      shareText += '📅 7-Day Forecast:\n';
+      shareText += '📅 Future Forecast:\n';
       forecast.daily.slice(0, 7).forEach((day) => {
         const dayName = new Date(day.date).toLocaleDateString([], { weekday: 'short' });
         shareText += `${dayName}: ${formatTemperature(day.maxTemp)}/${formatTemperature(day.minTemp)} - ${day.condition}`;

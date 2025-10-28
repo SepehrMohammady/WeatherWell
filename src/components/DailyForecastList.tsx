@@ -30,7 +30,7 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>📅 7-Day Forecast</Text>
+      <Text style={[styles.title, { color: colors.text }]}>📅 Future Forecast</Text>
       {dailyData.slice(0, 7).map((day, index) => (
         <View key={index} style={styles.dayItem}>
           <View style={styles.leftSection}>
