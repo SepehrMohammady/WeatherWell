@@ -23,7 +23,7 @@ const lightTheme: ThemeColors = {
   background: '#F0F0F0',     // Light neutral background
   surface: '#FFFFFF',        // Clean white surface
   text: '#758793',           // Dark grey-blue for text
-  textSecondary: '#B6BCBE',  // Lighter grey for secondary text
+  textSecondary: '#8A9299',  // Darker grey for better visibility on white
   accent: '#CB936A',         // Warm terracotta accent
   error: '#CD9C8B',          // Muted rose for errors
   border: '#E7E7E7',         // Very light grey border
@@ -33,14 +33,14 @@ const lightTheme: ThemeColors = {
 const darkTheme: ThemeColors = {
   primary: '#CB936A',        // Warm terracotta
   secondary: '#5E6D74',      // Dark grey-blue
-  background: '#2D2D2D',     // Dark neutral background
-  surface: '#3A3A3A',        // Slightly lighter surface
+  background: '#1A1A1A',     // Darker background (was #2D2D2D)
+  surface: '#2A2A2A',        // Darker surface (was #3A3A3A)
   text: '#E7E7E7',           // Light grey text
   textSecondary: '#B6BCBE',  // Muted grey for secondary
   accent: '#CFAE95',         // Light neutral accent
   error: '#D6AD9D',          // Soft rose for errors
   border: '#5E6D74',         // Dark grey-blue border
-  gradient: ['#5E6D74', '#3A3A3A'] // Cool neutral gradient
+  gradient: ['#3A4A54', '#1A1A1A'] // Darker cool gradient (was #5E6D74, #3A3A3A)
 };
 
 interface ThemeContextType {
