@@ -10,12 +10,19 @@ export interface AppSettings {
   enableNotifications: boolean;
   enableSevereWeatherAlerts: boolean;
   enableDailyForecast: boolean;
+  enableHourlyForecast: boolean;
   enableTemperatureAlerts: boolean;
   enableUVAlerts: boolean;
+  enableUmbrellaAlerts: boolean;
+  enableAQIAlerts: boolean;
+  enableWindAlerts: boolean;
   dailyForecastTime: string;
+  hourlyForecastTime: string;
   temperatureThresholdHigh: number;
   temperatureThresholdLow: number;
   uvThreshold: number;
+  rainThreshold: number;
+  windSpeedThreshold: number;
   weatherApiKey: string | null;
   openWeatherMapApiKey: string | null;
   visualCrossingApiKey: string | null;
@@ -26,6 +33,8 @@ export interface AppSettings {
   showVisibility: boolean;
   showUVIndex: boolean;
   showWindSpeed: boolean;
+  showWindDirection: boolean;
+  showAirQuality: boolean;
   enableShareLocation: boolean;
 }
 
@@ -35,12 +44,19 @@ const defaultSettings: AppSettings = {
   enableNotifications: true,
   enableSevereWeatherAlerts: true,
   enableDailyForecast: true,
+  enableHourlyForecast: false,
   enableTemperatureAlerts: false,
   enableUVAlerts: true,
+  enableUmbrellaAlerts: true,
+  enableAQIAlerts: false,
+  enableWindAlerts: false,
   dailyForecastTime: '08:00',
+  hourlyForecastTime: '18:00',
   temperatureThresholdHigh: 35,
   temperatureThresholdLow: 0,
   uvThreshold: 8,
+  rainThreshold: 70,
+  windSpeedThreshold: 50,
   weatherApiKey: null,
   openWeatherMapApiKey: null,
   visualCrossingApiKey: null,
@@ -51,6 +67,8 @@ const defaultSettings: AppSettings = {
   showVisibility: true,
   showUVIndex: true,
   showWindSpeed: true,
+  showWindDirection: true,
+  showAirQuality: true,
   enableShareLocation: true
 };
 

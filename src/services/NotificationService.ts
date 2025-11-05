@@ -10,6 +10,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -17,28 +19,42 @@ export interface NotificationSettings {
   enableNotifications: boolean;
   enableSevereWeatherAlerts: boolean;
   enableDailyForecast: boolean;
+  enableHourlyForecast: boolean;
   enableTemperatureAlerts: boolean;
   enableUVAlerts: boolean;
+  enableUmbrellaAlerts: boolean;
+  enableAQIAlerts: boolean;
+  enableWindAlerts: boolean;
   dailyForecastTime: string; // Format: "HH:MM"
+  hourlyForecastTime: string; // Format: "HH:MM"
   temperatureThreshold: {
     high: number;
     low: number;
   };
   uvThreshold: number;
+  rainThreshold: number; // Percentage chance
+  windSpeedThreshold: number; // km/h
 }
 
 export const defaultNotificationSettings: NotificationSettings = {
   enableNotifications: true,
   enableSevereWeatherAlerts: true,
   enableDailyForecast: true,
+  enableHourlyForecast: false,
   enableTemperatureAlerts: false,
   enableUVAlerts: true,
+  enableUmbrellaAlerts: true,
+  enableAQIAlerts: false,
+  enableWindAlerts: false,
   dailyForecastTime: "08:00",
+  hourlyForecastTime: "18:00",
   temperatureThreshold: {
     high: 35, // Celsius
     low: 0,
   },
   uvThreshold: 8, // High UV index
+  rainThreshold: 70, // Percentage chance
+  windSpeedThreshold: 50, // km/h
 };
 
 class NotificationService {
@@ -125,13 +141,13 @@ class NotificationService {
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#4A90E2',
-          sound: true,
+          sound: 'default',
         });
 
         await Notifications.setNotificationChannelAsync('daily-forecast', {
           name: 'Daily Forecast',
           importance: Notifications.AndroidImportance.DEFAULT,
-          sound: true,
+          sound: 'default',
         });
       }
 
@@ -198,7 +214,58 @@ class NotificationService {
   }
 
   /**
-   * Schedule daily forecast notification
+   * Send daily forecast notification with actual weather data
+   */
+  async sendDailyForecastNotification(weatherData: WeatherData): Promise<void> {
+    if (!this.notificationSettings.enableDailyForecast) return;
+
+    try {
+      const current = weatherData.current;
+      const today = weatherData.forecast.daily[0];
+      const location = weatherData.location.name;
+
+      // Create detailed weather message
+      const temperature = Math.round(current.temperature);
+      const condition = current.condition;
+      const highTemp = Math.round(today?.maxTemp || current.temperature);
+      const lowTemp = Math.round(today?.minTemp || current.temperature);
+      const rainChance = today?.precipitationChance || 0;
+
+      let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
+      
+      if (rainChance > 30) {
+        body += `. ${rainChance}% chance of rain`;
+      }
+
+      // Add UV warning if high
+      if (current.uvIndex >= 8) {
+        body += `. High UV - wear sunscreen!`;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🌤️ Today\'s Weather',
+          body: body,
+          data: { 
+            type: 'daily-forecast',
+            temperature,
+            condition,
+            location: location,
+            rainChance
+          },
+          sound: 'default',
+        },
+        trigger: null, // Send immediately
+      });
+
+      console.log(`📅 Daily forecast sent: ${location} - ${temperature}°C`);
+    } catch (error) {
+      console.error('Error sending daily forecast:', error);
+    }
+  }
+
+  /**
+   * Schedule daily forecast notification (placeholder scheduler)
    */
   async scheduleDailyForecast(): Promise<void> {
     if (!this.notificationSettings.enableDailyForecast) return;
@@ -209,18 +276,19 @@ class NotificationService {
 
       const [hours, minutes] = this.notificationSettings.dailyForecastTime.split(':').map(Number);
       
+      // Schedule a generic notification that will trigger the app to send actual weather data
       await Notifications.scheduleNotificationAsync({
         identifier: 'daily-forecast',
         content: {
           title: '🌤️ Daily Weather Forecast',
-          body: 'Check today\'s weather conditions and plan your day!',
-          data: { type: 'daily-forecast' },
-          sound: true,
+          body: 'Tap to view today\'s weather conditions and plan your day!',
+          data: { type: 'daily-forecast-trigger' },
+          sound: 'default',
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: hours,
           minute: minutes,
-          repeats: true,
         },
       });
 
@@ -330,6 +398,183 @@ class NotificationService {
   }
 
   /**
+   * Send hourly forecast notification with actual weather data
+   */
+  async sendHourlyForecastNotification(weatherData: WeatherData): Promise<void> {
+    if (!this.notificationSettings.enableHourlyForecast) return;
+
+    try {
+      const hourlyData = weatherData.forecast.hourly.slice(0, 6); // Next 6 hours
+      const location = weatherData.location.name;
+      
+      if (hourlyData.length === 0) return;
+
+      // Create summary of next few hours
+      const nextHour = hourlyData[0];
+      const temps = hourlyData.map(h => Math.round(h.temperature));
+      const minTemp = Math.min(...temps);
+      const maxTemp = Math.max(...temps);
+
+      let body = `${location} next 6h: ${minTemp}-${maxTemp}°C. `;
+      
+      // Check for rain in next hours
+      const rainHours = hourlyData.filter(h => h.precipitationChance > 30);
+      if (rainHours.length > 0) {
+        body += `Rain expected in ${rainHours.length} hour(s). `;
+      }
+
+      body += `Currently ${Math.round(nextHour.temperature)}°C, ${nextHour.condition}`;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '⏰ Next 6 Hours Weather',
+          body: body,
+          data: { 
+            type: 'hourly-forecast',
+            location: location,
+            minTemp,
+            maxTemp,
+            rainHours: rainHours.length
+          },
+          sound: 'default',
+        },
+        trigger: null, // Send immediately
+      });
+
+      console.log(`⏰ Hourly forecast sent: ${location} - ${minTemp}-${maxTemp}°C`);
+    } catch (error) {
+      console.error('Error sending hourly forecast:', error);
+    }
+  }
+
+  /**
+   * Schedule hourly forecast notification (placeholder scheduler)
+   */
+  async scheduleHourlyForecast(): Promise<void> {
+    if (!this.notificationSettings.enableHourlyForecast) return;
+
+    try {
+      await Notifications.cancelScheduledNotificationAsync('hourly-forecast');
+
+      const [hours, minutes] = this.notificationSettings.hourlyForecastTime.split(':').map(Number);
+      
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'hourly-forecast',
+        content: {
+          title: '🌤️ Hourly Weather Update',
+          body: 'Tap to check the next few hours weather forecast!',
+          data: { type: 'hourly-forecast-trigger' },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+
+      console.log(`⏰ Hourly forecast scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
+    } catch (error) {
+      console.error('Error scheduling hourly forecast:', error);
+    }
+  }
+
+  /**
+   * Send umbrella alert for rain
+   */
+  async sendUmbrellaAlert(rainChance: number, weatherCondition: string): Promise<void> {
+    if (!this.notificationSettings.enableUmbrellaAlerts || rainChance < this.notificationSettings.rainThreshold) {
+      return;
+    }
+
+    try {
+      const title = '☂️ Umbrella Alert';
+      const body = `${rainChance}% chance of rain today. Don't forget your umbrella!`;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { 
+            type: 'umbrella-alert',
+            rainChance,
+            condition: weatherCondition
+          },
+          sound: 'default',
+        },
+        trigger: null,
+      });
+
+      console.log(`☂️ Umbrella alert sent: ${rainChance}% rain chance`);
+    } catch (error) {
+      console.error('Error sending umbrella alert:', error);
+    }
+  }
+
+  /**
+   * Send AQI alert for air quality
+   */
+  async sendAQIAlert(aqi: number, aqiDescription: string): Promise<void> {
+    if (!this.notificationSettings.enableAQIAlerts || aqi < 101) { // Only alert for unhealthy levels
+      return;
+    }
+
+    try {
+      const title = '🌫️ Air Quality Alert';
+      const body = `Air Quality Index is ${aqi} (${aqiDescription}). Consider limiting outdoor activities.`;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { 
+            type: 'aqi-alert',
+            aqi,
+            description: aqiDescription
+          },
+          sound: 'default',
+        },
+        trigger: null,
+      });
+
+      console.log(`🌫️ AQI alert sent: ${aqi} (${aqiDescription})`);
+    } catch (error) {
+      console.error('Error sending AQI alert:', error);
+    }
+  }
+
+  /**
+   * Send wind speed alert
+   */
+  async sendWindAlert(windSpeed: number): Promise<void> {
+    if (!this.notificationSettings.enableWindAlerts || windSpeed < this.notificationSettings.windSpeedThreshold) {
+      return;
+    }
+
+    try {
+      const title = '💨 Strong Wind Alert';
+      const body = `Wind speed is ${Math.round(windSpeed)} km/h. Take precautions when outdoors.`;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { 
+            type: 'wind-alert',
+            windSpeed: Math.round(windSpeed)
+          },
+          sound: 'default',
+        },
+        trigger: null,
+      });
+
+      console.log(`💨 Wind alert sent: ${windSpeed} km/h`);
+    } catch (error) {
+      console.error('Error sending wind alert:', error);
+    }
+  }
+
+  /**
    * Check weather data for alerts
    */
   async checkWeatherAlerts(weatherData: WeatherData): Promise<void> {
@@ -343,13 +588,24 @@ class NotificationService {
 
       // Check temperature alerts
       if (this.notificationSettings.enableTemperatureAlerts) {
-        await this.sendTemperatureAlert(current.temp_c, current.temp_c >= this.notificationSettings.temperatureThreshold.high);
-        await this.sendTemperatureAlert(current.temp_c, current.temp_c <= this.notificationSettings.temperatureThreshold.low);
+        await this.sendTemperatureAlert(current.temperature, current.temperature >= this.notificationSettings.temperatureThreshold.high);
+        await this.sendTemperatureAlert(current.temperature, current.temperature <= this.notificationSettings.temperatureThreshold.low);
       }
 
       // Check UV alerts
       if (this.notificationSettings.enableUVAlerts) {
-        await this.sendUVAlert(current.uv);
+        await this.sendUVAlert(current.uvIndex);
+      }
+
+      // Check umbrella alerts
+      if (this.notificationSettings.enableUmbrellaAlerts && weatherData.forecast.daily.length > 0) {
+        const todayForecast = weatherData.forecast.daily[0];
+        await this.sendUmbrellaAlert(todayForecast.precipitationChance, todayForecast.condition);
+      }
+
+      // Check wind alerts
+      if (this.notificationSettings.enableWindAlerts) {
+        await this.sendWindAlert(current.windSpeed);
       }
 
     } catch (error) {
@@ -362,7 +618,7 @@ class NotificationService {
    */
   private async checkSevereWeatherConditions(weatherData: WeatherData): Promise<void> {
     const current = weatherData.current;
-    const condition = current.condition.text.toLowerCase();
+    const condition = current.condition.toLowerCase();
 
     // Severe weather conditions
     const severeConditions = [
@@ -375,11 +631,11 @@ class NotificationService {
     ];
 
     // Check wind speed for alerts
-    if (current.wind_kph > 50) { // Strong wind threshold
+    if (current.windSpeed > 50) { // Strong wind threshold
       await this.sendSevereWeatherAlert(
         weatherData,
         'Strong Wind',
-        `💨 Strong winds detected: ${current.wind_kph} km/h. Take precautions when outdoors.`
+        `💨 Strong winds detected: ${current.windSpeed} km/h. Take precautions when outdoors.`
       );
     }
 
@@ -407,6 +663,7 @@ class NotificationService {
       // Reschedule based on current settings
       if (this.notificationSettings.enableNotifications) {
         await this.scheduleDailyForecast();
+        await this.scheduleHourlyForecast();
       }
 
       console.log('🔄 Notifications rescheduled');
@@ -442,6 +699,23 @@ class NotificationService {
   }
 
   /**
+   * Send immediate weather update notification
+   */
+  async sendWeatherUpdateNotification(weatherData: WeatherData, type: 'daily' | 'hourly' = 'daily'): Promise<void> {
+    if (!this.notificationSettings.enableNotifications) return;
+
+    try {
+      if (type === 'daily' && this.notificationSettings.enableDailyForecast) {
+        await this.sendDailyForecastNotification(weatherData);
+      } else if (type === 'hourly' && this.notificationSettings.enableHourlyForecast) {
+        await this.sendHourlyForecastNotification(weatherData);
+      }
+    } catch (error) {
+      console.error('Error sending weather update notification:', error);
+    }
+  }
+
+  /**
    * Test notification (for development)
    */
   async sendTestNotification(): Promise<void> {
@@ -449,11 +723,11 @@ class NotificationService {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🧪 Test Notification',
-          body: 'WeatherWell notifications are working correctly!',
+          body: 'WeatherWell notifications are working! Real weather data will be sent at scheduled times and when you open the app.',
           data: { type: 'test' },
-          sound: true,
+          sound: 'default',
         },
-        trigger: { seconds: 1 },
+        trigger: null,
       });
 
       console.log('🧪 Test notification sent');

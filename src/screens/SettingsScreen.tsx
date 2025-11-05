@@ -413,6 +413,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
             }
           />
+          <SettingItem
+            title="Show Wind Direction"
+            rightElement={
+              <Switch
+                value={settings.showWindDirection}
+                onValueChange={(value) => updateSetting('showWindDirection', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={settings.showWindDirection ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
+          <SettingItem
+            title="Show Air Quality"
+            rightElement={
+              <Switch
+                value={settings.showAirQuality}
+                onValueChange={(value) => updateSetting('showAirQuality', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={settings.showAirQuality ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
         </View>
 
         {/* Notifications */}
@@ -486,6 +508,58 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   />
                 }
               />
+              
+              <SettingItem
+                title="Hourly Forecast"
+                subtitle={`Hourly weather updates at ${settings.hourlyForecastTime || '18:00'}`}
+                rightElement={
+                  <Switch
+                    value={settings.enableHourlyForecast}
+                    onValueChange={(value) => updateSetting('enableHourlyForecast', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableHourlyForecast ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="Umbrella Alerts"
+                subtitle={`Rain alerts when chance exceeds ${settings.rainThreshold || 70}%`}
+                rightElement={
+                  <Switch
+                    value={settings.enableUmbrellaAlerts}
+                    onValueChange={(value) => updateSetting('enableUmbrellaAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableUmbrellaAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="Wind Alerts"
+                subtitle={`Strong wind alerts above ${settings.windSpeedThreshold || 50} km/h`}
+                rightElement={
+                  <Switch
+                    value={settings.enableWindAlerts}
+                    onValueChange={(value) => updateSetting('enableWindAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableWindAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
+              
+              <SettingItem
+                title="Air Quality Alerts"
+                subtitle="AQI alerts for unhealthy air quality levels"
+                rightElement={
+                  <Switch
+                    value={settings.enableAQIAlerts}
+                    onValueChange={(value) => updateSetting('enableAQIAlerts', value)}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={settings.enableAQIAlerts ? colors.accent : '#f4f3f4'}
+                  />
+                }
+              />
             </>
           )}
         </View>
@@ -529,14 +603,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             subtitle="Restore settings from backup"
             rightElement={
               <TouchableOpacity onPress={() => setShowImportModal(true)}>
-                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
+                <Ionicons name="document-text-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
             }
             onPress={() => setShowImportModal(true)}
           />
           <SettingItem
             title="Test Notification"
-            subtitle="Send a test notification to verify functionality"
+            subtitle="Send a test notification (real weather data sent when app loads)"
             rightElement={
               <TouchableOpacity 
                 onPress={sendTestNotification}

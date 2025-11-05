@@ -16,30 +16,31 @@ export interface ThemeColors {
   gradient: string[];
 }
 
+// Neutral Paradise Color Palette
 const lightTheme: ThemeColors = {
-  primary: '#74b9ff',
-  secondary: '#0984e3',
-  background: '#ffffff',
-  surface: 'rgba(255, 255, 255, 0.95)',
-  text: '#2d3436',
-  textSecondary: 'rgba(45, 52, 54, 0.7)',
-  accent: '#00b894',
-  error: '#d63031',
-  border: 'rgba(45, 52, 54, 0.2)',
-  gradient: ['#74b9ff', '#0984e3']
+  primary: '#A17F66',        // Warm brown from palette
+  secondary: '#5F758E',      // Muted blue-grey
+  background: '#F0F0F0',     // Light neutral background
+  surface: '#FFFFFF',        // Clean white surface
+  text: '#758793',           // Dark grey-blue for text
+  textSecondary: '#B6BCBE',  // Lighter grey for secondary text
+  accent: '#CB936A',         // Warm terracotta accent
+  error: '#CD9C8B',          // Muted rose for errors
+  border: '#E7E7E7',         // Very light grey border
+  gradient: ['#E7CFC1', '#D3B19A'] // Warm neutral gradient
 };
 
 const darkTheme: ThemeColors = {
-  primary: '#74b9ff',
-  secondary: '#0984e3',
-  background: '#2d3436',
-  surface: 'rgba(116, 185, 255, 0.1)',
-  text: '#ffffff',
-  textSecondary: 'rgba(255, 255, 255, 0.7)',
-  accent: '#00b894',
-  error: '#d63031',
-  border: 'rgba(255, 255, 255, 0.2)',
-  gradient: ['#2d3436', '#636e72']
+  primary: '#CB936A',        // Warm terracotta
+  secondary: '#5E6D74',      // Dark grey-blue
+  background: '#2D2D2D',     // Dark neutral background
+  surface: '#3A3A3A',        // Slightly lighter surface
+  text: '#E7E7E7',           // Light grey text
+  textSecondary: '#B6BCBE',  // Muted grey for secondary
+  accent: '#CFAE95',         // Light neutral accent
+  error: '#D6AD9D',          // Soft rose for errors
+  border: '#5E6D74',         // Dark grey-blue border
+  gradient: ['#5E6D74', '#3A3A3A'] // Cool neutral gradient
 };
 
 interface ThemeContextType {
