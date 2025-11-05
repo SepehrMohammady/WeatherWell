@@ -73,7 +73,7 @@ export class VisualCrossingService implements WeatherService {
   }
 
   getApiSource(): string {
-    return this.apiKey === this.fallbackApiKey ? 'Visual Crossing (Demo)' : 'Visual Crossing (Custom)';
+    return this.apiKey === this.fallbackApiKey ? 'Visual Crossing' : 'Visual Crossing (Custom)';
   }
 
   private formatDate(date: Date): string {

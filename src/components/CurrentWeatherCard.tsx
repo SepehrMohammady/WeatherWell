@@ -16,9 +16,9 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
   const { colors } = useTheme();
   const { settings } = useSettings();
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | 'airquality' | null>(null);
 
-  const handleMetricPress = (metric: 'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility') => {
+  const handleMetricPress = (metric: 'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | 'airquality') => {
     setSelectedMetric(metric);
     setModalVisible(true);
   };
@@ -61,22 +61,26 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.humidity}%</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
-          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
-          onPress={() => handleMetricPress('wind')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>{Math.round(current.windSpeed)} km/h</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
-          onPress={() => handleMetricPress('uv')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>UV Index</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>{current.uvIndex}</Text>
-        </TouchableOpacity>
+        {settings.showWindSpeed && (
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('wind')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{Math.round(current.windSpeed)} km/h</Text>
+          </TouchableOpacity>
+        )}
+        {settings.showUVIndex && (
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('uv')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>UV Index</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.uvIndex}</Text>
+          </TouchableOpacity>
+        )}
         {settings.showPressure && (
           <TouchableOpacity 
             style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
@@ -87,14 +91,16 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.pressure} hPa</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
-          style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
-          onPress={() => handleMetricPress('windDir')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind Dir</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
-        </TouchableOpacity>
+        {settings.showWindDirection && (
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('windDir')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind Dir</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
+          </TouchableOpacity>
+        )}
         {settings.showVisibility && (
           <TouchableOpacity 
             style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
@@ -103,6 +109,16 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
           >
             <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Visibility</Text>
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.visibility} km</Text>
+          </TouchableOpacity>
+        )}
+        {settings.showAirQuality && weatherData.airQuality && (
+          <TouchableOpacity 
+            style={[styles.detailItem, styles.clickableItem, { backgroundColor: colors.surface === '#ffffff' ? '#f8f9fa' : colors.text + '10' }]}
+            onPress={() => handleMetricPress('airquality')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Air Quality</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>AQI {weatherData.airQuality.aqi}</Text>
           </TouchableOpacity>
         )}
       </View>

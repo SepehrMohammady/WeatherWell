@@ -90,7 +90,7 @@ export class WeatherAPIService implements WeatherService {
   }
 
   getApiSource(): string {
-    return this.apiKey === this.fallbackApiKey ? 'WeatherAPI (Demo)' : 'WeatherAPI (Custom)';
+    return this.apiKey === this.fallbackApiKey ? 'WeatherAPI' : 'WeatherAPI (Custom)';
   }
 
   private transformCurrentWeatherData(data: any): WeatherData {

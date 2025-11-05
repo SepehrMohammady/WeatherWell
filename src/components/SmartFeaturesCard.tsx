@@ -107,6 +107,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {type === 'umbrella' && '☂️ Hourly Rain Forecast'}
                 {type === 'clothing' && '🧥 Hourly Temperature'}
+                {type === 'uv' && '☀️ Hourly UV Index'}
                 {type === 'airquality' && '💨 Hourly Air Quality'}
               </Text>
               <TouchableOpacity onPress={() => setExpandedItem(null)}>
@@ -137,6 +138,18 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                       </Text>
                       <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
                         {hour.condition}
+                      </Text>
+                    </View>
+                  )}
+                  {type === 'uv' && (
+                    <View style={styles.hourlyDetail}>
+                      <Text style={[styles.hourlyValue, { color: colors.text }]}>
+                        UV {hour.uvIndex || 0}
+                      </Text>
+                      <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
+                        {hour.uvIndex && hour.uvIndex >= 8 ? 'Very High' : 
+                         hour.uvIndex && hour.uvIndex >= 6 ? 'High' : 
+                         hour.uvIndex && hour.uvIndex >= 3 ? 'Moderate' : 'Low'}
                       </Text>
                     </View>
                   )}
@@ -256,7 +269,10 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        <View style={styles.featureCard}>
+        <TouchableOpacity 
+          style={styles.featureCard}
+          onPress={() => setExpandedItem('uv')}
+        >
           <View style={[styles.featureIcon, { backgroundColor: uvProtection.color + '20' }]}>
             <Text style={styles.featureEmoji}>{uvProtection.emoji}</Text>
           </View>
@@ -267,10 +283,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
               UV Index: {weatherData.current.uvIndex}
             </Text>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
 
         {/* Air Quality moved to Recommendations with expandable details */}
-        {settings.showAirQuality && weatherData.airQuality && (
+        {weatherData.airQuality && (
           <TouchableOpacity 
             style={styles.featureCard}
             onPress={() => setExpandedItem('airquality')}
@@ -293,6 +310,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       {/* Render modals for hourly details */}
       {renderHourlyDetails('umbrella')}
       {renderHourlyDetails('clothing')}
+      {renderHourlyDetails('uv')}
       {renderHourlyDetails('airquality')}
       {renderAstronomyDetails('sun')}
       {renderAstronomyDetails('moon')}

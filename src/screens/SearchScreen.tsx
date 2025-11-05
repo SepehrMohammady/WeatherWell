@@ -293,7 +293,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
                 {/* Show notice if we might be using fallback data */}
                 {displayData.length <= 10 && searchQuery.trim().length >= 2 && (
                   <Text style={[styles.fallbackNotice, { color: colors.textSecondary }]}>
-                    Popular European cities matching your search
+                    Popular cities matching your search
                   </Text>
                 )}
                 <FlatList

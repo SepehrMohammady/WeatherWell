@@ -17,7 +17,7 @@ interface WeatherDetailModalProps {
   visible: boolean;
   onClose: () => void;
   weatherData: WeatherData;
-  metricType: 'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | null;
+  metricType: 'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | 'airquality' | null;
 }
 
 export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
@@ -42,6 +42,8 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
         return 'Wind Direction';
       case 'visibility':
         return 'Visibility Trends';
+      case 'airquality':
+        return 'Air Quality Index';
       default:
         return 'Weather Details';
     }
@@ -61,6 +63,8 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
         return 'Current wind direction and speed with compass visualization.';
       case 'visibility':
         return 'Visibility conditions affect driving, outdoor activities, and flight safety. Clear visibility indicates good weather conditions.';
+      case 'airquality':
+        return 'Air Quality Index measures air pollution levels. Lower values indicate better air quality.';
       default:
         return '';
     }
@@ -81,6 +85,8 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
         return `${current.windDirection} at ${Math.round(current.windSpeed)} km/h`;
       case 'visibility':
         return `${current.visibility} km`;
+      case 'airquality':
+        return `AQI ${weatherData.airQuality?.aqi || 'N/A'}`;
       default:
         return '';
     }
@@ -113,6 +119,13 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
         if (current.visibility >= 5) return '🌤️ Good visibility - safe for driving and outdoor activities';
         if (current.visibility >= 2) return '🌫️ Reduced visibility - drive carefully, use headlights';
         return '⚠️ Poor visibility - avoid unnecessary travel, use extreme caution';
+      case 'airquality':
+        const aqi = weatherData.airQuality?.aqi || 0;
+        if (aqi <= 50) return '✅ Good air quality - safe for outdoor activities';
+        if (aqi <= 100) return '🟡 Moderate - acceptable for most people';
+        if (aqi <= 150) return '🟠 Unhealthy for sensitive groups - limit prolonged outdoor activities';
+        if (aqi <= 200) return '🔴 Unhealthy - everyone should limit outdoor activities';
+        return '🟣 Very unhealthy - avoid outdoor activities';
       default:
         return '';
     }
@@ -244,6 +257,31 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
                 • 2-5 km: Moderate - use caution, headlights on{'\n'}
                 • 1-2 km: Poor - hazardous driving conditions{'\n'}
                 • {'<'}1 km: Very poor - avoid travel if possible
+              </Text>
+            </View>
+          )}
+
+          {metricType === 'airquality' && weatherData.airQuality && (
+            <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.insightTitle, { color: colors.text }]}>
+                🌫️ Air Quality Details
+              </Text>
+              <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
+                <Text style={{ fontWeight: 'bold' }}>Current AQI: {weatherData.airQuality.aqi}</Text>{'\n\n'}
+                PM2.5: {Math.round(weatherData.airQuality.pm2_5)} μg/m³{'\n'}
+                PM10: {Math.round(weatherData.airQuality.pm10)} μg/m³{'\n'}
+                {weatherData.airQuality.o3 && `O₃: ${Math.round(weatherData.airQuality.o3)} μg/m³${'\n'}`}
+                {weatherData.airQuality.no2 && `NO₂: ${Math.round(weatherData.airQuality.no2)} μg/m³${'\n'}`}
+                {weatherData.airQuality.so2 && `SO₂: ${Math.round(weatherData.airQuality.so2)} μg/m³${'\n'}`}
+                {weatherData.airQuality.co && `CO: ${Math.round(weatherData.airQuality.co)} μg/m³${'\n'}`}
+                {'\n'}
+                <Text style={{ fontWeight: 'bold' }}>AQI Scale:</Text>{'\n'}
+                • 0-50: Good - Air quality is satisfactory{'\n'}
+                • 51-100: Moderate - Acceptable for most{'\n'}
+                • 101-150: Unhealthy for sensitive groups{'\n'}
+                • 151-200: Unhealthy - Everyone may experience effects{'\n'}
+                • 201-300: Very unhealthy - Health alert{'\n'}
+                • 301+: Hazardous - Emergency conditions
               </Text>
             </View>
           )}

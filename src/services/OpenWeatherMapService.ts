@@ -105,7 +105,7 @@ export class OpenWeatherMapService implements WeatherService {
   }
 
   getApiSource(): string {
-    return this.apiKey === this.fallbackApiKey ? 'OpenWeatherMap (Demo)' : 'OpenWeatherMap (Custom)';
+    return this.apiKey === this.fallbackApiKey ? 'OpenWeatherMap' : 'OpenWeatherMap (Custom)';
   }
 
   private transformCurrentWeatherData(weatherData: any, airQualityData?: any): WeatherData {

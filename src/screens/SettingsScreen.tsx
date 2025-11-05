@@ -593,7 +593,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             subtitle="Save settings as file for backup"
             rightElement={
               <TouchableOpacity onPress={handleExport}>
-                <Ionicons name="download-outline" size={24} color={colors.primary} />
+                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
             }
             onPress={handleExport}
@@ -603,7 +603,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             subtitle="Restore settings from backup"
             rightElement={
               <TouchableOpacity onPress={() => setShowImportModal(true)}>
-                <Ionicons name="document-text-outline" size={24} color={colors.primary} />
+                <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
             }
             onPress={() => setShowImportModal(true)}
@@ -644,7 +644,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="WeatherWell"
-            description="Cross-platform weather app with European focus"
+            description="Cross-platform weather app"
             rightElement={null}
           />
           <SettingItem

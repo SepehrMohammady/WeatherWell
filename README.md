@@ -1,6 +1,6 @@
 # WeatherWell
 
-A comprehensive cross-platform weather application built with **React Native** and **Expo** for Android, iOS, and Web. WeatherWell provides detailed weather information with a focus on European weather patterns and includes smart features like umbrella alarms and clothing suggestions.
+A comprehensive cross-platform weather application built with **React Native** and **Expo** for Android, iOS, and Web. WeatherWell provides detailed weather information and includes smart features like umbrella alarms and clothing suggestions.
 
 ## ✨ Features
 
@@ -26,7 +26,6 @@ A comprehensive cross-platform weather application built with **React Native** a
 ### 🎯 Smart Features
 - **Umbrella Alarm**: Intelligent notifications when rain is expected
 - **Clothing Suggestions**: Daily outfit recommendations based on weather conditions
-- **European Focus**: Optimized for European weather patterns and locations
 
 ### 🎨 Enhanced User Experience
 - **Settings Screen**: Theme management, API configuration, display options
@@ -51,7 +50,7 @@ WeatherWell uses multiple weather data providers to ensure reliability:
 
 1. **Primary**: WeatherAPI.com
 2. **Secondary**: OpenWeatherMap
-3. **Fallback**: Popular European cities database
+3. **Fallback**: Popular cities database
 
 ## 📱 Installation & Setup
 
@@ -162,10 +161,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Weather data provided by WeatherAPI.com and OpenWeatherMap
 - Icons from Expo Vector Icons
 - Built with React Native and Expo
-- European weather focus inspired by local meteorological patterns
 
 ---
 
-**WeatherWell** - Your reliable companion for European weather updates! 🌤️
+**WeatherWell** - Your reliable companion for weather updates! 🌤️
 
 *Built with React Native & Expo for the best cross-platform experience*
