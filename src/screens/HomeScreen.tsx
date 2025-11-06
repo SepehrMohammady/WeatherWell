@@ -7,7 +7,8 @@ import {
   Alert,
   Text,
   StatusBar,
-  TouchableOpacity
+  TouchableOpacity,
+  Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -186,6 +187,11 @@ export const HomeScreen: React.FC = () => {
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <StatusBar barStyle="light-content" />
         <View style={styles.centerContent}>
+          <Image 
+            source={require('../../assets/splash-icon.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.loadingText}>Loading WeatherWell...</Text>
           <Text style={styles.loadingSubtext}>Getting your location and weather data</Text>
         </View>
@@ -422,6 +428,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 24,
   },
   errorText: {
     fontSize: 24,
