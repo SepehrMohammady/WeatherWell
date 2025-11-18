@@ -1,6 +1,7 @@
 import { WeatherAPIService } from './WeatherAPIService';
 import { OpenWeatherMapService } from './OpenWeatherMapService';
 import { VisualCrossingService } from './VisualCrossingService';
+import { OpenMeteoService } from './OpenMeteoService';
 import { WeatherService } from './types';
 import { WeatherProvider } from '../contexts/SettingsContext';
 
@@ -8,6 +9,7 @@ export class WeatherServiceFactory {
   private static weatherApiService: WeatherAPIService;
   private static openWeatherMapService: OpenWeatherMapService;
   private static visualCrossingService: VisualCrossingService;
+  private static openMeteoService: OpenMeteoService;
 
   static getWeatherAPIService(apiKey?: string): WeatherAPIService {
     // Always create new instance with current API key
@@ -24,6 +26,11 @@ export class WeatherServiceFactory {
     return new VisualCrossingService(apiKey);
   }
 
+  static getOpenMeteoService(): OpenMeteoService {
+    // Always create new instance (no API key required)
+    return new OpenMeteoService();
+  }
+
   static getServiceByProvider(provider: WeatherProvider, weatherApiKey?: string, openWeatherMapApiKey?: string, visualCrossingApiKey?: string): WeatherService {
     if (provider === 'weatherapi') {
       const service = this.getWeatherAPIService(weatherApiKey);
@@ -37,6 +44,11 @@ export class WeatherServiceFactory {
       }
     } else if (provider === 'visualcrossing') {
       const service = this.getVisualCrossingService(visualCrossingApiKey);
+      if (service.isAvailable()) {
+        return service;
+      }
+    } else if (provider === 'openmeteo') {
+      const service = this.getOpenMeteoService();
       if (service.isAvailable()) {
         return service;
       }

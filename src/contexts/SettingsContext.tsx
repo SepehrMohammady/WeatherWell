@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing';
+export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'openmeteo';
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 
 export interface AppSettings {

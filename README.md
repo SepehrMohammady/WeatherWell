@@ -48,9 +48,10 @@ A comprehensive cross-platform weather application built with **React Native** a
 
 WeatherWell uses multiple weather data providers to ensure reliability:
 
-1. **Primary**: WeatherAPI.com
-2. **Secondary**: OpenWeatherMap
-3. **Fallback**: Popular cities database
+1. **WeatherAPI.com**: Comprehensive global weather data
+2. **OpenWeatherMap**: Reliable worldwide forecasts
+3. **Visual Crossing**: Advanced weather intelligence
+4. **Open-Meteo**: Free, open-source weather API (no key required)
 
 ## 📱 Installation & Setup
 
