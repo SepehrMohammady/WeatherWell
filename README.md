@@ -53,6 +53,7 @@ WeatherWell uses multiple weather data providers to ensure reliability:
 3. **Visual Crossing**: Advanced weather intelligence
 4. **Open-Meteo**: Free, open-source weather API (no key required)
 5. **QWeather**: Chinese and global weather with air quality data
+6. **Meteostat**: Historical weather data from global weather stations
 
 ## 📱 Installation & Setup
 

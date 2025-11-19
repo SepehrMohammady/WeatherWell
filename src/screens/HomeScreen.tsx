@@ -77,7 +77,8 @@ export const HomeScreen: React.FC = () => {
         settings.weatherApiKey || undefined,
         settings.openWeatherMapApiKey || undefined,
         settings.visualCrossingApiKey || undefined,
-        settings.qweatherApiKey || undefined
+        settings.qweatherApiKey || undefined,
+        settings.meteostatApiKey || undefined
       );
       
       setWeatherData(result.data);

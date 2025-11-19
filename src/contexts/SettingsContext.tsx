@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'openmeteo' | 'qweather';
+export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'openmeteo' | 'qweather' | 'meteostat';
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 
 export interface AppSettings {
@@ -27,6 +27,7 @@ export interface AppSettings {
   openWeatherMapApiKey: string | null;
   visualCrossingApiKey: string | null;
   qweatherApiKey: string | null;
+  meteostatApiKey: string | null;
   refreshInterval: number; // in minutes
   showFeelsLike: boolean;
   showHumidity: boolean;
@@ -62,6 +63,7 @@ const defaultSettings: AppSettings = {
   openWeatherMapApiKey: null,
   visualCrossingApiKey: null,
   qweatherApiKey: 'b196010778a24af19765ed70af849801',
+  meteostatApiKey: '93d3a5f1d3msh36569bf37d01a27p1c06ecjsna9f86b114ae8',
   refreshInterval: 30,
   showFeelsLike: true,
   showHumidity: true,

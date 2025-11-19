@@ -3,6 +3,7 @@ import { OpenWeatherMapService } from './OpenWeatherMapService';
 import { VisualCrossingService } from './VisualCrossingService';
 import { OpenMeteoService } from './OpenMeteoService';
 import { QWeatherService } from './QWeatherService';
+import { MeteostatService } from './MeteostatService';
 import { WeatherService } from './types';
 import { WeatherProvider } from '../contexts/SettingsContext';
 
@@ -12,6 +13,7 @@ export class WeatherServiceFactory {
   private static visualCrossingService: VisualCrossingService;
   private static openMeteoService: OpenMeteoService;
   private static qweatherService: QWeatherService;
+  private static meteostatService: MeteostatService;
 
   static getWeatherAPIService(apiKey?: string): WeatherAPIService {
     // Always create new instance with current API key
@@ -38,7 +40,12 @@ export class WeatherServiceFactory {
     return new QWeatherService(apiKey);
   }
 
-  static getServiceByProvider(provider: WeatherProvider, weatherApiKey?: string, openWeatherMapApiKey?: string, visualCrossingApiKey?: string, qweatherApiKey?: string): WeatherService {
+  static getMeteostatService(apiKey?: string): MeteostatService {
+    // Always create new instance with current API key
+    return new MeteostatService(apiKey);
+  }
+
+  static getServiceByProvider(provider: WeatherProvider, weatherApiKey?: string, openWeatherMapApiKey?: string, visualCrossingApiKey?: string, qweatherApiKey?: string, meteostatApiKey?: string): WeatherService {
     if (provider === 'weatherapi') {
       const service = this.getWeatherAPIService(weatherApiKey);
       if (service.isAvailable()) {
@@ -61,6 +68,11 @@ export class WeatherServiceFactory {
       }
     } else if (provider === 'qweather') {
       const service = this.getQWeatherService(qweatherApiKey);
+      if (service.isAvailable()) {
+        return service;
+      }
+    } else if (provider === 'meteostat') {
+      const service = this.getMeteostatService(meteostatApiKey);
       if (service.isAvailable()) {
         return service;
       }
@@ -115,13 +127,14 @@ export class WeatherServiceFactory {
     weatherApiKey?: string,
     openWeatherMapApiKey?: string,
     visualCrossingApiKey?: string,
-    qweatherApiKey?: string
+    qweatherApiKey?: string,
+    meteostatApiKey?: string
   ): Promise<{ data: any; source: string }> {
     try {
       // Use preferred provider if specified, otherwise use default primary service
       let primaryService: WeatherService;
       if (preferredProvider) {
-        primaryService = this.getServiceByProvider(preferredProvider, weatherApiKey, openWeatherMapApiKey, visualCrossingApiKey, qweatherApiKey);
+        primaryService = this.getServiceByProvider(preferredProvider, weatherApiKey, openWeatherMapApiKey, visualCrossingApiKey, qweatherApiKey, meteostatApiKey);
       } else {
         primaryService = this.getPrimaryService();
       }

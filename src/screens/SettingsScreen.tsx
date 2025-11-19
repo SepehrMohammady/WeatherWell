@@ -202,6 +202,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                       ? 'Visual Crossing'
                       : settings.weatherProvider === 'qweather'
                       ? 'QWeather'
+                      : settings.weatherProvider === 'meteostat'
+                      ? 'Meteostat'
                       : 'Open-Meteo'
                 }
               </Text>
@@ -263,6 +265,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 >
                   <Text style={[styles.providerText, { color: settings.weatherProvider === 'qweather' ? 'white' : colors.text }]}>
                     QWeather
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'meteostat' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('meteostat')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'meteostat' ? 'white' : colors.text }]}>
+                    Meteostat
                   </Text>
                 </TouchableOpacity>
               </View>
