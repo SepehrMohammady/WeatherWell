@@ -147,7 +147,13 @@ export class WeatherAPIService implements WeatherService {
       windSpeed: day.day.maxwind_kph,
       uvIndex: day.day.uv,
       precipitationChance: day.day.daily_chance_of_rain,
-      precipitationMm: day.day.totalprecip_mm
+      precipitationMm: day.day.totalprecip_mm,
+      astronomy: {
+        sunrise: day.astro?.sunrise || '',
+        sunset: day.astro?.sunset || '',
+        moonPhase: day.astro?.moon_phase || '',
+        moonIllumination: day.astro?.moon_illumination ? parseFloat(day.astro.moon_illumination) / 100 : 0
+      }
     }));
 
     const hourlyForecast: HourlyForecast[] = data.forecast.forecastday

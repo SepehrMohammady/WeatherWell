@@ -50,6 +50,12 @@ export interface DailyForecast {
   uvIndex: number;
   precipitationChance: number;
   precipitationMm: number;
+  astronomy?: {
+    sunrise: string;
+    sunset: string;
+    moonPhase: string;
+    moonIllumination: number;
+  };
 }
 
 export interface HourlyForecast {

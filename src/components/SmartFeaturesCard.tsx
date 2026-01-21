@@ -195,33 +195,54 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             </View>
             
             <ScrollView style={styles.modalScroll}>
-              {dailyData.map((day, index) => (
-                <View key={index} style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.hourlyTime, { color: colors.text }]}>
-                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </Text>
-                  {type === 'sun' && (
-                    <View style={styles.hourlyDetail}>
-                      <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        ☀️ {weatherData.astronomy.sunrise}
-                      </Text>
-                      <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        🌙 {weatherData.astronomy.sunset}
-                      </Text>
-                    </View>
-                  )}
-                  {type === 'moon' && (
-                    <View style={styles.hourlyDetail}>
-                      <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        {weatherData.astronomy.moonPhase}
-                      </Text>
-                      <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        {Math.round(weatherData.astronomy.moonIllumination * 100)}% illuminated
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              ))}
+              {dailyData.map((day, index) => {
+                // Use per-day astronomy if available, otherwise fallback to current day's data
+                const dayAstronomy = day.astronomy || (index === 0 ? weatherData.astronomy : null);
+                
+                return (
+                  <View key={index} style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.hourlyTime, { color: colors.text }]}>
+                      {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </Text>
+                    {type === 'sun' && (
+                      <View style={styles.hourlyDetail}>
+                        {dayAstronomy ? (
+                          <>
+                            <Text style={[styles.hourlyValue, { color: colors.text }]}>
+                              ☀️ {dayAstronomy.sunrise}
+                            </Text>
+                            <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
+                              🌙 {dayAstronomy.sunset}
+                            </Text>
+                          </>
+                        ) : (
+                          <Text style={[styles.hourlyValue, { color: colors.textSecondary }]}>
+                            Data not available
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                    {type === 'moon' && (
+                      <View style={styles.hourlyDetail}>
+                        {dayAstronomy ? (
+                          <>
+                            <Text style={[styles.hourlyValue, { color: colors.text }]}>
+                              {dayAstronomy.moonPhase}
+                            </Text>
+                            <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
+                              {Math.round(dayAstronomy.moonIllumination * 100)}% illuminated
+                            </Text>
+                          </>
+                        ) : (
+                          <Text style={[styles.hourlyValue, { color: colors.textSecondary }]}>
+                            Data not available
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </ScrollView>
           </View>
         </View>

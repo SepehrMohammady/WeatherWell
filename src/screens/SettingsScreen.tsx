@@ -34,7 +34,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { sendTestNotification, isInitialized } = useNotifications();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing'>('weatherapi');
+  const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
 
@@ -47,13 +47,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     updateSetting('temperatureUnit', unit);
   };
 
-  const handleApiKeyUpdate = (provider: 'weatherapi' | 'openweathermap' | 'visualcrossing') => {
-    const key = provider === 'weatherapi' 
-      ? 'weatherApiKey' 
-      : provider === 'openweathermap'
-        ? 'openWeatherMapApiKey'
-        : 'visualCrossingApiKey';
-    updateSetting(key, tempApiKey || null);
+  const handleApiKeyUpdate = (provider: 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat') => {
+    const keyMap: Record<typeof provider, keyof typeof settings> = {
+      'weatherapi': 'weatherApiKey',
+      'openweathermap': 'openWeatherMapApiKey',
+      'visualcrossing': 'visualCrossingApiKey',
+      'qweather': 'qweatherApiKey',
+      'meteostat': 'meteostatApiKey'
+    };
+    const key = keyMap[provider];
+    updateSetting(key as any, tempApiKey || null);
     setTempApiKey('');
     setShowApiKeyInput(false);
     Alert.alert('Success', 'API key updated successfully');
@@ -377,6 +380,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   setTempApiKey(settings.visualCrossingApiKey || '');
                   setShowApiKeyInput(true);
                   setSelectedProvider('visualcrossing');
+                }}
+              >
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingItem
+            title="QWeather Key"
+            subtitle={settings.qweatherApiKey ? 'Custom key configured' : 'Using default key'}
+            rightElement={
+              <TouchableOpacity
+                onPress={() => {
+                  setTempApiKey(settings.qweatherApiKey || '');
+                  setShowApiKeyInput(true);
+                  setSelectedProvider('qweather');
+                }}
+              >
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingItem
+            title="Meteostat Key (RapidAPI)"
+            subtitle={settings.meteostatApiKey ? 'Custom key configured' : 'Using default key'}
+            rightElement={
+              <TouchableOpacity
+                onPress={() => {
+                  setTempApiKey(settings.meteostatApiKey || '');
+                  setShowApiKeyInput(true);
+                  setSelectedProvider('meteostat');
                 }}
               >
                 <Ionicons name="key-outline" size={24} color={colors.primary} />
@@ -720,7 +755,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             WeatherWell provides accurate weather forecasts with privacy-first approach. No personal data is collected or shared.
           </Text>
           <Text style={[styles.copyrightText, { color: colors.textSecondary }]}>
-            © 2025 Sepehr Mohammady. Open source under MIT License.
+            © 2026 Sepehr Mohammady. Open source under MIT License.
           </Text>
         </View>
 
@@ -738,11 +773,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {selectedProvider === 'weatherapi' 
-                ? 'WeatherAPI Key' 
-                : selectedProvider === 'openweathermap'
-                  ? 'OpenWeatherMap Key'
-                  : 'Visual Crossing Key'}
+              {selectedProvider === 'weatherapi' ? 'WeatherAPI Key' 
+                : selectedProvider === 'openweathermap' ? 'OpenWeatherMap Key'
+                : selectedProvider === 'visualcrossing' ? 'Visual Crossing Key'
+                : selectedProvider === 'qweather' ? 'QWeather Key'
+                : 'Meteostat Key (RapidAPI)'}
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
               Enter your API key or leave blank to use demo key

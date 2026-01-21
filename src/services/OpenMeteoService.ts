@@ -147,7 +147,13 @@ export class OpenMeteoService implements WeatherService {
           precipitationMm: daily.precipitation_sum?.[i] || 0,
           windSpeed: daily.wind_speed_10m_max?.[i] || 0,
           humidity: 0, // Not available in daily data
-          uvIndex: daily.uv_index_max?.[i] || 0
+          uvIndex: daily.uv_index_max?.[i] || 0,
+          astronomy: {
+            sunrise: daily.sunrise?.[i] || '06:00',
+            sunset: daily.sunset?.[i] || '18:00',
+            moonPhase: '', // Open-Meteo doesn't provide moon phase
+            moonIllumination: 0
+          }
         });
       }
     }
