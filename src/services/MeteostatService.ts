@@ -205,10 +205,10 @@ export class MeteostatService implements WeatherService {
         hourly: hourlyForecast
       },
       astronomy: {
-        sunrise: '06:00',
-        sunset: '18:00',
+        sunrise: '', // Meteostat doesn't provide astronomy data
+        sunset: '',
         moonPhase: '',
-        moonIllumination: 0
+        moonIllumination: -1 // -1 indicates data not available
       }
     };
   }
@@ -278,10 +278,10 @@ export class MeteostatService implements WeatherService {
         hourly: hourlyForecast
       },
       astronomy: {
-        sunrise: '06:00',
-        sunset: '18:00',
+        sunrise: '', // Meteostat doesn't provide astronomy data
+        sunset: '',
         moonPhase: '',
-        moonIllumination: 0
+        moonIllumination: -1 // -1 indicates data not available
       }
     };
   }

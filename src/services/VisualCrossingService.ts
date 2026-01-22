@@ -109,10 +109,10 @@ export class VisualCrossingService implements WeatherService {
       },
       airQuality: undefined, // Visual Crossing doesn't provide air quality data
       astronomy: {
-        sunrise: this.formatTime(data.days[0]?.sunrise) || '06:00',
-        sunset: this.formatTime(data.days[0]?.sunset) || '18:00',
-        moonPhase: this.getMoonPhase(data.days[0]?.moonphase ?? 0),
-        moonIllumination: data.days[0]?.moonphase ?? 0
+        sunrise: this.formatTime(data.days[0]?.sunrise),
+        sunset: this.formatTime(data.days[0]?.sunset),
+        moonPhase: data.days[0]?.moonphase !== undefined ? this.getMoonPhase(data.days[0].moonphase) : '',
+        moonIllumination: data.days[0]?.moonphase !== undefined ? data.days[0].moonphase : -1
       }
     };
   }
@@ -130,10 +130,10 @@ export class VisualCrossingService implements WeatherService {
       humidity: day.humidity || 0,
       uvIndex: day.uvindex || 0,
       astronomy: {
-        sunrise: this.formatTime(day.sunrise) || '06:00',
-        sunset: this.formatTime(day.sunset) || '18:00',
-        moonPhase: this.getMoonPhase(day.moonphase ?? 0),
-        moonIllumination: day.moonphase ?? 0
+        sunrise: this.formatTime(day.sunrise),
+        sunset: this.formatTime(day.sunset),
+        moonPhase: day.moonphase !== undefined ? this.getMoonPhase(day.moonphase) : '',
+        moonIllumination: day.moonphase !== undefined ? day.moonphase : -1
       }
     }));
   }

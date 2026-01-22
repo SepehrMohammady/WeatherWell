@@ -136,8 +136,8 @@ export class OpenWeatherMapService implements WeatherService {
       astronomy: {
         sunrise: new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString(),
         sunset: new Date(weatherData.sys.sunset * 1000).toLocaleTimeString(),
-        moonPhase: '',
-        moonIllumination: 0
+        moonPhase: '', // OpenWeatherMap doesn't provide moon data
+        moonIllumination: -1 // -1 indicates data not available
       },
       airQuality: airQualityData ? {
         aqi: airQualityData.list[0].main.aqi,
@@ -226,8 +226,8 @@ export class OpenWeatherMapService implements WeatherService {
       astronomy: {
         sunrise: new Date(data.city.sunrise * 1000).toLocaleTimeString(),
         sunset: new Date(data.city.sunset * 1000).toLocaleTimeString(),
-        moonPhase: '',
-        moonIllumination: 0
+        moonPhase: '', // OpenWeatherMap doesn't provide moon data
+        moonIllumination: -1 // -1 indicates data not available
       }
     };
   }
@@ -262,8 +262,8 @@ export class OpenWeatherMapService implements WeatherService {
       astronomy: {
         sunrise: new Date(current.sunrise * 1000).toLocaleTimeString(),
         sunset: new Date(current.sunset * 1000).toLocaleTimeString(),
-        moonPhase: '',
-        moonIllumination: 0
+        moonPhase: '', // OpenWeatherMap doesn't provide moon data
+        moonIllumination: -1 // -1 indicates data not available
       }
     };
   }

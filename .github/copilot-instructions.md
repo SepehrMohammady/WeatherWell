@@ -1,18 +1,18 @@
 ## WeatherWell - React Native/Expo Project
 
-✅ **Project Setup Complete** - Version 0.4.4
+✅ **Project Setup Complete** - Version 0.4.5
 
 ### Project Type
 Cross-platform weather application built with React Native and Expo for Android, iOS, and Web.
 
 ### Features Implemented
-- ✅ Neutral Paradise color theme with light/dark mode support
+- ✅ Neutral Paradise color theme with light/dark mode support (now follows device theme)
 - ✅ Settings screen with comprehensive display options and notification controls
 - ✅ Location search with autocomplete and popular cities fallback
 - ✅ Weather sharing with customizable options
 - ✅ Daily and hourly forecasts with expandable details
 - ✅ Complete weather metrics (temperature, wind, precipitation, UV, visibility, humidity)
-- ✅ Smart recommendations: umbrella alerts, clothing suggestions, UV protection
+- ✅ Smart recommendations: umbrella alerts, clothing suggestions, UV protection (worst-case based)
 - ✅ Air Quality monitoring with health recommendations (moved to Recommendations section)
 - ✅ Expandable hourly details for recommendations
 - ✅ Astronomy section with clickable daily details and per-day data
@@ -21,9 +21,32 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.4.4)
+### Recent Updates (v0.4.5)
+- **System Theme Detection**: App now follows device dark/light mode on first launch
+  - Uses React Native Appearance API for system theme detection
+  - Listens to system theme changes automatically
+  - Manual toggle still available in settings
+- **Default Settings Improvements**:
+  - Refresh interval changed from 30 to 60 minutes
+  - All features and alerts enabled by default (hourly, temperature, AQI, wind alerts)
+- **UI Improvements**:
+  - Removed ⭐ star from WeatherAPI provider button (cleaner design)
+  - Fixed QWeather and Meteostat API key labels to show "Using default key" correctly
+- **Smart Recommendations Enhanced**:
+  - Recommendations now based on worst-case scenario for remaining hours today
+  - Umbrella alert uses max precipitation chance from remaining hourly forecasts
+  - Clothing suggestion uses minimum temperature from remaining hours
+  - UV recommendation uses maximum UV index from remaining hours
+- **Astronomy Data Fixes**:
+  - OpenWeatherMap: Moon phase now shows "Data not available" instead of 0%
+  - Open-Meteo: Fixed sunrise/sunset formatting, moon data shows as unavailable
+  - Meteostat: Astronomy section properly shows "Data not available"
+  - Visual Crossing: Removed hardcoded fallback values (06:00/18:00)
+  - All services now use -1 for unavailable moonIllumination to distinguish from actual 0%
+
+### Previous Updates (v0.4.4)
 - **Provider Reliability Analysis**: Compared data accuracy with MSN Weather and AccuWeather
-  - Added reliability indicators (⭐ recommended, ⚠ limited) to provider selection
+  - Added reliability indicators (⚠ limited) to provider selection
   - Provider descriptions now show data capabilities and limitations
 - **Visual Crossing Fix**: Fixed astronomy time formatting (was showing raw HH:MM:SS)
   - Added formatTime helper for proper 12-hour AM/PM format
@@ -32,12 +55,12 @@ Cross-platform weather application built with React Native and Expo for Android,
   - getApiSource now returns "Meteostat (Historical)" to indicate limitation
   - Provider button shows warning indicator
 - **Provider Reliability Ranking** (most to least reliable):
-  1. ⭐ WeatherAPI - Best accuracy, full astronomy (sunrise, sunset, moon phase, illumination)
-  2. ✓ OpenWeatherMap - Good forecasts, limited astronomy (no moon phase)
-  3. ✓ Visual Crossing - Good data, astronomy available (fixed in this version)
-  4. ✓ Open-Meteo - Free/no key, good forecasts, no moon phase data
-  5. ⚠ QWeather - May require paid plan, fallback issues
-  6. ⚠ Meteostat - Historical data only, not suitable for forecasts
+  1. WeatherAPI - Best accuracy, full astronomy (sunrise, sunset, moon phase, illumination)
+  2. OpenWeatherMap - Good forecasts, limited astronomy (no moon phase)
+  3. Visual Crossing - Good data, astronomy available
+  4. Open-Meteo - Free/no key, good forecasts, no moon phase data
+  5. QWeather - May require paid plan, fallback issues
+  6. Meteostat - Historical data only, not suitable for forecasts
 
 ### Previous Updates (v0.4.3)
 - **New API Provider**: Added Meteostat service

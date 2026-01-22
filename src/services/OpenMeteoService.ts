@@ -149,10 +149,10 @@ export class OpenMeteoService implements WeatherService {
           humidity: 0, // Not available in daily data
           uvIndex: daily.uv_index_max?.[i] || 0,
           astronomy: {
-            sunrise: daily.sunrise?.[i] || '06:00',
-            sunset: daily.sunset?.[i] || '18:00',
+            sunrise: this.formatTime(daily.sunrise?.[i]),
+            sunset: this.formatTime(daily.sunset?.[i]),
             moonPhase: '', // Open-Meteo doesn't provide moon phase
-            moonIllumination: 0
+            moonIllumination: -1 // -1 indicates data not available
           }
         });
       }
@@ -183,10 +183,10 @@ export class OpenMeteoService implements WeatherService {
         hourly: hourlyForecast
       },
       astronomy: {
-        sunrise: daily.sunrise?.[0] || '06:00',
-        sunset: daily.sunset?.[0] || '18:00',
-        moonPhase: '',
-        moonIllumination: 0
+        sunrise: this.formatTime(daily.sunrise?.[0]),
+        sunset: this.formatTime(daily.sunset?.[0]),
+        moonPhase: '', // Open-Meteo doesn't provide moon data
+        moonIllumination: -1 // -1 indicates data not available
       }
     };
   }
@@ -255,5 +255,21 @@ export class OpenMeteoService implements WeatherService {
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const index = Math.round(degrees / 22.5) % 16;
     return directions[index];
+  }
+
+  private formatTime(isoDateTime: string | undefined): string {
+    if (!isoDateTime) return '';
+    try {
+      // Open-Meteo returns ISO datetime like "2024-01-15T06:45"
+      const date = new Date(isoDateTime);
+      if (isNaN(date.getTime())) return '';
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const hour12 = hours % 12 || 12;
+      return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    } catch {
+      return '';
+    }
   }
 }

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Theme = 'light' | 'dark';
@@ -65,10 +66,24 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Initialize with device system theme
+  const systemTheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+  const [theme, setThemeState] = useState<Theme>(systemTheme);
 
   useEffect(() => {
     loadTheme();
+    
+    // Listen for system theme changes
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      // Only auto-switch if user hasn't explicitly set a theme
+      AsyncStorage.getItem('theme').then(savedTheme => {
+        if (!savedTheme) {
+          setThemeState(colorScheme === 'dark' ? 'dark' : 'light');
+        }
+      });
+    });
+    
+    return () => subscription.remove();
   }, []);
 
   const loadTheme = async () => {
@@ -76,6 +91,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       const savedTheme = await AsyncStorage.getItem('theme');
       if (savedTheme === 'light' || savedTheme === 'dark') {
         setThemeState(savedTheme);
+      } else {
+        // No saved preference - use system theme
+        setThemeState(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light');
       }
     } catch (error) {
       console.error('Error loading theme:', error);

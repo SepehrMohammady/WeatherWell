@@ -21,8 +21,25 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showAstronomyDetail, setShowAstronomyDetail] = useState<string | null>(null);
 
+  // Get remaining hourly data for today (from current hour onwards)
+  const getRemainingHourlyData = () => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    return weatherData.forecast.hourly.filter(hour => {
+      const hourTime = new Date(hour.time);
+      return hourTime >= now && hour.time.startsWith(todayStr);
+    });
+  };
+
   const getUmbrellaRecommendation = () => {
-    const precipChance = weatherData.forecast.daily[0]?.precipitationChance || 0;
+    // Check worst case: max precipitation chance from current hour until end of day
+    const remainingHours = getRemainingHourlyData();
+    const dailyPrecip = weatherData.forecast.daily[0]?.precipitationChance || 0;
+    const hourlyMaxPrecip = remainingHours.length > 0 
+      ? Math.max(...remainingHours.map(h => h.precipitationChance || 0))
+      : dailyPrecip;
+    const precipChance = Math.max(dailyPrecip, hourlyMaxPrecip);
+    
     if (precipChance > 70) {
       return { text: "Definitely bring an umbrella!", emoji: "☂️", color: "#e17055" };
     } else if (precipChance > 30) {
@@ -33,15 +50,18 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   };
 
   const getClothingRecommendation = () => {
-    const temp = weatherData.current.temperature;
-    const windSpeed = weatherData.current.windSpeed;
-    const precipChance = weatherData.forecast.daily[0]?.precipitationChance || 0;
+    // Use minimum temperature from remaining hours for worst-case cold scenario
+    const remainingHours = getRemainingHourlyData();
+    const currentTemp = weatherData.current.temperature;
+    const minTemp = remainingHours.length > 0
+      ? Math.min(currentTemp, ...remainingHours.map(h => h.temperature))
+      : currentTemp;
 
-    if (temp < 5) {
+    if (minTemp < 5) {
       return { text: "Heavy winter coat, scarf, gloves", emoji: "🧥", color: "#74b9ff" };
-    } else if (temp < 15) {
+    } else if (minTemp < 15) {
       return { text: "Jacket or warm sweater", emoji: "🧥", color: "#81ecec" };
-    } else if (temp < 25) {
+    } else if (minTemp < 25) {
       return { text: "Light sweater or long sleeves", emoji: "👕", color: "#00b894" };
     } else {
       return { text: "T-shirt or light clothing", emoji: "👔", color: "#fdcb6e" };
@@ -49,12 +69,18 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   };
 
   const getUVRecommendation = () => {
-    const uvIndex = weatherData.current.uvIndex;
-    if (uvIndex >= 8) {
+    // Use maximum UV index from remaining hours for worst-case scenario
+    const remainingHours = getRemainingHourlyData();
+    const currentUV = weatherData.current.uvIndex;
+    const maxUV = remainingHours.length > 0
+      ? Math.max(currentUV, ...remainingHours.map(h => h.uvIndex || 0))
+      : currentUV;
+    
+    if (maxUV >= 8) {
       return { text: "Wear sunglasses & sunscreen SPF 30+", emoji: "🕶️", color: "#e17055" };
-    } else if (uvIndex >= 6) {
+    } else if (maxUV >= 6) {
       return { text: "Consider sunglasses & sunscreen", emoji: "🧴", color: "#fdcb6e" };
-    } else if (uvIndex >= 3) {
+    } else if (maxUV >= 3) {
       return { text: "Light sun protection recommended", emoji: "☀️", color: "#00b894" };
     } else {
       return { text: "No sun protection needed", emoji: "🌤️", color: "#74b9ff" };
@@ -198,6 +224,8 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
               {dailyData.map((day, index) => {
                 // Use per-day astronomy if available, otherwise fallback to current day's data
                 const dayAstronomy = day.astronomy || (index === 0 ? weatherData.astronomy : null);
+                const hasSunData = dayAstronomy && dayAstronomy.sunrise && dayAstronomy.sunset;
+                const hasMoonData = dayAstronomy && dayAstronomy.moonPhase && dayAstronomy.moonIllumination >= 0;
                 
                 return (
                   <View key={index} style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
@@ -206,7 +234,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                     </Text>
                     {type === 'sun' && (
                       <View style={styles.hourlyDetail}>
-                        {dayAstronomy ? (
+                        {hasSunData ? (
                           <>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
                               ☀️ {dayAstronomy.sunrise}
@@ -224,7 +252,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                     )}
                     {type === 'moon' && (
                       <View style={styles.hourlyDetail}>
-                        {dayAstronomy ? (
+                        {hasMoonData ? (
                           <>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
                               {dayAstronomy.moonPhase}
@@ -350,7 +378,9 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Sun Times</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
-              Sunrise: {weatherData.astronomy.sunrise} • Sunset: {weatherData.astronomy.sunset}
+              {weatherData.astronomy.sunrise && weatherData.astronomy.sunset
+                ? `Sunrise: ${weatherData.astronomy.sunrise} • Sunset: ${weatherData.astronomy.sunset}`
+                : 'Data not available for this provider'}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
               Daylight: {(() => {
@@ -397,10 +427,12 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Moon Phase</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
-              {weatherData.astronomy.moonPhase}
+              {weatherData.astronomy.moonPhase || 'Data not available'}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              Illumination: {Math.round(weatherData.astronomy.moonIllumination * 100)}%
+              {weatherData.astronomy.moonIllumination >= 0 
+                ? `Illumination: ${Math.round(weatherData.astronomy.moonIllumination * 100)}%`
+                : 'Illumination: Data not available'}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />

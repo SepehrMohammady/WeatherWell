@@ -197,7 +197,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </Text>
               <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
                 {settings.weatherProvider === 'weatherapi' 
-                  ? '⭐ WeatherAPI - Most accurate with full astronomy data' 
+                  ? 'WeatherAPI - Most accurate with full astronomy data' 
                   : settings.weatherProvider === 'openweathermap'
                     ? '✓ OpenWeatherMap - Reliable forecasts, limited astronomy'
                     : settings.weatherProvider === 'visualcrossing'
@@ -218,7 +218,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   onPress={() => handleProviderChange('weatherapi')}
                 >
                   <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
-                    ⭐ WeatherAPI
+                    WeatherAPI
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -388,7 +388,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <SettingItem
             title="QWeather Key"
-            subtitle={settings.qweatherApiKey ? 'Custom key configured' : 'Using default key'}
+            subtitle={settings.qweatherApiKey && settings.qweatherApiKey !== 'b196010778a24af19765ed70af849801' ? 'Custom key configured' : 'Using default key'}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -404,7 +404,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <SettingItem
             title="Meteostat Key (RapidAPI)"
-            subtitle={settings.meteostatApiKey ? 'Custom key configured' : 'Using default key'}
+            subtitle={settings.meteostatApiKey && settings.meteostatApiKey !== '93d3a5f1d3msh36569bf37d01a27p1c06ecjsna9f86b114ae8' ? 'Custom key configured' : 'Using default key'}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
