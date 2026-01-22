@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
 
+/**
+ * MeteostatService - Historical Weather Data Provider
+ * 
+ * IMPORTANT: Meteostat provides HISTORICAL weather data only, not forecasts.
+ * - Current weather shows the most recent available observation (may be hours/days old)
+ * - Daily forecast shows historical data from the past, not future predictions
+ * - No astronomy data is available from this source
+ * 
+ * Best used for: Historical weather analysis, research, past weather lookup
+ * NOT recommended for: Current weather or forecasts
+ */
 export class MeteostatService implements WeatherService {
   private apiKey: string;
   private readonly baseUrl = 'https://meteostat.p.rapidapi.com';
@@ -140,7 +151,7 @@ export class MeteostatService implements WeatherService {
   }
 
   getApiSource(): string {
-    return 'Meteostat';
+    return 'Meteostat (Historical)';
   }
 
   private formatDate(date: Date): string {

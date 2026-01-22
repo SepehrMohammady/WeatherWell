@@ -109,10 +109,10 @@ export class VisualCrossingService implements WeatherService {
       },
       airQuality: undefined, // Visual Crossing doesn't provide air quality data
       astronomy: {
-        sunrise: data.days[0]?.sunrise || '06:00',
-        sunset: data.days[0]?.sunset || '18:00',
-        moonPhase: this.getMoonPhase(data.days[0]?.moonphase || 0),
-        moonIllumination: (data.days[0]?.moonphase || 0) / 1
+        sunrise: this.formatTime(data.days[0]?.sunrise) || '06:00',
+        sunset: this.formatTime(data.days[0]?.sunset) || '18:00',
+        moonPhase: this.getMoonPhase(data.days[0]?.moonphase ?? 0),
+        moonIllumination: data.days[0]?.moonphase ?? 0
       }
     };
   }
@@ -128,8 +128,27 @@ export class VisualCrossingService implements WeatherService {
       precipitationMm: day.precip || 0,
       windSpeed: day.windspeed || 0,
       humidity: day.humidity || 0,
-      uvIndex: day.uvindex || 0
+      uvIndex: day.uvindex || 0,
+      astronomy: {
+        sunrise: this.formatTime(day.sunrise) || '06:00',
+        sunset: this.formatTime(day.sunset) || '18:00',
+        moonPhase: this.getMoonPhase(day.moonphase ?? 0),
+        moonIllumination: day.moonphase ?? 0
+      }
     }));
+  }
+
+  private formatTime(time: string | undefined): string {
+    if (!time) return '';
+    // Visual Crossing returns time in HH:MM:SS format, convert to HH:MM AM/PM
+    try {
+      const [hours, minutes] = time.split(':').map(Number);
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const hour12 = hours % 12 || 12;
+      return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    } catch {
+      return time;
+    }
   }
 
   private transformHourlyForecast(days: any[]): HourlyForecast[] {

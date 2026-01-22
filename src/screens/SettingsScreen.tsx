@@ -196,18 +196,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 Weather Provider
               </Text>
               <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
-                Currently using {
-                  settings.weatherProvider === 'weatherapi' 
-                    ? 'WeatherAPI' 
-                    : settings.weatherProvider === 'openweathermap'
-                      ? 'OpenWeatherMap'
-                      : settings.weatherProvider === 'visualcrossing'
-                      ? 'Visual Crossing'
-                      : settings.weatherProvider === 'qweather'
-                      ? 'QWeather'
-                      : settings.weatherProvider === 'meteostat'
-                      ? 'Meteostat'
-                      : 'Open-Meteo'
+                {settings.weatherProvider === 'weatherapi' 
+                  ? '⭐ WeatherAPI - Most accurate with full astronomy data' 
+                  : settings.weatherProvider === 'openweathermap'
+                    ? '✓ OpenWeatherMap - Reliable forecasts, limited astronomy'
+                    : settings.weatherProvider === 'visualcrossing'
+                    ? '✓ Visual Crossing - Good data, astronomy available'
+                    : settings.weatherProvider === 'openmeteo'
+                    ? '✓ Open-Meteo - Free, no moon phase data'
+                    : settings.weatherProvider === 'qweather'
+                    ? '⚠ QWeather - May require paid plan'
+                    : '⚠ Meteostat - Historical data only, not for forecasts'
                 }
               </Text>
               <View style={styles.providerButtons}>
@@ -219,7 +218,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   onPress={() => handleProviderChange('weatherapi')}
                 >
                   <Text style={[styles.providerText, { color: settings.weatherProvider === 'weatherapi' ? 'white' : colors.text }]}>
-                    WeatherAPI
+                    ⭐ WeatherAPI
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -262,23 +261,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 <TouchableOpacity
                   style={[
                     styles.providerButton,
-                    { backgroundColor: settings.weatherProvider === 'qweather' ? colors.primary : colors.border }
+                    { backgroundColor: settings.weatherProvider === 'qweather' ? colors.primary : colors.border, opacity: 0.7 }
                   ]}
                   onPress={() => handleProviderChange('qweather')}
                 >
                   <Text style={[styles.providerText, { color: settings.weatherProvider === 'qweather' ? 'white' : colors.text }]}>
-                    QWeather
+                    QWeather ⚠
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.providerButton,
-                    { backgroundColor: settings.weatherProvider === 'meteostat' ? colors.primary : colors.border }
+                    { backgroundColor: settings.weatherProvider === 'meteostat' ? colors.primary : colors.border, opacity: 0.7 }
                   ]}
                   onPress={() => handleProviderChange('meteostat')}
                 >
                   <Text style={[styles.providerText, { color: settings.weatherProvider === 'meteostat' ? 'white' : colors.text }]}>
-                    Meteostat
+                    Meteostat ⚠
                   </Text>
                 </TouchableOpacity>
               </View>
