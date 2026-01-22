@@ -132,11 +132,21 @@ npm run web        # Run on web
   - **Patch (0.x.Y)**: Bug fixes, minor UI tweaks, typo corrections
   - **Minor (0.X.0)**: New features, significant enhancements, new components
   - **Major (X.0.0)**: Breaking changes, complete redesigns, architecture changes
-- Update in THREE files simultaneously:
+- **Update in FIVE files simultaneously** (CRITICAL - do not forget any):
   1. `src/config/version.ts` - APP_VERSION constant
   2. `app.json` - expo.version field
   3. `package.json` - version field
+  4. `package-lock.json` - version field (TWO locations at top of file)
+  5. `android/app/build.gradle` - versionCode (increment by 1) and versionName
 - Document changes in `.github/copilot-instructions.md` under "Recent Updates"
+
+### After Changes Workflow (ALWAYS follow this)
+1. Update ALL version files listed above
+2. Build native release APK: `cd android; .\gradlew assembleRelease`
+3. Install on device: `adb install -r android\app\build\outputs\apk\release\app-release.apk`
+4. Commit with detailed message
+5. Push to remote repository
+6. Provide Release Title and Release Notes in Markdown format
 
 ### Git Commit Policy
 - **NEVER commit automatically** - Only commit when explicitly requested by the developer
@@ -147,21 +157,3 @@ npm run web        # Run on web
 - `src/screens/` - Main app screens (Home, Settings, Search)
 - `src/services/` - API services and business logic
 - `src/contexts/` - React Context providers (Theme, Settings)
-	<!--
-	Set up debugging configuration for Flutter app.
-	 -->
-
-- [ ] Ensure Documentation is Complete
-	<!--
-	Complete README.md with WeatherWell project information and setup instructions.
-	 -->
-
-## WeatherWell Project Overview
-Cross-platform weather application built with Flutter featuring:
-- Daily and hourly forecasts
-- Historical weather data
-- Air Quality Index (AQI)
-- Complete weather metrics (temperature, wind, precipitation, UV, visibility, humidity)
-- Sunrise/sunset times and moon phases
-- Smart features: umbrella alarms and clothing suggestions
-- Minimal and clean design
