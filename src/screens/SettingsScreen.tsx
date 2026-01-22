@@ -201,7 +201,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   : settings.weatherProvider === 'openweathermap'
                     ? '✓ OpenWeatherMap - Reliable forecasts, limited astronomy'
                     : settings.weatherProvider === 'visualcrossing'
-                    ? '✓ Visual Crossing - Good data, limited moon phase'
+                    ? '✓ Visual Crossing - Good data, no astronomy'
                     : settings.weatherProvider === 'openmeteo'
                     ? '✓ Open-Meteo - Free, no moon phase data'
                     : settings.weatherProvider === 'qweather'

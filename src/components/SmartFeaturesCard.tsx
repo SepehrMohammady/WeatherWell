@@ -380,7 +380,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
               {weatherData.astronomy.sunrise && weatherData.astronomy.sunset
                 ? `Sunrise: ${weatherData.astronomy.sunrise} • Sunset: ${weatherData.astronomy.sunset}`
-                : 'Data not available for this provider'}
+                : 'Data not available'}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
               Daylight: {(() => {
@@ -388,7 +388,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                   // Check if we have valid sunrise and sunset times
                   if (!weatherData.astronomy.sunrise || !weatherData.astronomy.sunset || 
                       weatherData.astronomy.sunrise === 'N/A' || weatherData.astronomy.sunset === 'N/A') {
-                    return 'Not available';
+                    return 'Data not available';
                   }
                   
                   const sunrise = new Date(`1970-01-01T${weatherData.astronomy.sunrise}`);
@@ -396,7 +396,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                   
                   // Check if dates are valid
                   if (isNaN(sunrise.getTime()) || isNaN(sunset.getTime())) {
-                    return 'Not available';
+                    return 'Data not available';
                   }
                   
                   const diff = sunset.getTime() - sunrise.getTime();
@@ -404,12 +404,12 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                   
                   if (isNaN(hours) || isNaN(minutes)) {
-                    return 'Not available';
+                    return 'Data not available';
                   }
                   
                   return `${hours}h ${minutes}m`;
                 } catch (error) {
-                  return 'Not available';
+                  return 'Data not available';
                 }
               })()}
             </Text>
