@@ -21,13 +21,21 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showAstronomyDetail, setShowAstronomyDetail] = useState<string | null>(null);
 
-  // Get remaining hourly data for today (from current hour onwards)
+  // Get remaining hourly data for today (from current hour onwards - FUTURE only)
   const getRemainingHourlyData = () => {
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const currentHour = now.getHours();
+    const todayStr = now.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    
     return weatherData.forecast.hourly.filter(hour => {
-      const hourTime = new Date(hour.time);
-      return hourTime >= now && hour.time.startsWith(todayStr);
+      // Handle both "YYYY-MM-DD HH:MM" and ISO format
+      const timeStr = hour.time.replace(' ', 'T');
+      const hourTime = new Date(timeStr);
+      const hourDate = hour.time.split(' ')[0] || hour.time.split('T')[0];
+      const hourHour = hourTime.getHours();
+      
+      // Only include future hours from today
+      return hourDate === todayStr && hourHour > currentHour;
     });
   };
 
@@ -88,10 +96,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   };
 
   const getMaskRecommendation = () => {
-    const aqi = weatherData.airQuality?.aqi || 1;
-    if (aqi >= 4) {
+    // AQI is now 0-500 scale (EPA standard)
+    const aqi = weatherData.airQuality?.aqi || 0;
+    if (aqi > 150) {
       return { text: "Wear a mask outdoors", emoji: "😷", color: "#e17055" };
-    } else if (aqi >= 3) {
+    } else if (aqi > 100) {
       return { text: "Consider wearing a mask", emoji: "😐", color: "#fdcb6e" };
     } else {
       return { text: "No mask needed", emoji: "😊", color: "#00b894" };
@@ -99,15 +108,16 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   };
 
   const getAirQualityStatus = () => {
-    const aqi = weatherData.airQuality?.aqi || 1;
-    if (aqi <= 2) {
+    // AQI is now 0-500 scale (EPA standard)
+    const aqi = weatherData.airQuality?.aqi || 0;
+    if (aqi <= 50) {
       return { text: "Air quality is good", emoji: "💚", color: "#00b894" };
-    } else if (aqi <= 3) {
+    } else if (aqi <= 100) {
       return { text: "Moderate air quality", emoji: "💛", color: "#fdcb6e" };
-    } else if (aqi <= 4) {
-      return { text: "Poor air quality", emoji: "🧡", color: "#e17055" };
+    } else if (aqi <= 150) {
+      return { text: "Unhealthy for sensitive", emoji: "🧡", color: "#e17055" };
     } else {
-      return { text: "Very poor air quality", emoji: "🔴", color: "#d63031" };
+      return { text: "Unhealthy air quality", emoji: "🔴", color: "#d63031" };
     }
   };
 
@@ -185,7 +195,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                         AQI {weatherData.airQuality.aqi}
                       </Text>
                       <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        PM2.5: {Math.round(weatherData.airQuality.pm2_5)}μg/m³
+                        (Current - hourly data not available)
                       </Text>
                     </View>
                   )}

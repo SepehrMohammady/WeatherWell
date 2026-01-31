@@ -40,12 +40,12 @@ export const defaultNotificationSettings: NotificationSettings = {
   enableNotifications: true,
   enableSevereWeatherAlerts: true,
   enableDailyForecast: true,
-  enableHourlyForecast: false,
-  enableTemperatureAlerts: false,
+  enableHourlyForecast: false, // Disabled by default - 18:00 hourly update is not useful
+  enableTemperatureAlerts: true,
   enableUVAlerts: true,
   enableUmbrellaAlerts: true,
-  enableAQIAlerts: false,
-  enableWindAlerts: false,
+  enableAQIAlerts: true,
+  enableWindAlerts: true,
   dailyForecastTime: "08:00",
   hourlyForecastTime: "18:00",
   temperatureThreshold: {
@@ -266,6 +266,8 @@ class NotificationService {
 
   /**
    * Schedule daily forecast notification (placeholder scheduler)
+   * Note: This schedules a generic notification. When user opens app, real weather data is sent.
+   * For background weather alerts, the app needs to be periodically opened or use background fetch.
    */
   async scheduleDailyForecast(): Promise<void> {
     if (!this.notificationSettings.enableDailyForecast) return;
@@ -276,12 +278,13 @@ class NotificationService {
 
       const [hours, minutes] = this.notificationSettings.dailyForecastTime.split(':').map(Number);
       
-      // Schedule a generic notification that will trigger the app to send actual weather data
+      // Schedule a notification that reminds user to check weather
+      // The actual weather data will be shown when they open the app
       await Notifications.scheduleNotificationAsync({
         identifier: 'daily-forecast',
         content: {
           title: '🌤️ Daily Weather Forecast',
-          body: 'Tap to view today\'s weather conditions and plan your day!',
+          body: 'Good morning! Tap to check today\'s weather, rain chances, and get your daily recommendations.',
           data: { type: 'daily-forecast-trigger' },
           sound: 'default',
         },

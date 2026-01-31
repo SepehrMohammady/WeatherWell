@@ -125,7 +125,9 @@ export class WeatherAPIService implements WeatherService {
         moonIllumination: 0
       },
       airQuality: data.current.air_quality ? {
-        aqi: data.current.air_quality.us_epa_index || 1,
+        // Calculate real AQI from PM2.5 using EPA breakpoints
+        // EPA AQI breakpoints for PM2.5: 0-12=0-50, 12.1-35.4=51-100, 35.5-55.4=101-150, etc.
+        aqi: this.calculateAQIFromPM25(data.current.air_quality.pm2_5),
         co: data.current.air_quality.co,
         no2: data.current.air_quality.no2,
         o3: data.current.air_quality.o3,
@@ -134,6 +136,36 @@ export class WeatherAPIService implements WeatherService {
         pm10: data.current.air_quality.pm_10
       } : undefined
     };
+  }
+
+  /**
+   * Calculate AQI from PM2.5 concentration using EPA breakpoints
+   */
+  private calculateAQIFromPM25(pm25: number): number {
+    if (pm25 === null || pm25 === undefined) return 0;
+    
+    // EPA AQI breakpoints for PM2.5 (24-hour average)
+    const breakpoints = [
+      { cLow: 0, cHigh: 12.0, iLow: 0, iHigh: 50 },
+      { cLow: 12.1, cHigh: 35.4, iLow: 51, iHigh: 100 },
+      { cLow: 35.5, cHigh: 55.4, iLow: 101, iHigh: 150 },
+      { cLow: 55.5, cHigh: 150.4, iLow: 151, iHigh: 200 },
+      { cLow: 150.5, cHigh: 250.4, iLow: 201, iHigh: 300 },
+      { cLow: 250.5, cHigh: 350.4, iLow: 301, iHigh: 400 },
+      { cLow: 350.5, cHigh: 500.4, iLow: 401, iHigh: 500 },
+    ];
+
+    for (const bp of breakpoints) {
+      if (pm25 >= bp.cLow && pm25 <= bp.cHigh) {
+        // Linear interpolation formula: I = ((Ihigh - Ilow) / (Chigh - Clow)) * (C - Clow) + Ilow
+        const aqi = ((bp.iHigh - bp.iLow) / (bp.cHigh - bp.cLow)) * (pm25 - bp.cLow) + bp.iLow;
+        return Math.round(aqi);
+      }
+    }
+
+    // If PM2.5 is above the highest breakpoint
+    if (pm25 > 500.4) return 500;
+    return 0;
   }
 
   private transformForecastData(data: any): WeatherData {
