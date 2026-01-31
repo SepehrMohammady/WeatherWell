@@ -1,6 +1,6 @@
 ## WeatherWell - React Native/Expo Project
 
-✅ **Project Setup Complete** - Version 0.4.7
+✅ **Project Setup Complete** - Version 0.4.8
 
 ### Project Type
 Cross-platform weather application built with React Native and Expo for Android, iOS, and Web.
@@ -21,7 +21,26 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.4.5)
+### Recent Updates (v0.4.8)
+- **Codebase Cleanup**: Removed dead files and updated documentation
+  - Removed `eas.json` (no longer using EAS Build, native Gradle only)
+  - Updated README.md with correct version (0.4.8)
+  - Updated VERSION_MANAGEMENT.md to mention build.gradle manual updates
+- **Documentation Sync**: All version references updated across project
+
+### Previous Updates (v0.4.7)
+- **AQI Calculation Fix**: Real AQI values now calculated from PM2.5 using EPA breakpoints
+  - WeatherAPI `us_epa_index` (1-6 scale) was incorrectly displayed as real AQI (0-500)
+  - Added `calculateAQIFromPM25()` method using EPA formula
+  - AQI now shows realistic values (20-200+ for Genoa) instead of misleading "1"
+- **Future-Only Recommendations**: Fixed recommendations to use ONLY future hours
+  - `getRemainingHourlyData()` now correctly parses WeatherAPI time format
+  - Umbrella, clothing, UV recommendations based on upcoming hours only
+- **Notifications Improved**: All alerts enabled by default
+  - Improved daily forecast notification message
+  - Added documentation about background notification limitations
+
+### Previous Updates (v0.4.5)
 - **System Theme Detection**: App now follows device dark/light mode on first launch
   - Uses React Native Appearance API for system theme detection
   - Listens to system theme changes automatically

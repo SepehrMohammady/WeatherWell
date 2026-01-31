@@ -33,10 +33,15 @@ npm run version:major
 
 ## Files Synchronized
 
-The following files are automatically updated:
+The following files are automatically updated by scripts:
 - `package.json`
 - `app.json` (Expo configuration)
 - `package-lock.json`
+
+### Manual Updates Required
+The following files must be updated manually:
+- `android/app/build.gradle` - Update `versionCode` (increment by 1) and `versionName`
+- `.github/copilot-instructions.md` - Update version references
 
 ## Usage Workflow
 
@@ -44,5 +49,6 @@ The following files are automatically updated:
 2. **For bug fixes**: `npm run version:patch`
 3. **For breaking changes**: `npm run version:major`
 4. **Manual sync after editing version.ts**: `npm run sync-version`
+5. **Don't forget**: Update `build.gradle` manually!
 
 This prevents version mismatches and ensures consistent versioning across all configuration files.
