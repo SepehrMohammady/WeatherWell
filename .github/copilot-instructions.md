@@ -22,15 +22,27 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.5.0)
+### Recent Updates (v0.5.2)
+- **UI Improvements**: Fixed Temperature Alerts order (L:0° before H:35°, Low to High)
+- **Modal Styling**: Improved time picker Cancel button visibility (was gray, now properly styled)
+
+### Previous Updates (v0.5.1)
+- **Customizable Notification Settings UI**: Users can now change notification times and alert thresholds directly from Settings
+  - Added time picker for Daily Forecast Time (default: 19:00)
+  - Added time picker for Hourly Forecast Time (default: 08:00)
+  - Added threshold editor for Rain Alert (default: 70%)
+  - Added threshold editor for Wind Alert (default: 50 km/h)
+  - Added threshold editor for UV Alert (default: 8)
+  - Added threshold editor for Temperature High Alert (default: 35°C)
+  - Added threshold editor for Temperature Low Alert (default: 0°C)
+- **Fixed Notification Defaults**: Daily forecast at 19:00 (evening), Hourly at 08:00 (morning)
+
+### Previous Updates (v0.5.0)
 - **Background Weather Alerts**: Implemented background task service for real-time alerts
   - Uses expo-task-manager and expo-background-fetch for periodic weather checks
   - Alerts now work even when app is closed (every ~15-30 minutes)
   - Checks all alert types: umbrella, wind, UV, temperature, AQI, severe weather
   - Location is saved for background task to use
-- **Notification Settings Changes**:
-  - Restored default thresholds (rain 70%, wind 50 km/h, UV 8)
-  - Changed hourly forecast time to 19:00 (evening forecast)
 - **New Service**: BackgroundTaskService.ts handles all background weather fetching
 
 ### Previous Updates (v0.4.9)

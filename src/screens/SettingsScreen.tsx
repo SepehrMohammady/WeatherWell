@@ -28,6 +28,13 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
+// Time options for picker
+const timeOptions = [
+  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
+  '20:00', '21:00', '22:00'
+];
+
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
@@ -37,7 +44,65 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
+  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [timePickerType, setTimePickerType] = useState<'daily' | 'hourly'>('daily');
+  const [showThresholdModal, setShowThresholdModal] = useState(false);
+  const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow'>('rain');
+  const [tempThresholdValue, setTempThresholdValue] = useState('');
 
+  const openTimePicker = (type: 'daily' | 'hourly') => {
+    setTimePickerType(type);
+    setShowTimePickerModal(true);
+  };
+
+  const handleTimeSelect = (time: string) => {
+    if (timePickerType === 'daily') {
+      updateSetting('dailyForecastTime', time);
+    } else {
+      updateSetting('hourlyForecastTime', time);
+    }
+    setShowTimePickerModal(false);
+  };
+
+  const openThresholdEditor = (type: 'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow') => {
+    setThresholdType(type);
+    let currentValue = '';
+    switch (type) {
+      case 'rain': currentValue = String(settings.rainThreshold); break;
+      case 'wind': currentValue = String(settings.windSpeedThreshold); break;
+      case 'uv': currentValue = String(settings.uvThreshold); break;
+      case 'tempHigh': currentValue = String(settings.temperatureThresholdHigh); break;
+      case 'tempLow': currentValue = String(settings.temperatureThresholdLow); break;
+    }
+    setTempThresholdValue(currentValue);
+    setShowThresholdModal(true);
+  };
+
+  const handleThresholdSave = () => {
+    const value = parseFloat(tempThresholdValue);
+    if (isNaN(value)) {
+      Alert.alert('Invalid Value', 'Please enter a valid number');
+      return;
+    }
+    switch (thresholdType) {
+      case 'rain': updateSetting('rainThreshold', Math.min(100, Math.max(0, value))); break;
+      case 'wind': updateSetting('windSpeedThreshold', Math.max(0, value)); break;
+      case 'uv': updateSetting('uvThreshold', Math.min(15, Math.max(1, value))); break;
+      case 'tempHigh': updateSetting('temperatureThresholdHigh', value); break;
+      case 'tempLow': updateSetting('temperatureThresholdLow', value); break;
+    }
+    setShowThresholdModal(false);
+  };
+
+  const getThresholdTitle = () => {
+    switch (thresholdType) {
+      case 'rain': return 'Rain Threshold (%)';
+      case 'wind': return 'Wind Speed Threshold (km/h)';
+      case 'uv': return 'UV Index Threshold';
+      case 'tempHigh': return 'High Temperature Threshold (°C)';
+      case 'tempLow': return 'Low Temperature Threshold (°C)';
+    }
+  };
 
   const handleProviderChange = (provider: WeatherProvider) => {
     updateSetting('weatherProvider', provider);
@@ -520,7 +585,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            ℹ️ Background alerts check weather every ~15-30 minutes and notify you when conditions meet thresholds (rain, wind, UV). Daily forecast is scheduled at 8:00 AM.
+            ℹ️ Background alerts check weather every ~15-30 minutes and notify you when conditions meet thresholds. Tap times or thresholds to customize.
           </Text>
           <SettingItem
             title="Enable Notifications"
@@ -554,25 +619,68 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 title="Daily Forecast"
                 subtitle={`Daily weather summary at ${settings.dailyForecastTime}`}
                 rightElement={
-                  <Switch
-                    value={settings.enableDailyForecast}
-                    onValueChange={(value) => updateSetting('enableDailyForecast', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableDailyForecast ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.timeButton, { backgroundColor: colors.card }]}
+                      onPress={() => openTimePicker('daily')}
+                    >
+                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{settings.dailyForecastTime}</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableDailyForecast}
+                      onValueChange={(value) => updateSetting('enableDailyForecast', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableDailyForecast ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
+                }
+              />
+              
+              <SettingItem
+                title="Hourly Forecast"
+                subtitle={`Hourly weather updates at ${settings.hourlyForecastTime || '08:00'}`}
+                rightElement={
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.timeButton, { backgroundColor: colors.card }]}
+                      onPress={() => openTimePicker('hourly')}
+                    >
+                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{settings.hourlyForecastTime || '08:00'}</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableHourlyForecast}
+                      onValueChange={(value) => updateSetting('enableHourlyForecast', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableHourlyForecast ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
               
               <SettingItem
                 title="Temperature Alerts"
-                subtitle={`High: ${settings.temperatureThresholdHigh}°C, Low: ${settings.temperatureThresholdLow}°C`}
+                subtitle={`Low: ${settings.temperatureThresholdLow}°C, High: ${settings.temperatureThresholdHigh}°C`}
                 rightElement={
-                  <Switch
-                    value={settings.enableTemperatureAlerts}
-                    onValueChange={(value) => updateSetting('enableTemperatureAlerts', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableTemperatureAlerts ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('tempLow')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>L:{settings.temperatureThresholdLow}°</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('tempHigh')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>H:{settings.temperatureThresholdHigh}°</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableTemperatureAlerts}
+                      onValueChange={(value) => updateSetting('enableTemperatureAlerts', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableTemperatureAlerts ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
               
@@ -580,25 +688,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 title="UV Index Alerts"
                 subtitle={`Alert when UV index exceeds ${settings.uvThreshold}`}
                 rightElement={
-                  <Switch
-                    value={settings.enableUVAlerts}
-                    onValueChange={(value) => updateSetting('enableUVAlerts', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableUVAlerts ? colors.accent : '#f4f3f4'}
-                  />
-                }
-              />
-              
-              <SettingItem
-                title="Hourly Forecast"
-                subtitle={`Hourly weather updates at ${settings.hourlyForecastTime || '18:00'}`}
-                rightElement={
-                  <Switch
-                    value={settings.enableHourlyForecast}
-                    onValueChange={(value) => updateSetting('enableHourlyForecast', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableHourlyForecast ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('uv')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.uvThreshold}</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableUVAlerts}
+                      onValueChange={(value) => updateSetting('enableUVAlerts', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableUVAlerts ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
               
@@ -606,12 +709,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 title="Umbrella Alerts"
                 subtitle={`Rain alerts when chance exceeds ${settings.rainThreshold || 70}%`}
                 rightElement={
-                  <Switch
-                    value={settings.enableUmbrellaAlerts}
-                    onValueChange={(value) => updateSetting('enableUmbrellaAlerts', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableUmbrellaAlerts ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('rain')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.rainThreshold}%</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableUmbrellaAlerts}
+                      onValueChange={(value) => updateSetting('enableUmbrellaAlerts', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableUmbrellaAlerts ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
               
@@ -619,18 +730,26 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 title="Wind Alerts"
                 subtitle={`Strong wind alerts above ${settings.windSpeedThreshold || 50} km/h`}
                 rightElement={
-                  <Switch
-                    value={settings.enableWindAlerts}
-                    onValueChange={(value) => updateSetting('enableWindAlerts', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableWindAlerts ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('wind')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.windSpeedThreshold}</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableWindAlerts}
+                      onValueChange={(value) => updateSetting('enableWindAlerts', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableWindAlerts ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
               
               <SettingItem
                 title="Air Quality Alerts"
-                subtitle="AQI alerts for unhealthy air quality levels"
+                subtitle="AQI alerts for unhealthy air quality levels (AQI > 100)"
                 rightElement={
                   <Switch
                     value={settings.enableAQIAlerts}
@@ -843,6 +962,105 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
       </Modal>
 
+      {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePickerModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTimePickerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {timePickerType === 'daily' ? 'Daily Forecast Time' : 'Hourly Forecast Time'}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+              Select the time for your {timePickerType} forecast notification
+            </Text>
+            <ScrollView style={styles.timePickerScroll}>
+              {timeOptions.map((time) => (
+                <TouchableOpacity
+                  key={time}
+                  style={[
+                    styles.timeOption,
+                    { 
+                      backgroundColor: (timePickerType === 'daily' ? settings.dailyForecastTime : settings.hourlyForecastTime) === time 
+                        ? colors.primary 
+                        : colors.card 
+                    }
+                  ]}
+                  onPress={() => handleTimeSelect(time)}
+                >
+                  <Text style={[
+                    styles.timeOptionText,
+                    { 
+                      color: (timePickerType === 'daily' ? settings.dailyForecastTime : settings.hourlyForecastTime) === time 
+                        ? 'white' 
+                        : colors.text 
+                    }
+                  ]}>
+                    {time}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: colors.card, marginTop: 16, borderWidth: 1, borderColor: colors.border }]}
+              onPress={() => setShowTimePickerModal(false)}
+            >
+              <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Threshold Editor Modal */}
+      <Modal
+        visible={showThresholdModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowThresholdModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {getThresholdTitle()}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+              Enter the threshold value for alerts
+            </Text>
+            <TextInput
+              style={[styles.thresholdInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              placeholder="Enter value..."
+              placeholderTextColor={colors.textSecondary}
+              value={tempThresholdValue}
+              onChangeText={setTempThresholdValue}
+              keyboardType="numeric"
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.border }]}
+                onPress={() => setShowThresholdModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                onPress={handleThresholdSave}
+              >
+                <Text style={[styles.modalButtonText, { color: 'white' }]}>
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       </LinearGradient>
     </SafeAreaView>
   );
@@ -988,6 +1206,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     padding: 20,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
@@ -1022,6 +1241,51 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  timeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  thresholdButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  thresholdButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  timePickerScroll: {
+    maxHeight: 250,
+  },
+  timeOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  timeOptionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  thresholdInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   footer: {
     paddingHorizontal: 20,

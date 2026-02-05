@@ -40,14 +40,14 @@ export const defaultNotificationSettings: NotificationSettings = {
   enableNotifications: true,
   enableSevereWeatherAlerts: true,
   enableDailyForecast: true,
-  enableHourlyForecast: false, // Disabled by default - 18:00 hourly update is not useful
+  enableHourlyForecast: false, // Disabled by default
   enableTemperatureAlerts: true,
   enableUVAlerts: true,
   enableUmbrellaAlerts: true,
   enableAQIAlerts: true,
   enableWindAlerts: true,
-  dailyForecastTime: "08:00",
-  hourlyForecastTime: "19:00", // Evening forecast
+  dailyForecastTime: "19:00", // Evening daily forecast
+  hourlyForecastTime: "08:00", // Morning hourly forecast
   temperatureThreshold: {
     high: 35, // Celsius
     low: 0,
