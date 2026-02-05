@@ -520,7 +520,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            ℹ️ Daily forecast is scheduled at 8:00 AM. Alert notifications (umbrella, wind, UV) trigger when you open the app and conditions meet thresholds.
+            ℹ️ Background alerts check weather every ~15-30 minutes and notify you when conditions meet thresholds (rain, wind, UV). Daily forecast is scheduled at 8:00 AM.
           </Text>
           <SettingItem
             title="Enable Notifications"

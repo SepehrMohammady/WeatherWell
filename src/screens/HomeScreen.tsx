@@ -27,6 +27,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { backgroundTaskService } from '../services/BackgroundTaskService';
 
 export const HomeScreen: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -43,6 +44,16 @@ export const HomeScreen: React.FC = () => {
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const { checkWeatherAlerts, isInitialized } = useNotifications();
   const locationService = LocationService.getInstance();
+
+  // Register background task on mount
+  useEffect(() => {
+    const initBackgroundTask = async () => {
+      if (settings.enableNotifications) {
+        await backgroundTaskService.registerBackgroundTask();
+      }
+    };
+    initBackgroundTask();
+  }, [settings.enableNotifications]);
 
   const loadWeatherData = async (customLocation?: Location) => {
     try {
@@ -69,6 +80,9 @@ export const HomeScreen: React.FC = () => {
         longitude = location.longitude;
       }
       
+      // Save location for background task
+      await backgroundTaskService.saveLocationForBackground(latitude, longitude);
+      
       // Fetch weather data using preferred provider from settings
       const result = await WeatherServiceFactory.getWeatherWithFallback(
         latitude, 
@@ -85,11 +99,8 @@ export const HomeScreen: React.FC = () => {
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
       
-      // Check for weather alerts and send notifications after loading data
-      // NOTE: Alert notifications (umbrella, wind, UV, etc.) only trigger when:
-      // 1. App is opened and weather data is loaded
-      // 2. Weather conditions meet the threshold settings
-      // Scheduled notifications at 8:00/18:00 are separate from alert notifications
+      // Check for weather alerts when app is opened
+      // Background alerts are handled by BackgroundTaskService
       if (isInitialized && settings.enableNotifications) {
         await checkWeatherAlerts(result.data);
       }

@@ -1,6 +1,6 @@
 ## WeatherWell - React Native/Expo Project
 
-✅ **Project Setup Complete** - Version 0.4.9
+✅ **Project Setup Complete** - Version 0.5.0
 
 ### Project Type
 Cross-platform weather application built with React Native and Expo for Android, iOS, and Web.
@@ -17,62 +17,44 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Expandable hourly details for recommendations
 - ✅ Astronomy section with clickable daily details and per-day data
 - ✅ Comprehensive notification system with real weather data
+- ✅ **Background weather alerts** - alerts work even when app is closed
 - ✅ 6 weather API providers with fallback (WeatherAPI, OpenWeatherMap, Visual Crossing, Open-Meteo, QWeather, Meteostat)
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.4.9)
+### Recent Updates (v0.5.0)
+- **Background Weather Alerts**: Implemented background task service for real-time alerts
+  - Uses expo-task-manager and expo-background-fetch for periodic weather checks
+  - Alerts now work even when app is closed (every ~15-30 minutes)
+  - Checks all alert types: umbrella, wind, UV, temperature, AQI, severe weather
+  - Location is saved for background task to use
+- **Notification Settings Changes**:
+  - Restored default thresholds (rain 70%, wind 50 km/h, UV 8)
+  - Changed hourly forecast time to 19:00 (evening forecast)
+- **New Service**: BackgroundTaskService.ts handles all background weather fetching
+
+### Previous Updates (v0.4.9)
 - **Notification System Improvements**:
   - Removed Test Notification button from Settings (not useful for users)
-  - Removed duplicate daily/hourly notifications on app load (was sending both scheduled AND immediate)
-  - Lowered default alert thresholds for better usability:
-    - Rain threshold: 70% → 30% (alert for reasonable rain chance)
-    - Wind threshold: 50 km/h → 30 km/h (moderate wind warning)
-    - UV threshold: 8 → 6 (high UV starts at 6)
-  - Changed hourly forecast time from 18:00 → 07:00 (more useful morning forecast)
+  - Removed duplicate daily/hourly notifications on app load
   - Added info note explaining how alert notifications work
-- **Visibility Data**: Confirmed WeatherAPI provides real visibility data (10 km is common for good weather)
+- **Visibility Data**: Confirmed WeatherAPI provides real visibility data
 
 ### Previous Updates (v0.4.8)
 - **Codebase Cleanup**: Removed dead files and updated documentation
   - Removed `eas.json` (no longer using EAS Build, native Gradle only)
-  - Updated README.md with correct version (0.4.8)
   - Updated VERSION_MANAGEMENT.md to mention build.gradle manual updates
-- **Documentation Sync**: All version references updated across project
 
 ### Previous Updates (v0.4.7)
 - **AQI Calculation Fix**: Real AQI values now calculated from PM2.5 using EPA breakpoints
-  - WeatherAPI `us_epa_index` (1-6 scale) was incorrectly displayed as real AQI (0-500)
-  - Added `calculateAQIFromPM25()` method using EPA formula
-  - AQI now shows realistic values (20-200+ for Genoa) instead of misleading "1"
 - **Future-Only Recommendations**: Fixed recommendations to use ONLY future hours
-  - `getRemainingHourlyData()` now correctly parses WeatherAPI time format
-  - Umbrella, clothing, UV recommendations based on upcoming hours only
 - **Notifications Improved**: All alerts enabled by default
-  - Improved daily forecast notification message
-  - Added documentation about background notification limitations
 
 ### Previous Updates (v0.4.5)
 - **System Theme Detection**: App now follows device dark/light mode on first launch
-  - Uses React Native Appearance API for system theme detection
-  - Listens to system theme changes automatically
-  - Manual toggle still available in settings
-- **Default Settings Improvements**:
-  - Refresh interval changed from 30 to 60 minutes
-  - All features and alerts enabled by default (hourly, temperature, AQI, wind alerts)
-- **UI Improvements**:
-  - Removed ⭐ star from WeatherAPI provider button (cleaner design)
-  - Fixed QWeather and Meteostat API key labels to show "Using default key" correctly
-- **Smart Recommendations Enhanced**:
-  - Recommendations now based on worst-case scenario for remaining hours today
-  - Umbrella alert uses max precipitation chance from remaining hourly forecasts
-  - Clothing suggestion uses minimum temperature from remaining hours
-  - UV recommendation uses maximum UV index from remaining hours
-- **Astronomy Data Fixes**:
-  - OpenWeatherMap: Moon phase now shows "Data not available" instead of 0%
-  - Open-Meteo: Fixed sunrise/sunset formatting, moon data shows as unavailable
-  - Meteostat: Astronomy section properly shows "Data not available"
-  - Visual Crossing: Removed hardcoded fallback values (06:00/18:00)
+- **Default Settings Improvements**: Refresh interval 60 minutes, all alerts enabled
+- **Smart Recommendations Enhanced**: Worst-case scenario for remaining hours
+- **Astronomy Data Fixes**: Proper handling of unavailable data across providers
   - All services now use -1 for unavailable moonIllumination to distinguish from actual 0%
 
 ### Previous Updates (v0.4.4)
