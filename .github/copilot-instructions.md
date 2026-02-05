@@ -1,6 +1,6 @@
 ## WeatherWell - React Native/Expo Project
 
-✅ **Project Setup Complete** - Version 0.4.8
+✅ **Project Setup Complete** - Version 0.4.9
 
 ### Project Type
 Cross-platform weather application built with React Native and Expo for Android, iOS, and Web.
@@ -21,7 +21,19 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.4.8)
+### Recent Updates (v0.4.9)
+- **Notification System Improvements**:
+  - Removed Test Notification button from Settings (not useful for users)
+  - Removed duplicate daily/hourly notifications on app load (was sending both scheduled AND immediate)
+  - Lowered default alert thresholds for better usability:
+    - Rain threshold: 70% → 30% (alert for reasonable rain chance)
+    - Wind threshold: 50 km/h → 30 km/h (moderate wind warning)
+    - UV threshold: 8 → 6 (high UV starts at 6)
+  - Changed hourly forecast time from 18:00 → 07:00 (more useful morning forecast)
+  - Added info note explaining how alert notifications work
+- **Visibility Data**: Confirmed WeatherAPI provides real visibility data (10 km is common for good weather)
+
+### Previous Updates (v0.4.8)
 - **Codebase Cleanup**: Removed dead files and updated documentation
   - Removed `eas.json` (no longer using EAS Build, native Gradle only)
   - Updated README.md with correct version (0.4.8)

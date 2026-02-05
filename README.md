@@ -2,7 +2,7 @@
 
 A comprehensive cross-platform weather application built with **React Native** and **Expo** for Android, iOS, and Web. WeatherWell provides detailed weather information with smart features like umbrella alarms, clothing suggestions, and real-time notifications.
 
-![Version](https://img.shields.io/badge/version-0.4.8-blue)
+![Version](https://img.shields.io/badge/version-0.4.9-blue)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-green)
 ![License](https://img.shields.io/badge/license-MIT-purple)
 
@@ -198,6 +198,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**WeatherWell** v0.4.8 - Your reliable companion for weather updates! 🌤️
+**WeatherWell** v0.4.9 - Your reliable companion for weather updates! 🌤️
 
 © 2026 Sepehr Mohammady

@@ -41,7 +41,7 @@ export const HomeScreen: React.FC = () => {
   const { colors } = useTheme();
   const { settings } = useSettings();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
-  const { checkWeatherAlerts, sendWeatherUpdate, isInitialized } = useNotifications();
+  const { checkWeatherAlerts, isInitialized } = useNotifications();
   const locationService = LocationService.getInstance();
 
   const loadWeatherData = async (customLocation?: Location) => {
@@ -86,17 +86,12 @@ export const HomeScreen: React.FC = () => {
       console.log('Using weather source:', result.source);
       
       // Check for weather alerts and send notifications after loading data
+      // NOTE: Alert notifications (umbrella, wind, UV, etc.) only trigger when:
+      // 1. App is opened and weather data is loaded
+      // 2. Weather conditions meet the threshold settings
+      // Scheduled notifications at 8:00/18:00 are separate from alert notifications
       if (isInitialized && settings.enableNotifications) {
         await checkWeatherAlerts(result.data);
-        
-        // Send immediate weather notifications with real data
-        // This gives users current weather info instead of generic messages
-        if (settings.enableDailyForecast) {
-          await sendWeatherUpdate(result.data, 'daily');
-        }
-        if (settings.enableHourlyForecast) {
-          await sendWeatherUpdate(result.data, 'hourly');
-        }
       }
     } catch (err) {
       console.error('Error loading weather data:', err);

@@ -47,14 +47,14 @@ export const defaultNotificationSettings: NotificationSettings = {
   enableAQIAlerts: true,
   enableWindAlerts: true,
   dailyForecastTime: "08:00",
-  hourlyForecastTime: "18:00",
+  hourlyForecastTime: "07:00", // Changed to morning for more useful hourly forecast
   temperatureThreshold: {
     high: 35, // Celsius
     low: 0,
   },
-  uvThreshold: 8, // High UV index
-  rainThreshold: 70, // Percentage chance
-  windSpeedThreshold: 50, // km/h
+  uvThreshold: 6, // Lowered from 8 - high UV starts at 6
+  rainThreshold: 30, // Lowered from 70% - alert when there's a reasonable chance of rain
+  windSpeedThreshold: 30, // Lowered from 50 km/h - moderate wind warning
 };
 
 class NotificationService {

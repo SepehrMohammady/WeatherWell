@@ -31,7 +31,7 @@ interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
-  const { sendTestNotification, isInitialized } = useNotifications();
+  const { isInitialized } = useNotifications();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
@@ -519,6 +519,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Notifications
           </Text>
+          <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
+            ℹ️ Daily forecast is scheduled at 8:00 AM. Alert notifications (umbrella, wind, UV) trigger when you open the app and conditions meet thresholds.
+          </Text>
           <SettingItem
             title="Enable Notifications"
             subtitle="Master switch for all weather notifications"
@@ -684,23 +687,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </TouchableOpacity>
             }
             onPress={() => setShowImportModal(true)}
-          />
-          <SettingItem
-            title="Test Notification"
-            subtitle="Send a test notification (real weather data sent when app loads)"
-            rightElement={
-              <TouchableOpacity 
-                onPress={sendTestNotification}
-                disabled={!isInitialized || !settings.enableNotifications}
-              >
-                <Ionicons 
-                  name="notifications-outline" 
-                  size={24} 
-                  color={isInitialized && settings.enableNotifications ? colors.primary : colors.textSecondary} 
-                />
-              </TouchableOpacity>
-            }
-            onPress={sendTestNotification}
           />
           <SettingItem
             title="Reset to Defaults"
@@ -908,6 +894,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     color: 'white',
+  },
+  notificationNote: {
+    fontSize: 12,
+    marginBottom: 12,
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
   settingItem: {
     flexDirection: 'row',
