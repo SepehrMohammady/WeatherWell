@@ -70,7 +70,7 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>� Hourly Forecast</Text>
+      <Text style={[styles.title, { color: colors.text }]}>⏰ Hourly Forecast</Text>
       <ScrollView 
         ref={scrollViewRef}
         horizontal 

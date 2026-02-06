@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WeatherData } from '../services/types';
@@ -126,6 +126,34 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const uvProtection = getUVRecommendation();
   const maskAdvice = getMaskRecommendation();
   const airQuality = getAirQualityStatus();
+  
+  // Ref for auto-scrolling to current hour in recommendations
+  const recommendationScrollRef = useRef<ScrollView>(null);
+  
+  // Find current hour index for auto-scroll
+  const getCurrentHourIndex = () => {
+    const now = new Date();
+    const hourlyData = weatherData.forecast.hourly.slice(0, 24);
+    return hourlyData.findIndex(hour => {
+      const hourDate = new Date(hour.time);
+      return hourDate.getHours() === now.getHours() && 
+             hourDate.toDateString() === now.toDateString();
+    });
+  };
+  
+  // Auto-scroll to current hour when modal opens
+  useEffect(() => {
+    if (expandedItem && expandedItem !== 'airquality') {
+      const currentIndex = getCurrentHourIndex();
+      if (currentIndex > 0 && recommendationScrollRef.current) {
+        // Each hourly item is approximately 56px high (paddingVertical: 12 * 2 + content)
+        const scrollPosition = Math.max(0, (currentIndex - 1) * 56);
+        setTimeout(() => {
+          recommendationScrollRef.current?.scrollTo({ y: scrollPosition, animated: true });
+        }, 300);
+      }
+    }
+  }, [expandedItem]);
 
   const renderHourlyDetails = (type: string) => {
     const hourlyData = weatherData.forecast.hourly.slice(0, 24); // Next 24 hours
@@ -155,7 +183,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  🌬️ Daily Air Quality
+                  💨 Daily Air Quality
                 </Text>
                 <TouchableOpacity onPress={() => setExpandedItem(null)}>
                   <Ionicons name="close" size={24} color={colors.text} />
@@ -202,7 +230,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView ref={recommendationScrollRef} style={styles.modalScroll}>
               {hourlyData.map((hour, index) => {
                 const isCurrent = isCurrentHour(hour.time);
                 return (
@@ -303,7 +331,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                               ☀️ {dayAstronomy.sunrise}
                             </Text>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              � {dayAstronomy.sunset}
+                              🌇 {dayAstronomy.sunset}
                             </Text>
                           </>
                         ) : (
