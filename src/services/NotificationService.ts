@@ -492,7 +492,7 @@ class NotificationService {
 
     try {
       const title = '☂️ Umbrella Alert';
-      const body = `${rainChance}% chance of rain today. Don't forget your umbrella!`;
+      const body = `${rainChance}% chance of rain upcoming. Don't forget your umbrella!`;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -600,10 +600,15 @@ class NotificationService {
         await this.sendUVAlert(current.uvIndex);
       }
 
-      // Check umbrella alerts
+      // Check umbrella alerts - use max rain chance from FUTURE hours only
       if (this.notificationSettings.enableUmbrellaAlerts && weatherData.forecast.daily.length > 0) {
         const todayForecast = weatherData.forecast.daily[0];
-        await this.sendUmbrellaAlert(todayForecast.precipitationChance, todayForecast.condition);
+        const now = new Date();
+        const futureHourly = weatherData.forecast.hourly.filter(h => new Date(h.time) > now);
+        const futureRainChance = futureHourly.length > 0
+          ? Math.max(...futureHourly.map(h => h.precipitationChance))
+          : todayForecast.precipitationChance;
+        await this.sendUmbrellaAlert(futureRainChance, todayForecast.condition);
       }
 
       // Check wind alerts

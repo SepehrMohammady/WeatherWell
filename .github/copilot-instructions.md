@@ -22,7 +22,12 @@ Cross-platform weather application built with React Native and Expo for Android,
 - ✅ Minimal and clean neutral design
 - ✅ Splash screen with app logo
 
-### Recent Updates (v0.5.2)
+### Recent Updates (v0.5.3)
+- **Background Task Interval**: Changed from 15-30 minutes to every 60 minutes (1 hour)
+- **Umbrella Alert Fix**: Rain alerts now use max rain chance from FUTURE hours only (not daily aggregate including past hours)
+- **Both foreground & background alerts**: Fixed in NotificationService and BackgroundTaskService
+
+### Previous Updates (v0.5.2)
 - **UI Improvements**: Fixed Temperature Alerts order (L:0° before H:35°, Low to High)
 - **Modal Styling**: Improved time picker Cancel button visibility (was gray, now properly styled)
 

@@ -96,13 +96,17 @@ async function checkAndSendAlerts(
   const current = weatherData.current;
   const today = weatherData.forecast.daily[0];
 
-  // Check umbrella alert
+  // Check umbrella alert - use max rain chance from FUTURE hours only
   if (settings.enableUmbrellaAlerts && today) {
-    const rainChance = today.precipitationChance;
+    const now = new Date();
+    const futureHourly = weatherData.forecast.hourly.filter(h => new Date(h.time) > now);
+    const rainChance = futureHourly.length > 0
+      ? Math.max(...futureHourly.map(h => h.precipitationChance))
+      : today.precipitationChance;
     if (rainChance >= settings.rainThreshold) {
       await sendBackgroundNotification(
         '☂️ Umbrella Alert',
-        `${rainChance}% chance of rain today. Don't forget your umbrella!`,
+        `${rainChance}% chance of rain upcoming. Don't forget your umbrella!`,
         { type: 'umbrella-alert', rainChance }
       );
       console.log(`☂️ Background umbrella alert sent: ${rainChance}%`);
@@ -246,14 +250,14 @@ class BackgroundTaskService {
 
       // Register the background fetch task
       await BackgroundFetch.registerTaskAsync(BACKGROUND_WEATHER_TASK, {
-        minimumInterval: 15 * 60, // 15 minutes minimum (Android may schedule less frequently)
+        minimumInterval: 60 * 60, // 60 minutes (1 hour)
         stopOnTerminate: false, // Continue after app is closed
         startOnBoot: true, // Start after device reboot
       });
 
       this.isRegistered = true;
       console.log('✅ Background weather task registered successfully');
-      console.log('📋 Task will run approximately every 15-30 minutes depending on system');
+      console.log('📋 Task will run approximately every 60 minutes depending on system');
       return true;
     } catch (error) {
       console.error('❌ Failed to register background task:', error);
