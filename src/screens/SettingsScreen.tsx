@@ -585,7 +585,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            ℹ️ Background alerts check weather every ~15-30 minutes and notify you when conditions meet thresholds. Tap times or thresholds to customize.
+            ℹ️ Background alerts check weather every ~60 minutes and notify you when conditions meet thresholds. Tap times or thresholds to customize.
           </Text>
           <SettingItem
             title="Enable Notifications"

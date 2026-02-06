@@ -130,6 +130,46 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const renderHourlyDetails = (type: string) => {
     const hourlyData = weatherData.forecast.hourly.slice(0, 12); // Next 12 hours
     
+    // Air Quality uses daily data (only current is available)
+    if (type === 'airquality') {
+      return (
+        <Modal
+          visible={expandedItem === type}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setExpandedItem(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  💨 Daily Air Quality
+                </Text>
+                <TouchableOpacity onPress={() => setExpandedItem(null)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalScroll}>
+                {weatherData.airQuality && (
+                  <View style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.hourlyTime, { color: colors.text }]}>
+                      {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </Text>
+                    <View style={styles.hourlyDetail}>
+                      <Text style={[styles.hourlyValue, { color: colors.text }]}>
+                        AQI {weatherData.airQuality.aqi}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+    
     return (
       <Modal
         visible={expandedItem === type}
@@ -144,7 +184,6 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                 {type === 'umbrella' && '☂️ Hourly Rain Forecast'}
                 {type === 'clothing' && '🧥 Hourly Temperature'}
                 {type === 'uv' && '☀️ Hourly UV Index'}
-                {type === 'airquality' && '💨 Hourly Air Quality'}
               </Text>
               <TouchableOpacity onPress={() => setExpandedItem(null)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -186,16 +225,6 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                         {hour.uvIndex && hour.uvIndex >= 8 ? 'Very High' : 
                          hour.uvIndex && hour.uvIndex >= 6 ? 'High' : 
                          hour.uvIndex && hour.uvIndex >= 3 ? 'Moderate' : 'Low'}
-                      </Text>
-                    </View>
-                  )}
-                  {type === 'airquality' && weatherData.airQuality && (
-                    <View style={styles.hourlyDetail}>
-                      <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        AQI {weatherData.airQuality.aqi}
-                      </Text>
-                      <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        (Current - hourly data not available)
                       </Text>
                     </View>
                   )}
@@ -249,7 +278,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
                               ☀️ {dayAstronomy.sunrise}
                             </Text>
-                            <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
+                            <Text style={[styles.hourlyValue, { color: colors.text }]}>
                               🌙 {dayAstronomy.sunset}
                             </Text>
                           </>

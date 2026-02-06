@@ -298,7 +298,7 @@ class BackgroundTaskService {
    * Check the status of background fetch
    */
   async getBackgroundFetchStatus(): Promise<{
-    status: BackgroundFetch.BackgroundFetchStatus;
+    status: BackgroundFetch.BackgroundFetchStatus | null;
     isRegistered: boolean;
     statusText: string;
   }> {
