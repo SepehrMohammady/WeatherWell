@@ -128,7 +128,19 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   const airQuality = getAirQualityStatus();
 
   const renderHourlyDetails = (type: string) => {
-    const hourlyData = weatherData.forecast.hourly.slice(0, 12); // Next 12 hours
+    const hourlyData = weatherData.forecast.hourly.slice(0, 24); // Next 24 hours
+    
+    // Helper to check if hour is current
+    const isCurrentHour = (timeString: string): boolean => {
+      try {
+        const hourDate = new Date(timeString);
+        const now = new Date();
+        return hourDate.getHours() === now.getHours() && 
+               hourDate.toDateString() === now.toDateString();
+      } catch (e) {
+        return false;
+      }
+    };
     
     // Air Quality uses daily data (only current is available)
     if (type === 'airquality') {
@@ -143,7 +155,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  💨 Daily Air Quality
+                  🌬️ Daily Air Quality
                 </Text>
                 <TouchableOpacity onPress={() => setExpandedItem(null)}>
                   <Ionicons name="close" size={24} color={colors.text} />
@@ -191,10 +203,21 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             </View>
             
             <ScrollView style={styles.modalScroll}>
-              {hourlyData.map((hour, index) => (
-                <View key={index} style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.hourlyTime, { color: colors.text }]}>
-                    {new Date(hour.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              {hourlyData.map((hour, index) => {
+                const isCurrent = isCurrentHour(hour.time);
+                return (
+                <View key={index} style={[
+                  styles.hourlyItem, 
+                  { borderBottomColor: colors.border },
+                  isCurrent && styles.currentHourItem,
+                  isCurrent && { backgroundColor: colors.primary + '20', borderLeftColor: colors.primary }
+                ]}>
+                  <Text style={[
+                    styles.hourlyTime, 
+                    { color: isCurrent ? colors.primary : colors.text },
+                    isCurrent && { fontWeight: 'bold' }
+                  ]}>
+                    {isCurrent ? 'Now' : new Date(hour.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                   </Text>
                   {type === 'umbrella' && (
                     <View style={styles.hourlyDetail}>
@@ -229,7 +252,8 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                     </View>
                   )}
                 </View>
-              ))}
+                );
+              })}
             </ScrollView>
           </View>
         </View>
@@ -279,7 +303,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                               ☀️ {dayAstronomy.sunrise}
                             </Text>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              🌙 {dayAstronomy.sunset}
+                              � {dayAstronomy.sunset}
                             </Text>
                           </>
                         ) : (
@@ -558,6 +582,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
+  },
+  currentHourItem: {
+    borderLeftWidth: 3,
+    paddingLeft: 12,
+    marginLeft: -12,
+    borderRadius: 4,
   },
   hourlyTime: {
     fontSize: 14,
