@@ -216,7 +216,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.gradient[colors.gradient.length - 1] }]}>
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
