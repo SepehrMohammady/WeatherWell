@@ -253,7 +253,7 @@ export const HomeScreen: React.FC = () => {
     : weatherData?.location.name || 'Current Location';
 
   return (
-    <>
+    <View style={styles.container}>
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <StatusBar barStyle="light-content" />
         
@@ -348,7 +348,7 @@ export const HomeScreen: React.FC = () => {
           />
         </View>
       )}
-    </>
+    </View>
   );
 };
 
