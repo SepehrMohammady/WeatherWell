@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/SettingsContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { APP_VERSION } from '../config/version';
 
 interface SettingsScreenProps {
@@ -39,6 +40,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
   const { isInitialized } = useNotifications();
+  const { favorites, addToFavorites, removeFromFavorites, clearFavorites } = useFavorites();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
@@ -147,31 +149,65 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleExport = async () => {
     try {
-      const settingsJson = exportSettings();
-      const fileName = `WeatherWell_Settings_${new Date().toISOString().split('T')[0]}.json`;
+      const backupData = {
+        type: 'weatherwell-backup',
+        version: APP_VERSION,
+        exportDate: new Date().toISOString(),
+        settings: JSON.parse(exportSettings()),
+        favorites: favorites,
+      };
+      const backupJson = JSON.stringify(backupData, null, 2);
       
       await Share.share({
-        message: settingsJson,
-        title: 'WeatherWell Settings Export',
+        message: backupJson,
+        title: `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`,
       });
     } catch (error) {
-      Alert.alert('Error', 'Failed to export settings');
+      Alert.alert('Error', 'Failed to export backup');
     }
   };
 
   const handleImport = async () => {
     if (!importText.trim()) {
-      Alert.alert('Error', 'Please paste your settings data');
+      Alert.alert('Error', 'Please paste your backup data');
       return;
     }
 
-    const success = await importSettings(importText);
-    if (success) {
-      Alert.alert('Success', 'Settings imported successfully');
-      setShowImportModal(false);
-      setImportText('');
-    } else {
-      Alert.alert('Error', 'Invalid settings data');
+    try {
+      const parsed = JSON.parse(importText);
+      
+      // Handle new .weatherwell backup format
+      if (parsed.type === 'weatherwell-backup') {
+        const settingsSuccess = await importSettings(JSON.stringify(parsed.settings));
+        
+        // Restore favorites if present
+        if (parsed.favorites && Array.isArray(parsed.favorites)) {
+          await clearFavorites();
+          for (const fav of parsed.favorites) {
+            await addToFavorites(fav);
+          }
+        }
+        
+        if (settingsSuccess) {
+          Alert.alert('Success', 'Backup restored successfully (settings and favorites)');
+          setShowImportModal(false);
+          setImportText('');
+        } else {
+          Alert.alert('Error', 'Failed to restore settings from backup');
+        }
+      } else {
+        // Legacy format: plain settings JSON
+        const success = await importSettings(importText);
+        if (success) {
+          Alert.alert('Success', 'Settings imported successfully');
+          setShowImportModal(false);
+          setImportText('');
+        } else {
+          Alert.alert('Error', 'Invalid backup data');
+        }
+      }
+    } catch {
+      Alert.alert('Error', 'Invalid backup data. Make sure you paste the complete .weatherwell file content.');
     }
   };
 
@@ -585,11 +621,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            ℹ️ Background alerts check weather every ~60 minutes and notify you when conditions meet thresholds. Tap times or thresholds to customize.
+            📋 Scheduled: Daily and Hourly forecasts are sent at your chosen time.{'\n'}⚡ Dynamic: Weather alerts run in the background every ~{settings.refreshInterval} minutes and warn you when thresholds are exceeded or hazardous conditions are forecast within the next hour.
           </Text>
           <SettingItem
             title="Enable Notifications"
-            subtitle="Master switch for all weather notifications"
+            subtitle="Turn on/off all scheduled and dynamic weather alerts"
             rightElement={
               <Switch
                 value={settings.enableNotifications}
@@ -604,7 +640,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             <>
               <SettingItem
                 title="Severe Weather Alerts"
-                subtitle="Thunderstorms, heavy rain, strong winds"
+                subtitle="Warns about thunderstorms, heavy rain, snow, and hail"
                 rightElement={
                   <Switch
                     value={settings.enableSevereWeatherAlerts}
@@ -617,7 +653,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Daily Forecast"
-                subtitle={`Daily weather summary at ${settings.dailyForecastTime}`}
+                subtitle={`Scheduled daily summary at ${settings.dailyForecastTime} with conditions and tips`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -638,7 +674,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Hourly Forecast"
-                subtitle={`Hourly weather updates at ${settings.hourlyForecastTime || '08:00'}`}
+                subtitle={`Scheduled 6-hour outlook at ${settings.hourlyForecastTime || '08:00'} with rain and temp info`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -659,7 +695,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Temperature Alerts"
-                subtitle={`Low: ${settings.temperatureThresholdLow}°C, High: ${settings.temperatureThresholdHigh}°C`}
+                subtitle={`Alerts when temp drops below ${settings.temperatureThresholdLow}°C or exceeds ${settings.temperatureThresholdHigh}°C`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -686,7 +722,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="UV Index Alerts"
-                subtitle={`Alert when UV index exceeds ${settings.uvThreshold}`}
+                subtitle={`Warns when UV index reaches ${settings.uvThreshold}+ to protect your skin`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -707,7 +743,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Umbrella Alerts"
-                subtitle={`Rain alerts when chance exceeds ${settings.rainThreshold || 70}%`}
+                subtitle={`Reminds you to bring an umbrella when rain chance hits ${settings.rainThreshold || 70}%+`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -728,7 +764,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Wind Alerts"
-                subtitle={`Strong wind alerts above ${settings.windSpeedThreshold || 50} km/h`}
+                subtitle={`Warns when wind speed exceeds ${settings.windSpeedThreshold || 50} km/h`}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
@@ -749,7 +785,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Air Quality Alerts"
-                subtitle="AQI alerts for unhealthy air quality levels (AQI > 100)"
+                subtitle="Alerts when AQI reaches unhealthy levels (above 100)"
                 rightElement={
                   <Switch
                     value={settings.enableAQIAlerts}
@@ -788,8 +824,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Advanced
           </Text>
           <SettingItem
-            title="Export Settings"
-            subtitle="Save settings as file for backup"
+            title="Export Backup"
+            subtitle="Save all settings and favorites as .weatherwell file"
             rightElement={
               <TouchableOpacity onPress={handleExport}>
                 <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
@@ -798,8 +834,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             onPress={handleExport}
           />
           <SettingItem
-            title="Import Settings"
-            subtitle="Restore settings from backup"
+            title="Import Backup"
+            subtitle="Restore settings and favorites from .weatherwell file"
             rightElement={
               <TouchableOpacity onPress={() => setShowImportModal(true)}>
                 <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
@@ -926,14 +962,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Import Settings
+              Import Backup
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Paste your exported settings data below
+              Paste your .weatherwell backup data below to restore settings and favorites
             </Text>
             <TextInput
               style={[styles.importInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="Paste your settings JSON here..."
+              placeholder="Paste your .weatherwell backup data here..."
               placeholderTextColor={colors.textSecondary}
               value={importText}
               onChangeText={setImportText}
@@ -1005,11 +1041,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               ))}
             </ScrollView>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: colors.card, marginTop: 16, borderWidth: 1, borderColor: colors.border }]}
+              style={[styles.modalButton, { backgroundColor: colors.border, marginTop: 16 }]}
               onPress={() => setShowTimePickerModal(false)}
             >
               <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                Cancel
+                Close
               </Text>
             </TouchableOpacity>
           </View>

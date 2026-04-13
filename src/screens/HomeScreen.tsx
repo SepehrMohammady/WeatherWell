@@ -49,11 +49,11 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     const initBackgroundTask = async () => {
       if (settings.enableNotifications) {
-        await backgroundTaskService.registerBackgroundTask();
+        await backgroundTaskService.registerBackgroundTask(settings.refreshInterval);
       }
     };
     initBackgroundTask();
-  }, [settings.enableNotifications]);
+  }, [settings.enableNotifications, settings.refreshInterval]);
 
   const loadWeatherData = async (customLocation?: Location) => {
     try {

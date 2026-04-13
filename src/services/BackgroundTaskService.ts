@@ -13,6 +13,8 @@ export const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
 const LAST_LOCATION_KEY = 'weatherwell_last_location';
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
 const SETTINGS_KEY = 'weatherwell_settings';
+const LAST_ALERTS_KEY = 'weatherwell_last_alerts';
+const ALERT_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hour cooldown per alert type
 
 interface StoredLocation {
   latitude: number;
@@ -78,6 +80,9 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
 
     // Check for alerts and send notifications
     await checkAndSendAlerts(weatherData, notificationSettings);
+
+    // Check upcoming hourly conditions and warn 1 hour ahead
+    await checkUpcomingConditions(weatherData, notificationSettings);
 
     return BackgroundFetch.BackgroundFetchResult.NewData;
   } catch (error) {
@@ -201,6 +206,148 @@ async function checkAndSendAlerts(
 }
 
 /**
+ * Helper to check alert cooldown - prevents sending the same alert type repeatedly
+ */
+async function shouldSendAlert(alertType: string): Promise<boolean> {
+  try {
+    const lastAlertsData = await AsyncStorage.getItem(LAST_ALERTS_KEY);
+    const lastAlerts: Record<string, number> = lastAlertsData ? JSON.parse(lastAlertsData) : {};
+    const lastSent = lastAlerts[alertType] || 0;
+    return (Date.now() - lastSent) > ALERT_COOLDOWN_MS;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Mark an alert type as sent (for cooldown tracking)
+ */
+async function markAlertSent(alertType: string): Promise<void> {
+  try {
+    const lastAlertsData = await AsyncStorage.getItem(LAST_ALERTS_KEY);
+    const lastAlerts: Record<string, number> = lastAlertsData ? JSON.parse(lastAlertsData) : {};
+    lastAlerts[alertType] = Date.now();
+    // Clean up entries older than 24 hours
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    for (const key in lastAlerts) {
+      if (lastAlerts[key] < cutoff) delete lastAlerts[key];
+    }
+    await AsyncStorage.setItem(LAST_ALERTS_KEY, JSON.stringify(lastAlerts));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/**
+ * Check upcoming hourly forecasts and warn ~1 hour before bad conditions
+ */
+async function checkUpcomingConditions(
+  weatherData: WeatherData,
+  settings: NotificationSettings
+): Promise<void> {
+  const now = new Date();
+  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+  // Get hourly forecasts for the next 1-2 hours
+  const upcomingHours = weatherData.forecast.hourly.filter(h => {
+    const hourTime = new Date(h.time);
+    return hourTime > now && hourTime <= twoHoursFromNow;
+  });
+
+  if (upcomingHours.length === 0) return;
+
+  for (const hour of upcomingHours) {
+    const hourTime = new Date(hour.time);
+    const timeStr = hourTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Check for upcoming rain
+    if (settings.enableUmbrellaAlerts && hour.precipitationChance >= settings.rainThreshold) {
+      if (await shouldSendAlert('upcoming-rain')) {
+        await sendBackgroundNotification(
+          '☂️ Rain Coming Soon',
+          `${hour.precipitationChance}% chance of rain around ${timeStr}. Grab an umbrella!`,
+          { type: 'upcoming-rain', time: timeStr }
+        );
+        await markAlertSent('upcoming-rain');
+        console.log(`☂️ Upcoming rain alert: ${hour.precipitationChance}% at ${timeStr}`);
+      }
+    }
+
+    // Check for upcoming high temperature
+    if (settings.enableTemperatureAlerts) {
+      if (hour.temperature >= settings.temperatureThreshold.high) {
+        if (await shouldSendAlert('upcoming-temp-high')) {
+          await sendBackgroundNotification(
+            '🔥 High Temperature Ahead',
+            `Expected ${Math.round(hour.temperature)}°C around ${timeStr}. Stay hydrated!`,
+            { type: 'upcoming-temp-high', time: timeStr }
+          );
+          await markAlertSent('upcoming-temp-high');
+        }
+      } else if (hour.temperature <= settings.temperatureThreshold.low) {
+        if (await shouldSendAlert('upcoming-temp-low')) {
+          await sendBackgroundNotification(
+            '❄️ Cold Temperature Ahead',
+            `Expected ${Math.round(hour.temperature)}°C around ${timeStr}. Dress warmly!`,
+            { type: 'upcoming-temp-low', time: timeStr }
+          );
+          await markAlertSent('upcoming-temp-low');
+        }
+      }
+    }
+
+    // Check for upcoming strong wind
+    if (settings.enableWindAlerts && hour.windSpeed >= settings.windSpeedThreshold) {
+      if (await shouldSendAlert('upcoming-wind')) {
+        await sendBackgroundNotification(
+          '💨 Strong Wind Expected',
+          `Wind speeds up to ${Math.round(hour.windSpeed)} km/h expected around ${timeStr}.`,
+          { type: 'upcoming-wind', time: timeStr }
+        );
+        await markAlertSent('upcoming-wind');
+        console.log(`💨 Upcoming wind alert: ${Math.round(hour.windSpeed)} km/h at ${timeStr}`);
+      }
+    }
+
+    // Check for upcoming high UV
+    if (settings.enableUVAlerts && hour.uvIndex && hour.uvIndex >= settings.uvThreshold) {
+      if (await shouldSendAlert('upcoming-uv')) {
+        await sendBackgroundNotification(
+          '☀️ High UV Expected',
+          `UV index of ${hour.uvIndex} expected around ${timeStr}. Apply sunscreen!`,
+          { type: 'upcoming-uv', time: timeStr }
+        );
+        await markAlertSent('upcoming-uv');
+      }
+    }
+
+    // Check for upcoming severe weather
+    if (settings.enableSevereWeatherAlerts) {
+      const condition = hour.condition.toLowerCase();
+      const severeConditions = [
+        { keywords: ['thunderstorm', 'thunder', 'lightning'], type: 'Thunderstorm', emoji: '⛈️' },
+        { keywords: ['heavy rain', 'torrential'], type: 'Heavy Rain', emoji: '🌧️' },
+        { keywords: ['snow', 'blizzard', 'snowstorm'], type: 'Snow', emoji: '❄️' },
+        { keywords: ['hail'], type: 'Hail', emoji: '🧊' },
+      ];
+      for (const severe of severeConditions) {
+        if (severe.keywords.some(kw => condition.includes(kw))) {
+          if (await shouldSendAlert(`upcoming-severe-${severe.type}`)) {
+            await sendBackgroundNotification(
+              `${severe.emoji} ${severe.type} Expected Soon`,
+              `${severe.type} forecast around ${timeStr}. Take precautions.`,
+              { type: 'upcoming-severe', condition: severe.type, time: timeStr }
+            );
+            await markAlertSent(`upcoming-severe-${severe.type}`);
+          }
+          break;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Send a notification from background task
  */
 async function sendBackgroundNotification(
@@ -229,7 +376,7 @@ class BackgroundTaskService {
    * Register the background fetch task
    * Should be called once when the app starts
    */
-  async registerBackgroundTask(): Promise<boolean> {
+  async registerBackgroundTask(refreshIntervalMinutes?: number): Promise<boolean> {
     try {
       // Check if background fetch is available
       const status = await BackgroundFetch.getStatusAsync();
@@ -240,24 +387,23 @@ class BackgroundTaskService {
         return false;
       }
 
-      // Check if already registered
-      const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_WEATHER_TASK);
-      if (isRegistered) {
-        console.log('✅ Background weather task already registered');
-        this.isRegistered = true;
-        return true;
+      // Unregister existing task first to update interval
+      const isAlreadyRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_WEATHER_TASK);
+      if (isAlreadyRegistered) {
+        await BackgroundFetch.unregisterTaskAsync(BACKGROUND_WEATHER_TASK);
       }
+
+      const intervalMinutes = refreshIntervalMinutes || 60;
 
       // Register the background fetch task
       await BackgroundFetch.registerTaskAsync(BACKGROUND_WEATHER_TASK, {
-        minimumInterval: 60 * 60, // 60 minutes (1 hour)
+        minimumInterval: intervalMinutes * 60, // Convert to seconds
         stopOnTerminate: false, // Continue after app is closed
         startOnBoot: true, // Start after device reboot
       });
 
       this.isRegistered = true;
-      console.log('✅ Background weather task registered successfully');
-      console.log('📋 Task will run approximately every 60 minutes depending on system');
+      console.log(`✅ Background weather task registered (interval: ~${intervalMinutes}min)`);
       return true;
     } catch (error) {
       console.error('❌ Failed to register background task:', error);
