@@ -54,7 +54,10 @@ export function WeatherWidget({
   // Layout values
   const padding = Math.max(8, Math.min(20, Math.round(12 * scale)));
   const panelPadding = Math.max(6, Math.min(16, Math.round(10 * scale)));
-  const gap = Math.max(4, Math.min(16, Math.round(6 * hScale)));
+  const gap = Math.max(2, Math.min(16, Math.round(6 * hScale)));
+
+  // Auto-hide conditions when widget is too short to fit all content
+  const autoHideConditions = widgetHeight < 110;
 
   return (
     <FlexWidget
@@ -67,6 +70,7 @@ export function WeatherWidget({
         flexDirection: 'column',
         justifyContent: 'center',
         flexGap: gap,
+        overflow: 'hidden',
       }}
       clickAction="OPEN_APP"
     >
@@ -172,7 +176,7 @@ export function WeatherWidget({
       </FlexWidget>
 
       {/* Conditions */}
-      {showConditions ? (
+      {showConditions && !autoHideConditions ? (
         <TextWidget
           text={conditions || 'Tap to open WeatherWell'}
           style={{

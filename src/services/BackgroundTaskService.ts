@@ -414,27 +414,28 @@ async function checkAndSendScheduledNotifications(
 async function sendRichDailyForecast(weatherData: WeatherData): Promise<void> {
   const current = weatherData.current;
   const today = weatherData.forecast.daily[0];
+  const tomorrow = weatherData.forecast.daily[1];
   const location = weatherData.location.name;
-
-  const temperature = Math.round(current.temperature);
-  const condition = current.condition;
   const highTemp = Math.round(today?.maxTemp || current.temperature);
   const lowTemp = Math.round(today?.minTemp || current.temperature);
   const rainChance = today?.precipitationChance || 0;
 
-  let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
-  
-  if (rainChance > 30) {
-    body += `. ${rainChance}% chance of rain`;
+  let body = `📍 ${location}\nToday: ${highTemp}°/${lowTemp}°, ${today?.condition || current.condition}`;
+  if (rainChance > 30) body += ` | 🌧️ ${rainChance}% rain`;
+  if (tomorrow) {
+    body += `\nTomorrow: ${Math.round(tomorrow.maxTemp)}°/${Math.round(tomorrow.minTemp)}°, ${tomorrow.condition}`;
+    if ((tomorrow.precipitationChance || 0) > 30) body += ` | 🌧️ ${tomorrow.precipitationChance}% rain`;
   }
-  if (current.uvIndex >= 8) {
-    body += `. High UV - wear sunscreen!`;
-  }
+  const warnings: string[] = [];
+  if (current.uvIndex >= 8) warnings.push(`☀️ High UV (${current.uvIndex})`);
+  if ((today?.windSpeed || 0) >= 40) warnings.push(`💨 Strong wind ${Math.round(today!.windSpeed)} km/h`);
+  if ((today?.precipitationMm || 0) >= 10) warnings.push(`🌊 Heavy rain ${Math.round(today!.precipitationMm)}mm`);
+  if (warnings.length > 0) body += `\n⚠️ ${warnings.join(' | ')}`;
 
   await sendBackgroundNotification(
-    '🌤️ Today\'s Weather',
+    '📅 Daily Weather Forecast',
     body,
-    { type: 'daily-forecast', temperature, condition, location, rainChance }
+    { type: 'daily-forecast', location }
   );
 }
 
@@ -448,23 +449,35 @@ async function sendRichHourlyForecast(weatherData: WeatherData): Promise<void> {
   
   if (hourlyData.length === 0) return;
 
-  const temps = hourlyData.map(h => Math.round(h.temperature));
-  const minTemp = Math.min(...temps);
-  const maxTemp = Math.max(...temps);
+  let body = `📍 ${location}`;
+  // Hour-by-hour temperature trend
+  const tempTrend = hourlyData.map(h => {
+    const hour = new Date(h.time).getHours();
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const h12 = hour % 12 || 12;
+    return `${h12}${ampm} ${Math.round(h.temperature)}°`;
+  }).join(' → ');
+  body += `\n${tempTrend}`;
 
-  let body = `${location} next ${hourlyData.length}h: ${minTemp}-${maxTemp}°C. `;
-  
+  // Rain windows
   const rainHours = hourlyData.filter(h => h.precipitationChance > 30);
   if (rainHours.length > 0) {
-    body += `Rain expected in ${rainHours.length} hour(s). `;
+    const rainTimes = rainHours.map(h => {
+      const hour = new Date(h.time).getHours();
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      return `${hour % 12 || 12}${ampm}`;
+    }).join(', ');
+    body += `\n🌧️ Rain at ${rainTimes}`;
   }
 
-  body += `Currently ${Math.round(hourlyData[0].temperature)}°C, ${hourlyData[0].condition}`;
+  // Wind if notable
+  const maxWind = Math.max(...hourlyData.map(h => h.windSpeed));
+  if (maxWind >= 25) body += ` | 💨 Wind up to ${Math.round(maxWind)} km/h`;
 
   await sendBackgroundNotification(
-    '⏰ Next Hours Weather',
+    '⏰ Hourly Weather Update',
     body,
-    { type: 'hourly-forecast', location, minTemp, maxTemp, rainHours: rainHours.length }
+    { type: 'hourly-forecast', location }
   );
 }
 
@@ -482,23 +495,39 @@ async function rescheduleWithData(
 
     const current = weatherData.current;
     const today = weatherData.forecast.daily[0];
+    const tomorrow = weatherData.forecast.daily[1];
     const location = weatherData.location.name;
-    const temperature = Math.round(current.temperature);
-    const condition = current.condition;
     const highTemp = Math.round(today?.maxTemp || current.temperature);
     const lowTemp = Math.round(today?.minTemp || current.temperature);
     const rainChance = today?.precipitationChance || 0;
 
-    let title = '🌤️ Today\'s Weather';
-    let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
-    if (rainChance > 30) body += `. ${rainChance}% chance of rain`;
+    let title = '📅 Daily Weather Forecast';
+    let body = `📍 ${location}\nToday: ${highTemp}°/${lowTemp}°, ${today?.condition || current.condition}`;
+    if (rainChance > 30) body += ` | 🌧️ ${rainChance}% rain`;
+    if (tomorrow) {
+      body += `\nTomorrow: ${Math.round(tomorrow.maxTemp)}°/${Math.round(tomorrow.minTemp)}°, ${tomorrow.condition}`;
+      if ((tomorrow.precipitationChance || 0) > 30) body += ` | 🌧️ ${tomorrow.precipitationChance}% rain`;
+    }
 
     if (identifier === 'hourly-forecast') {
-      title = '⏰ Next Hours Weather';
-      const hourlyData = weatherData.forecast.hourly.slice(0, 6);
+      title = '⏰ Hourly Weather Update';
+      const now = new Date();
+      const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) > now).slice(0, 6);
       if (hourlyData.length > 0) {
-        const temps = hourlyData.map(h => Math.round(h.temperature));
-        body = `${location} next ${hourlyData.length}h: ${Math.min(...temps)}-${Math.max(...temps)}°C. Now ${Math.round(hourlyData[0].temperature)}°C`;
+        const tempTrend = hourlyData.map(h => {
+          const hr = new Date(h.time).getHours();
+          const ampm = hr >= 12 ? 'PM' : 'AM';
+          return `${hr % 12 || 12}${ampm} ${Math.round(h.temperature)}°`;
+        }).join(' → ');
+        body = `📍 ${location}\n${tempTrend}`;
+        const rainHrs = hourlyData.filter(h => h.precipitationChance > 30);
+        if (rainHrs.length > 0) {
+          const rainTimes = rainHrs.map(h => {
+            const hr = new Date(h.time).getHours();
+            return `${hr % 12 || 12}${hr >= 12 ? 'PM' : 'AM'}`;
+          }).join(', ');
+          body += `\n🌧️ Rain at ${rainTimes}`;
+        }
       }
     }
 
