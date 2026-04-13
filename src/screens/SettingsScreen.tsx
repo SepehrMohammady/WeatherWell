@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,13 +32,6 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
-// Time options for picker
-const timeOptions = [
-  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
-  '20:00', '21:00', '22:00'
-];
-
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
@@ -45,9 +40,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importText, setImportText] = useState('');
-  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [timePickerType, setTimePickerType] = useState<'daily' | 'hourly'>('daily');
   const [showThresholdModal, setShowThresholdModal] = useState(false);
   const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow'>('rain');
@@ -55,16 +48,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const openTimePicker = (type: 'daily' | 'hourly') => {
     setTimePickerType(type);
-    setShowTimePickerModal(true);
+    setShowTimePicker(true);
   };
 
-  const handleTimeSelect = (time: string) => {
-    if (timePickerType === 'daily') {
-      updateSetting('dailyForecastTime', time);
-    } else {
-      updateSetting('hourlyForecastTime', time);
+  const handleTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
     }
-    setShowTimePickerModal(false);
+    if (event.type === 'dismissed') return;
+    if (selectedDate) {
+      const hours = selectedDate.getHours().toString().padStart(2, '0');
+      const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
+      if (timePickerType === 'daily') {
+        updateSetting('dailyForecastTime', timeStr);
+      } else {
+        updateSetting('hourlyForecastTime', timeStr);
+      }
+    }
+  };
+
+  const getTimePickerDate = (): Date => {
+    const timeStr = timePickerType === 'daily' ? settings.dailyForecastTime : (settings.hourlyForecastTime || '08:00');
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
   };
 
   const openThresholdEditor = (type: 'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow') => {
@@ -165,30 +174,43 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         encoding: FileSystem.EncodingType.UTF8,
       });
       
-      await Sharing.shareAsync(filePath, {
-        mimeType: 'application/json',
-        dialogTitle: 'Export WeatherWell Backup',
-        UTI: 'public.json',
-      });
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'application/octet-stream',
+          dialogTitle: 'Export WeatherWell Backup',
+        });
+      } else {
+        Alert.alert('Error', 'Sharing is not available on this device');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to export backup');
+      console.error('Export error:', error);
+      Alert.alert('Error', 'Failed to export backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
   const handleImport = async () => {
-    if (!importText.trim()) {
-      Alert.alert('Error', 'Please paste your backup data');
-      return;
-    }
-
     try {
-      const parsed = JSON.parse(importText);
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileUri = result.assets[0].uri;
+      const fileContent = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const parsed = JSON.parse(fileContent);
       
-      // Handle new .weatherwell backup format
+      // Handle .weatherwell backup format
       if (parsed.type === 'weatherwell-backup') {
         const settingsSuccess = await importSettings(JSON.stringify(parsed.settings));
         
-        // Restore favorites if present
         if (parsed.favorites && Array.isArray(parsed.favorites)) {
           await clearFavorites();
           for (const fav of parsed.favorites) {
@@ -197,25 +219,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         }
         
         if (settingsSuccess) {
-          Alert.alert('Success', 'Backup restored successfully (settings and favorites)');
-          setShowImportModal(false);
-          setImportText('');
+          Alert.alert('Success', 'Backup restored (settings and favorites)');
         } else {
           Alert.alert('Error', 'Failed to restore settings from backup');
         }
       } else {
         // Legacy format: plain settings JSON
-        const success = await importSettings(importText);
+        const success = await importSettings(fileContent);
         if (success) {
           Alert.alert('Success', 'Settings imported successfully');
-          setShowImportModal(false);
-          setImportText('');
         } else {
-          Alert.alert('Error', 'Invalid backup data');
+          Alert.alert('Error', 'Invalid backup file');
         }
       }
-    } catch {
-      Alert.alert('Error', 'Invalid backup data. Make sure you paste the complete .weatherwell file content.');
+    } catch (error) {
+      console.error('Import error:', error);
+      Alert.alert('Error', 'Failed to import backup. Make sure you selected a valid .weatherwell file.');
     }
   };
 
@@ -845,11 +864,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             title="Import Backup"
             subtitle="Restore settings and favorites from .weatherwell file"
             rightElement={
-              <TouchableOpacity onPress={() => setShowImportModal(true)}>
+              <TouchableOpacity onPress={handleImport}>
                 <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
               </TouchableOpacity>
             }
-            onPress={() => setShowImportModal(true)}
+            onPress={handleImport}
           />
           <SettingItem
             title="Reset to Defaults"
@@ -960,105 +979,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
       </Modal>
 
-      {/* Import Modal */}
-      <Modal
-        visible={showImportModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowImportModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Import Backup
-            </Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Paste your .weatherwell backup data below to restore settings and favorites
-            </Text>
-            <TextInput
-              style={[styles.importInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="Paste your .weatherwell backup data here..."
-              placeholderTextColor={colors.textSecondary}
-              value={importText}
-              onChangeText={setImportText}
-              multiline
-              numberOfLines={10}
-            />
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.modalButton, { backgroundColor: colors.border }]}
-                onPress={() => setShowImportModal(false)}
-              >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, { backgroundColor: colors.primary }]}
-                onPress={handleImport}
-              >
-                <Text style={[styles.modalButtonText, { color: 'white' }]}>
-                  Import
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Time Picker Modal */}
-      <Modal
-        visible={showTimePickerModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowTimePickerModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {timePickerType === 'daily' ? 'Daily Forecast Time' : 'Hourly Forecast Time'}
-            </Text>
-            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Select the time for your {timePickerType} forecast notification
-            </Text>
-            <ScrollView style={styles.timePickerScroll}>
-              {timeOptions.map((time) => (
-                <TouchableOpacity
-                  key={time}
-                  style={[
-                    styles.timeOption,
-                    { 
-                      backgroundColor: (timePickerType === 'daily' ? settings.dailyForecastTime : settings.hourlyForecastTime) === time 
-                        ? colors.primary 
-                        : colors.card 
-                    }
-                  ]}
-                  onPress={() => handleTimeSelect(time)}
-                >
-                  <Text style={[
-                    styles.timeOptionText,
-                    { 
-                      color: (timePickerType === 'daily' ? settings.dailyForecastTime : settings.hourlyForecastTime) === time 
-                        ? 'white' 
-                        : colors.text 
-                    }
-                  ]}>
-                    {time}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={[styles.closeModalButton, { backgroundColor: colors.primary }]}
-              onPress={() => setShowTimePickerModal(false)}
-            >
-              <Text style={[styles.modalButtonText, { color: 'white' }]}>
-                Done
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* Native Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={getTimePickerDate()}
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={handleTimeChange}
+          themeVariant={theme}
+        />
+      )}
 
       {/* Threshold Editor Modal */}
       <Modal
@@ -1308,26 +1239,6 @@ const styles = StyleSheet.create({
   thresholdButtonText: {
     fontSize: 12,
     fontWeight: '600',
-  },
-  timePickerScroll: {
-    maxHeight: 250,
-  },
-  closeModalButton: {
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  timeOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  timeOptionText: {
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: '500',
   },
   thresholdInput: {
     borderWidth: 1,
