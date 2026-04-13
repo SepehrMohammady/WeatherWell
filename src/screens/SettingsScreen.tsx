@@ -13,10 +13,9 @@ import {
   Platform,
   Linking
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,6 +40,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [timePickerType, setTimePickerType] = useState<'daily' | 'hourly'>('daily');
+  const [pickerHour, setPickerHour] = useState(0);
+  const [pickerMinute, setPickerMinute] = useState(0);
   const [showThresholdModal, setShowThresholdModal] = useState(false);
   const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow' | 'aqi'>('rain');
   const [tempThresholdValue, setTempThresholdValue] = useState('');
@@ -67,32 +68,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const openTimePicker = (type: 'daily' | 'hourly') => {
     setTimePickerType(type);
+    const timeStr = type === 'daily' ? settings.dailyForecastTime : (settings.hourlyForecastTime || '08:00');
+    const [h, m] = timeStr.split(':').map(Number);
+    setPickerHour(h);
+    setPickerMinute(m);
     setShowTimePicker(true);
   };
 
-  const handleTimeChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
+  const handleTimeSave = () => {
+    const timeStr = `${pickerHour.toString().padStart(2, '0')}:${pickerMinute.toString().padStart(2, '0')}`;
+    if (timePickerType === 'daily') {
+      updateSetting('dailyForecastTime', timeStr);
+    } else {
+      updateSetting('hourlyForecastTime', timeStr);
     }
-    if (event.type === 'dismissed') return;
-    if (selectedDate) {
-      const hours = selectedDate.getHours().toString().padStart(2, '0');
-      const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
-      const timeStr = `${hours}:${minutes}`;
-      if (timePickerType === 'daily') {
-        updateSetting('dailyForecastTime', timeStr);
-      } else {
-        updateSetting('hourlyForecastTime', timeStr);
-      }
-    }
-  };
-
-  const getTimePickerDate = (): Date => {
-    const timeStr = timePickerType === 'daily' ? settings.dailyForecastTime : (settings.hourlyForecastTime || '08:00');
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
+    setShowTimePicker(false);
   };
 
   const openThresholdEditor = (type: 'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow' | 'aqi') => {
@@ -190,15 +180,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       };
       const backupJson = JSON.stringify(backupData, null, 2);
       const fileName = `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`;
-      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
       
-      await FileSystem.writeAsStringAsync(filePath, backupJson, {
-        encoding: 'utf8' as any,
-      });
+      const file = new File(Paths.cache, fileName);
+      file.write(backupJson);
       
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
-        await Sharing.shareAsync(filePath, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'application/octet-stream',
           dialogTitle: 'Export WeatherWell Backup',
         });
@@ -223,9 +211,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       }
 
       const fileUri = result.assets[0].uri;
-      const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: 'utf8' as any,
-      });
+      const importedFile = new File(fileUri);
+      const fileContent = await importedFile.text();
 
       const parsed = JSON.parse(fileContent);
       
@@ -1009,17 +996,60 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
       </Modal>
 
-      {/* Native Time Picker */}
-      {showTimePicker && (
-        <DateTimePicker
-          value={getTimePickerDate()}
-          mode="time"
-          is24Hour={true}
-          display="spinner"
-          onChange={handleTimeChange}
-          themeVariant={theme}
-        />
-      )}
+      {/* Custom Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, maxWidth: 320 }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {timePickerType === 'daily' ? 'Daily Forecast Time' : 'Hourly Forecast Time'}
+            </Text>
+            <View style={styles.timePickerRow}>
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={() => setPickerHour((pickerHour + 1) % 24)}>
+                  <Ionicons name="chevron-up" size={28} color={colors.primary} />
+                </TouchableOpacity>
+                <Text style={[styles.timePickerValue, { color: colors.text }]}>
+                  {pickerHour.toString().padStart(2, '0')}
+                </Text>
+                <TouchableOpacity onPress={() => setPickerHour((pickerHour + 23) % 24)}>
+                  <Ionicons name="chevron-down" size={28} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+              <Text style={[styles.timePickerSeparator, { color: colors.text }]}>:</Text>
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={() => setPickerMinute((pickerMinute + 5) % 60)}>
+                  <Ionicons name="chevron-up" size={28} color={colors.primary} />
+                </TouchableOpacity>
+                <Text style={[styles.timePickerValue, { color: colors.text }]}>
+                  {pickerMinute.toString().padStart(2, '0')}
+                </Text>
+                <TouchableOpacity onPress={() => setPickerMinute((pickerMinute + 55) % 60)}>
+                  <Ionicons name="chevron-down" size={28} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.border }]}
+                onPress={() => setShowTimePicker(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                onPress={handleTimeSave}
+              >
+                <Text style={[styles.modalButtonText, { color: 'white' }]}>Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Threshold Editor Modal */}
       <Modal
@@ -1326,6 +1356,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  timePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+    gap: 8,
+  },
+  timePickerColumn: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  timePickerValue: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    minWidth: 60,
+    textAlign: 'center',
+  },
+  timePickerSeparator: {
+    fontSize: 36,
+    fontWeight: 'bold',
   },
   footer: {
     paddingHorizontal: 20,
