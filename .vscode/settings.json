@@ -1,0 +1,12 @@
+{
+    "chat.agent.maxRequests": 50,
+    "files.exclude": {
+        "**/node_modules": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/android/build": true,
+        "**/android/.gradle": true
+    },
+    "typescript.preferences.includePackageJsonAutoImports": "on"
+}
