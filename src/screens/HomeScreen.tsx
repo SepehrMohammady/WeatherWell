@@ -28,6 +28,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { backgroundTaskService } from '../services/BackgroundTaskService';
+import { updateWidgetWithWeatherData } from '../widgets/widget-utils';
 
 export const HomeScreen: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -98,6 +99,9 @@ export const HomeScreen: React.FC = () => {
       setWeatherData(result.data);
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
+      
+      // Update widget with fresh weather data
+      await updateWidgetWithWeatherData(result.data);
       
       // Check for weather alerts when app is opened
       // Background alerts are handled by BackgroundTaskService

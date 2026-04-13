@@ -251,6 +251,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     Linking.openURL('https://sepehrmohammady.ir/');
   };
 
+  const handleAddWidgetToHomeScreen = async () => {
+    try {
+      const { requestPinWidget } = require('react-native-android-widget');
+      await requestPinWidget('WeatherWidget');
+    } catch (error) {
+      showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+    }
+  };
+
   const handleOpenGitHub = () => {
     Linking.openURL('https://github.com/SepehrMohammady/WeatherWell');
   };
@@ -841,6 +850,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
             </>
           )}
+        </View>
+
+        {/* Widget */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Home Screen Widget
+          </Text>
+          <SettingItem
+            title="Widget Opacity"
+            subtitle={`${Math.round((settings.widgetOpacity ?? 0.85) * 100)}%`}
+            rightElement={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TouchableOpacity onPress={() => {
+                  const current = settings.widgetOpacity ?? 0.85;
+                  if (current > 0.3) updateSetting('widgetOpacity', Math.round((current - 0.05) * 100) / 100);
+                }}>
+                  <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
+                </TouchableOpacity>
+                <Text style={{ color: colors.text, fontSize: 16, minWidth: 40, textAlign: 'center' }}>
+                  {Math.round((settings.widgetOpacity ?? 0.85) * 100)}%
+                </Text>
+                <TouchableOpacity onPress={() => {
+                  const current = settings.widgetOpacity ?? 0.85;
+                  if (current < 1.0) updateSetting('widgetOpacity', Math.round((current + 0.05) * 100) / 100);
+                }}>
+                  <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            }
+          />
+          <SettingItem
+            title="Add Widget to Home Screen"
+            subtitle="Long-press home screen → Widgets → WeatherWell"
+            onPress={handleAddWidgetToHomeScreen}
+            rightElement={
+              <Ionicons name="add-outline" size={24} color={colors.primary} />
+            }
+          />
         </View>
 
         {/* Privacy */}

@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherServiceFactory } from './WeatherServiceFactory';
 import { defaultNotificationSettings, NotificationSettings } from './NotificationService';
 import { WeatherData } from './types';
+import { WIDGET_DATA_KEY } from '../widgets/widget-task-handler';
 
 // Task names
 export const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
@@ -15,6 +16,8 @@ const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
 const SETTINGS_KEY = 'weatherwell_settings';
 const LAST_ALERTS_KEY = 'weatherwell_last_alerts';
 const ALERT_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hour cooldown per alert type
+const LAST_DAILY_FORECAST_KEY = 'weatherwell_last_daily_forecast';
+const LAST_HOURLY_FORECAST_KEY = 'weatherwell_last_hourly_forecast';
 
 interface StoredLocation {
   latitude: number;
@@ -78,11 +81,17 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
     const weatherData = result.data;
     console.log(`✅ Background weather data fetched from ${result.source}`);
 
+    // Cache weather data for widget display
+    await cacheWidgetData(weatherData);
+
     // Check for alerts and send notifications
     await checkAndSendAlerts(weatherData, notificationSettings);
 
     // Check upcoming hourly conditions and warn 1 hour ahead
     await checkUpcomingConditions(weatherData, notificationSettings);
+
+    // Send scheduled daily/hourly forecast notifications with real weather data
+    await checkAndSendScheduledNotifications(weatherData, notificationSettings);
 
     return BackgroundFetch.BackgroundFetchResult.NewData;
   } catch (error) {
@@ -99,35 +108,23 @@ async function checkAndSendAlerts(
   settings: NotificationSettings
 ): Promise<void> {
   const current = weatherData.current;
-  const today = weatherData.forecast.daily[0];
 
-  // Check umbrella alert - use max rain chance from FUTURE hours only
-  if (settings.enableUmbrellaAlerts && today) {
-    const now = new Date();
-    const futureHourly = weatherData.forecast.hourly.filter(h => new Date(h.time) > now);
-    const rainChance = futureHourly.length > 0
-      ? Math.max(...futureHourly.map(h => h.precipitationChance))
-      : today.precipitationChance;
-    if (rainChance >= settings.rainThreshold) {
-      await sendBackgroundNotification(
-        '☂️ Umbrella Alert',
-        `${rainChance}% chance of rain upcoming. Don't forget your umbrella!`,
-        { type: 'umbrella-alert', rainChance }
-      );
-      console.log(`☂️ Background umbrella alert sent: ${rainChance}%`);
-    }
-  }
+  // Note: Rain/umbrella alerts are handled by checkUpcomingConditions()
+  // which includes specific timing info and cooldown protection
 
   // Check wind alert
   if (settings.enableWindAlerts) {
     const windSpeed = current.windSpeed;
     if (windSpeed >= settings.windSpeedThreshold) {
-      await sendBackgroundNotification(
-        '💨 Strong Wind Alert',
-        `Wind speed is ${Math.round(windSpeed)} km/h. Take precautions when outdoors.`,
-        { type: 'wind-alert', windSpeed }
-      );
-      console.log(`💨 Background wind alert sent: ${windSpeed} km/h`);
+      if (await shouldSendAlert('current-wind')) {
+        await sendBackgroundNotification(
+          '💨 Strong Wind Alert',
+          `Wind speed is ${Math.round(windSpeed)} km/h. Take precautions when outdoors.`,
+          { type: 'wind-alert', windSpeed }
+        );
+        await markAlertSent('current-wind');
+        console.log(`💨 Background wind alert sent: ${windSpeed} km/h`);
+      }
     }
   }
 
@@ -135,13 +132,16 @@ async function checkAndSendAlerts(
   if (settings.enableUVAlerts) {
     const uvIndex = current.uvIndex;
     if (uvIndex >= settings.uvThreshold) {
-      const uvLevel = uvIndex >= 11 ? 'Extreme' : uvIndex >= 8 ? 'Very High' : 'High';
-      await sendBackgroundNotification(
-        '☀️ UV Index Alert',
-        `UV Index is ${uvIndex} (${uvLevel}). Wear sunscreen and protective clothing!`,
-        { type: 'uv-alert', uvIndex }
-      );
-      console.log(`☀️ Background UV alert sent: ${uvIndex}`);
+      if (await shouldSendAlert('current-uv')) {
+        const uvLevel = uvIndex >= 11 ? 'Extreme' : uvIndex >= 8 ? 'Very High' : 'High';
+        await sendBackgroundNotification(
+          '☀️ UV Index Alert',
+          `UV Index is ${uvIndex} (${uvLevel}). Wear sunscreen and protective clothing!`,
+          { type: 'uv-alert', uvIndex }
+        );
+        await markAlertSent('current-uv');
+        console.log(`☀️ Background UV alert sent: ${uvIndex}`);
+      }
     }
   }
 
@@ -149,19 +149,25 @@ async function checkAndSendAlerts(
   if (settings.enableTemperatureAlerts) {
     const temp = current.temperature;
     if (temp >= settings.temperatureThreshold.high) {
-      await sendBackgroundNotification(
-        '🔥 High Temperature Alert',
-        `Temperature is ${Math.round(temp)}°C. Stay hydrated and avoid prolonged sun exposure.`,
-        { type: 'temp-high-alert', temperature: temp }
-      );
-      console.log(`🔥 Background high temp alert sent: ${temp}°C`);
+      if (await shouldSendAlert('current-temp-high')) {
+        await sendBackgroundNotification(
+          '🔥 High Temperature Alert',
+          `Temperature is ${Math.round(temp)}°C. Stay hydrated and avoid prolonged sun exposure.`,
+          { type: 'temp-high-alert', temperature: temp }
+        );
+        await markAlertSent('current-temp-high');
+        console.log(`🔥 Background high temp alert sent: ${temp}°C`);
+      }
     } else if (temp <= settings.temperatureThreshold.low) {
-      await sendBackgroundNotification(
-        '❄️ Low Temperature Alert',
-        `Temperature is ${Math.round(temp)}°C. Bundle up and stay warm!`,
-        { type: 'temp-low-alert', temperature: temp }
-      );
-      console.log(`❄️ Background low temp alert sent: ${temp}°C`);
+      if (await shouldSendAlert('current-temp-low')) {
+        await sendBackgroundNotification(
+          '❄️ Low Temperature Alert',
+          `Temperature is ${Math.round(temp)}°C. Bundle up and stay warm!`,
+          { type: 'temp-low-alert', temperature: temp }
+        );
+        await markAlertSent('current-temp-low');
+        console.log(`❄️ Background low temp alert sent: ${temp}°C`);
+      }
     }
   }
 
@@ -170,15 +176,18 @@ async function checkAndSendAlerts(
     const aqi = weatherData.airQuality.aqi;
     const aqiThreshold = (settings as any).aqiThreshold || 101;
     if (aqi >= aqiThreshold) {
-      const aqiLevel = aqi >= 301 ? 'Hazardous' : 
-                       aqi >= 201 ? 'Very Unhealthy' : 
-                       aqi >= 151 ? 'Unhealthy' : 'Unhealthy for Sensitive Groups';
-      await sendBackgroundNotification(
-        '🌫️ Air Quality Alert',
-        `AQI is ${aqi} (${aqiLevel}). Consider limiting outdoor activities.`,
-        { type: 'aqi-alert', aqi }
-      );
-      console.log(`🌫️ Background AQI alert sent: ${aqi}`);
+      if (await shouldSendAlert('current-aqi')) {
+        const aqiLevel = aqi >= 301 ? 'Hazardous' : 
+                         aqi >= 201 ? 'Very Unhealthy' : 
+                         aqi >= 151 ? 'Unhealthy' : 'Unhealthy for Sensitive Groups';
+        await sendBackgroundNotification(
+          '🌫️ Air Quality Alert',
+          `AQI is ${aqi} (${aqiLevel}). Consider limiting outdoor activities.`,
+          { type: 'aqi-alert', aqi }
+        );
+        await markAlertSent('current-aqi');
+        console.log(`🌫️ Background AQI alert sent: ${aqi}`);
+      }
     }
   }
 
@@ -194,12 +203,15 @@ async function checkAndSendAlerts(
 
     for (const severe of severeConditions) {
       if (severe.keywords.some(keyword => condition.includes(keyword))) {
-        await sendBackgroundNotification(
-          `${severe.emoji} Severe Weather: ${severe.type}`,
-          `${severe.type} detected in your area. Take necessary precautions.`,
-          { type: 'severe-weather', condition: severe.type }
-        );
-        console.log(`${severe.emoji} Background severe weather alert: ${severe.type}`);
+        if (await shouldSendAlert(`current-severe-${severe.type}`)) {
+          await sendBackgroundNotification(
+            `${severe.emoji} Severe Weather: ${severe.type}`,
+            `${severe.type} detected in your area. Take necessary precautions.`,
+            { type: 'severe-weather', condition: severe.type }
+          );
+          await markAlertSent(`current-severe-${severe.type}`);
+          console.log(`${severe.emoji} Background severe weather alert: ${severe.type}`);
+        }
         break;
       }
     }
@@ -345,6 +357,141 @@ async function checkUpcomingConditions(
         }
       }
     }
+  }
+}
+
+/**
+ * Check if it's time to send scheduled daily/hourly forecast notifications with real weather data
+ */
+async function checkAndSendScheduledNotifications(
+  weatherData: WeatherData,
+  settings: NotificationSettings
+): Promise<void> {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+
+  // Check daily forecast
+  if (settings.enableDailyForecast) {
+    const [targetHour, targetMinute] = settings.dailyForecastTime.split(':').map(Number);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const targetMinutes = targetHour * 60 + targetMinute;
+
+    if (currentMinutes >= targetMinutes) {
+      const lastSent = await AsyncStorage.getItem(LAST_DAILY_FORECAST_KEY);
+      if (lastSent !== today) {
+        await sendRichDailyForecast(weatherData);
+        await AsyncStorage.setItem(LAST_DAILY_FORECAST_KEY, today);
+        console.log(`📅 Rich daily forecast sent for ${today}`);
+      }
+    }
+  }
+
+  // Check hourly forecast
+  if (settings.enableHourlyForecast) {
+    const [targetHour, targetMinute] = settings.hourlyForecastTime.split(':').map(Number);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const targetMinutes = targetHour * 60 + targetMinute;
+
+    if (currentMinutes >= targetMinutes) {
+      const lastSent = await AsyncStorage.getItem(LAST_HOURLY_FORECAST_KEY);
+      if (lastSent !== today) {
+        await sendRichHourlyForecast(weatherData);
+        await AsyncStorage.setItem(LAST_HOURLY_FORECAST_KEY, today);
+        console.log(`⏰ Rich hourly forecast sent for ${today}`);
+      }
+    }
+  }
+}
+
+/**
+ * Send rich daily forecast notification with actual weather data
+ */
+async function sendRichDailyForecast(weatherData: WeatherData): Promise<void> {
+  const current = weatherData.current;
+  const today = weatherData.forecast.daily[0];
+  const location = weatherData.location.name;
+
+  const temperature = Math.round(current.temperature);
+  const condition = current.condition;
+  const highTemp = Math.round(today?.maxTemp || current.temperature);
+  const lowTemp = Math.round(today?.minTemp || current.temperature);
+  const rainChance = today?.precipitationChance || 0;
+
+  let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
+  
+  if (rainChance > 30) {
+    body += `. ${rainChance}% chance of rain`;
+  }
+  if (current.uvIndex >= 8) {
+    body += `. High UV - wear sunscreen!`;
+  }
+
+  await sendBackgroundNotification(
+    '🌤️ Today\'s Weather',
+    body,
+    { type: 'daily-forecast', temperature, condition, location, rainChance }
+  );
+}
+
+/**
+ * Send rich hourly forecast notification with actual weather data
+ */
+async function sendRichHourlyForecast(weatherData: WeatherData): Promise<void> {
+  const now = new Date();
+  const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) > now).slice(0, 6);
+  const location = weatherData.location.name;
+  
+  if (hourlyData.length === 0) return;
+
+  const temps = hourlyData.map(h => Math.round(h.temperature));
+  const minTemp = Math.min(...temps);
+  const maxTemp = Math.max(...temps);
+
+  let body = `${location} next ${hourlyData.length}h: ${minTemp}-${maxTemp}°C. `;
+  
+  const rainHours = hourlyData.filter(h => h.precipitationChance > 30);
+  if (rainHours.length > 0) {
+    body += `Rain expected in ${rainHours.length} hour(s). `;
+  }
+
+  body += `Currently ${Math.round(hourlyData[0].temperature)}°C, ${hourlyData[0].condition}`;
+
+  await sendBackgroundNotification(
+    '⏰ Next Hours Weather',
+    body,
+    { type: 'hourly-forecast', location, minTemp, maxTemp, rainHours: rainHours.length }
+  );
+}
+
+/**
+ * Cache weather data for widget display
+ */
+async function cacheWidgetData(weatherData: WeatherData): Promise<void> {
+  try {
+    const current = weatherData.current;
+    const today = weatherData.forecast.daily[0];
+    const rainChance = today?.precipitationChance || 0;
+
+    // Read widget opacity from settings
+    const settingsData = await AsyncStorage.getItem('appSettings');
+    const appSettings = settingsData ? JSON.parse(settingsData) : {};
+    const opacity = appSettings.widgetOpacity ?? 0.85;
+
+    const widgetData = {
+      temperature: `${Math.round(current.temperature)}°`,
+      location: weatherData.location.name,
+      conditions: current.condition,
+      high: `${Math.round(today?.maxTemp || current.temperature)}°`,
+      low: `${Math.round(today?.minTemp || current.temperature)}°`,
+      rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
+      feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
+      opacity,
+    };
+
+    await AsyncStorage.setItem(WIDGET_DATA_KEY, JSON.stringify(widgetData));
+    console.log('📱 Widget data cached');
+  } catch (error) {
+    console.log('Widget cache skipped:', error instanceof Error ? error.message : 'unknown');
   }
 }
 
