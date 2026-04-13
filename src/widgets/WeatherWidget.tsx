@@ -39,10 +39,9 @@ export function WeatherWidget({
   const bgColor = `#1A1A1A${alphaHex}`;
   const surfaceColor = `#2A2A2A${alphaHex}`;
 
-  // Scale independently by width and height
+  // Scale by width (height is handled by flex layout)
   const wScale = widgetWidth / 250;
-  const hScale = widgetHeight / 100;
-  const scale = Math.min(wScale, hScale);
+  const scale = Math.min(wScale, widgetHeight / 100);
 
   // Font sizes scale with overall scale
   const tempSize = Math.max(28, Math.min(64, Math.round(40 * scale)));
@@ -53,11 +52,11 @@ export function WeatherWidget({
 
   // Layout values
   const padding = Math.max(8, Math.min(20, Math.round(12 * scale)));
-  const panelPadding = Math.max(6, Math.min(16, Math.round(10 * scale)));
-  const gap = Math.max(2, Math.min(16, Math.round(6 * hScale)));
+  const panelPadding = Math.max(4, Math.min(16, Math.round(10 * scale)));
+  const gap = Math.max(2, Math.min(12, Math.round(5 * scale)));
 
-  // Auto-hide conditions when widget is too short to fit all content (e.g. 2 rows)
-  const autoHideConditions = widgetHeight < 140;
+  // Show conditions only when height is large enough (3+ rows typically ≥ 170dp)
+  const autoHideConditions = widgetHeight < 170;
 
   return (
     <FlexWidget
@@ -68,7 +67,7 @@ export function WeatherWidget({
         borderRadius: 16,
         padding: padding,
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         flexGap: gap,
         overflow: 'hidden',
       }}
@@ -84,9 +83,10 @@ export function WeatherWidget({
         maxLines={1}
       />
 
-      {/* Temperature Row */}
+      {/* Temperature Row — flex:1 fills remaining space, ensuring conditions stay visible */}
       <FlexWidget
         style={{
+          flex: 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -175,7 +175,7 @@ export function WeatherWidget({
         )}
       </FlexWidget>
 
-      {/* Conditions */}
+      {/* Conditions — shown only when height allows (3+ rows); flex:1 on temp row ensures this never overflows */}
       {showConditions && !autoHideConditions ? (
         <TextWidget
           text={conditions || 'Tap to open WeatherWell'}
@@ -186,10 +186,7 @@ export function WeatherWidget({
           maxLines={1}
         />
       ) : (
-        <TextWidget
-          text=""
-          style={{ fontSize: 1, color: '#00000000' }}
-        />
+        <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
       )}
     </FlexWidget>
   );
