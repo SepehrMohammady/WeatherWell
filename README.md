@@ -2,7 +2,7 @@
 
 A comprehensive cross-platform weather application built with **React Native** and **Expo** for Android, iOS, and Web. WeatherWell provides detailed weather information with smart features like umbrella alarms, clothing suggestions, and real-time notifications.
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue)
+![Version](https://img.shields.io/badge/version-0.6.5-blue)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-green)
 ![License](https://img.shields.io/badge/license-MIT-purple)
 
@@ -34,18 +34,21 @@ A comprehensive cross-platform weather application built with **React Native** a
 - **Air Quality Advice**: Mask and indoor activity recommendations
 
 ### 🔔 Notification System
-- Daily and hourly forecast notifications
+- Scheduled daily and hourly forecast notifications
+- Dynamic background weather alerts (work even when app is closed)
 - Severe weather alerts
-- Temperature threshold alerts
-- UV and wind warnings
-- Customizable notification times and thresholds
+- Temperature, UV, wind, rain, and AQI threshold alerts
+- Configurable thresholds for all alert types
+- Alert cooldown to prevent notification spam
+- Customizable notification times
 
 ### 🎨 User Experience
 - **Neutral Paradise Theme**: Warm, muted color palette
-- **Dark Mode**: Full light/dark theme support
+- **Dark Mode**: Full light/dark theme support (follows device theme)
 - **Location Search**: Worldwide city search with autocomplete
 - **Weather Sharing**: Customizable weather reports
-- **Settings Export/Import**: Backup and restore preferences
+- **Settings Export/Import**: Backup and restore settings + favorites as .weatherwell files
+- **App-Styled Dialogs**: All dialogs use themed modals matching the app design
 
 ## 🛠️ Tech Stack
 
@@ -141,6 +144,7 @@ src/
 │   ├── LocationService.ts
 │   ├── LocationSearchService.ts
 │   ├── NotificationService.ts
+│   ├── BackgroundTaskService.ts
 │   └── types.ts
 ├── contexts/            # React Context providers
 │   ├── ThemeContext.tsx
