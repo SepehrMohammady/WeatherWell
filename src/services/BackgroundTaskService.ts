@@ -168,7 +168,8 @@ async function checkAndSendAlerts(
   // Check AQI alert
   if (settings.enableAQIAlerts && weatherData.airQuality) {
     const aqi = weatherData.airQuality.aqi;
-    if (aqi >= 101) { // Unhealthy for sensitive groups
+    const aqiThreshold = (settings as any).aqiThreshold || 101;
+    if (aqi >= aqiThreshold) {
       const aqiLevel = aqi >= 301 ? 'Hazardous' : 
                        aqi >= 201 ? 'Very Unhealthy' : 
                        aqi >= 151 ? 'Unhealthy' : 'Unhealthy for Sensitive Groups';

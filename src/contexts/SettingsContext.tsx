@@ -15,6 +15,7 @@ export interface AppSettings {
   enableUVAlerts: boolean;
   enableUmbrellaAlerts: boolean;
   enableAQIAlerts: boolean;
+  aqiThreshold: number;
   enableWindAlerts: boolean;
   dailyForecastTime: string;
   hourlyForecastTime: string;
@@ -51,6 +52,7 @@ const defaultSettings: AppSettings = {
   enableUVAlerts: true,
   enableUmbrellaAlerts: true,
   enableAQIAlerts: true,
+  aqiThreshold: 101,
   enableWindAlerts: true,
   dailyForecastTime: '19:00',
   hourlyForecastTime: '08:00',

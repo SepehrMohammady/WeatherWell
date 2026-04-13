@@ -24,6 +24,7 @@ export interface NotificationSettings {
   enableUVAlerts: boolean;
   enableUmbrellaAlerts: boolean;
   enableAQIAlerts: boolean;
+  aqiThreshold: number;
   enableWindAlerts: boolean;
   dailyForecastTime: string; // Format: "HH:MM"
   hourlyForecastTime: string; // Format: "HH:MM"
@@ -45,6 +46,7 @@ export const defaultNotificationSettings: NotificationSettings = {
   enableUVAlerts: true,
   enableUmbrellaAlerts: true,
   enableAQIAlerts: true,
+  aqiThreshold: 101,
   enableWindAlerts: true,
   dailyForecastTime: "19:00", // Evening daily forecast
   hourlyForecastTime: "08:00", // Morning hourly forecast
@@ -518,7 +520,7 @@ class NotificationService {
    * Send AQI alert for air quality
    */
   async sendAQIAlert(aqi: number, aqiDescription: string): Promise<void> {
-    if (!this.notificationSettings.enableAQIAlerts || aqi < 101) { // Only alert for unhealthy levels
+    if (!this.notificationSettings.enableAQIAlerts || aqi < (this.notificationSettings.aqiThreshold || 101)) {
       return;
     }
 

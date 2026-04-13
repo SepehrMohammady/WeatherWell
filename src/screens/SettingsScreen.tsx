@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Switch,
   TextInput,
-  Alert,
   Modal,
   Pressable,
   KeyboardAvoidingView,
@@ -43,8 +42,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [timePickerType, setTimePickerType] = useState<'daily' | 'hourly'>('daily');
   const [showThresholdModal, setShowThresholdModal] = useState(false);
-  const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow'>('rain');
+  const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow' | 'aqi'>('rain');
   const [tempThresholdValue, setTempThresholdValue] = useState('');
+
+  // Custom alert modal state
+  const [alertModal, setAlertModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    buttons?: { text: string; style?: 'default' | 'destructive' | 'cancel'; onPress?: () => void }[];
+  }>({ visible: false, title: '', message: '' });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    buttons?: { text: string; style?: 'default' | 'destructive' | 'cancel'; onPress?: () => void }[]
+  ) => {
+    setAlertModal({ visible: true, title, message, buttons });
+  };
+
+  const dismissAlert = () => {
+    setAlertModal({ visible: false, title: '', message: '' });
+  };
 
   const openTimePicker = (type: 'daily' | 'hourly') => {
     setTimePickerType(type);
@@ -76,7 +95,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     return date;
   };
 
-  const openThresholdEditor = (type: 'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow') => {
+  const openThresholdEditor = (type: 'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow' | 'aqi') => {
     setThresholdType(type);
     let currentValue = '';
     switch (type) {
@@ -85,6 +104,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       case 'uv': currentValue = String(settings.uvThreshold); break;
       case 'tempHigh': currentValue = String(settings.temperatureThresholdHigh); break;
       case 'tempLow': currentValue = String(settings.temperatureThresholdLow); break;
+      case 'aqi': currentValue = String(settings.aqiThreshold); break;
     }
     setTempThresholdValue(currentValue);
     setShowThresholdModal(true);
@@ -93,7 +113,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const handleThresholdSave = () => {
     const value = parseFloat(tempThresholdValue);
     if (isNaN(value)) {
-      Alert.alert('Invalid Value', 'Please enter a valid number');
+      showAlert('Invalid Value', 'Please enter a valid number');
       return;
     }
     switch (thresholdType) {
@@ -102,6 +122,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       case 'uv': updateSetting('uvThreshold', Math.min(15, Math.max(1, value))); break;
       case 'tempHigh': updateSetting('temperatureThresholdHigh', value); break;
       case 'tempLow': updateSetting('temperatureThresholdLow', value); break;
+      case 'aqi': updateSetting('aqiThreshold', Math.min(500, Math.max(1, Math.round(value)))); break;
     }
     setShowThresholdModal(false);
   };
@@ -113,6 +134,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       case 'uv': return 'UV Index Threshold';
       case 'tempHigh': return 'High Temperature Threshold (°C)';
       case 'tempLow': return 'Low Temperature Threshold (°C)';
+      case 'aqi': return 'AQI Threshold';
     }
   };
 
@@ -136,11 +158,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     updateSetting(key as any, tempApiKey || null);
     setTempApiKey('');
     setShowApiKeyInput(false);
-    Alert.alert('Success', 'API key updated successfully');
+    showAlert('Success', 'API key updated successfully');
   };
 
   const handleReset = () => {
-    Alert.alert(
+    showAlert(
       'Reset Settings',
       'Are you sure you want to reset all settings to default?',
       [
@@ -150,7 +172,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           style: 'destructive',
           onPress: () => {
             resetSettings();
-            Alert.alert('Success', 'Settings reset to default');
+            showAlert('Success', 'Settings reset to default');
           }
         }
       ]
@@ -171,7 +193,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       const filePath = `${FileSystem.cacheDirectory}${fileName}`;
       
       await FileSystem.writeAsStringAsync(filePath, backupJson, {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: 'utf8' as any,
       });
       
       const isAvailable = await Sharing.isAvailableAsync();
@@ -181,11 +203,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           dialogTitle: 'Export WeatherWell Backup',
         });
       } else {
-        Alert.alert('Error', 'Sharing is not available on this device');
+        showAlert('Error', 'Sharing is not available on this device');
       }
     } catch (error) {
       console.error('Export error:', error);
-      Alert.alert('Error', 'Failed to export backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showAlert('Error', 'Failed to export backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -202,7 +224,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
       const fileUri = result.assets[0].uri;
       const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.UTF8,
+        encoding: 'utf8' as any,
       });
 
       const parsed = JSON.parse(fileContent);
@@ -219,22 +241,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         }
         
         if (settingsSuccess) {
-          Alert.alert('Success', 'Backup restored (settings and favorites)');
+          showAlert('Success', 'Backup restored (settings and favorites)');
         } else {
-          Alert.alert('Error', 'Failed to restore settings from backup');
+          showAlert('Error', 'Failed to restore settings from backup');
         }
       } else {
         // Legacy format: plain settings JSON
         const success = await importSettings(fileContent);
         if (success) {
-          Alert.alert('Success', 'Settings imported successfully');
+          showAlert('Success', 'Settings imported successfully');
         } else {
-          Alert.alert('Error', 'Invalid backup file');
+          showAlert('Error', 'Invalid backup file');
         }
       }
     } catch (error) {
       console.error('Import error:', error);
-      Alert.alert('Error', 'Failed to import backup. Make sure you selected a valid .weatherwell file.');
+      showAlert('Error', 'Failed to import backup. Make sure you selected a valid .weatherwell file.');
     }
   };
 
@@ -648,7 +670,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            📋 Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}⚡ Dynamic alerts check every ~{settings.refreshInterval} min and warn before hazardous conditions.
+            📋 Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}⚡ Dynamic alerts check based on your refresh interval ({settings.refreshInterval} min) and warn before hazardous conditions.
           </Text>
           <SettingItem
             title="Enable Notifications"
@@ -812,14 +834,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               
               <SettingItem
                 title="Air Quality Alerts"
-                subtitle="Alerts when AQI reaches unhealthy levels (above 100)"
+                subtitle={`Alerts when AQI reaches ${settings.aqiThreshold}+ (unhealthy levels)`}
                 rightElement={
-                  <Switch
-                    value={settings.enableAQIAlerts}
-                    onValueChange={(value) => updateSetting('enableAQIAlerts', value)}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={settings.enableAQIAlerts ? colors.accent : '#f4f3f4'}
-                  />
+                  <View style={styles.rowRight}>
+                    <TouchableOpacity 
+                      style={[styles.thresholdButton, { backgroundColor: colors.card }]}
+                      onPress={() => openThresholdEditor('aqi')}
+                    >
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.aqiThreshold}</Text>
+                    </TouchableOpacity>
+                    <Switch
+                      value={settings.enableAQIAlerts}
+                      onValueChange={(value) => updateSetting('enableAQIAlerts', value)}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={settings.enableAQIAlerts ? colors.accent : '#f4f3f4'}
+                    />
+                  </View>
                 }
               />
             </>
@@ -1031,6 +1061,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   Save
                 </Text>
               </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Alert Modal */}
+      <Modal
+        visible={alertModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={dismissAlert}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, maxWidth: 340 }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {alertModal.title}
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary, marginBottom: alertModal.buttons ? 20 : 16 }]}>
+              {alertModal.message}
+            </Text>
+            <View style={styles.modalButtons}>
+              {alertModal.buttons ? (
+                alertModal.buttons.map((btn, index) => (
+                  <Pressable
+                    key={index}
+                    style={[
+                      styles.modalButton,
+                      { backgroundColor: btn.style === 'destructive' ? colors.error : btn.style === 'cancel' ? colors.border : colors.primary }
+                    ]}
+                    onPress={() => {
+                      dismissAlert();
+                      btn.onPress?.();
+                    }}
+                  >
+                    <Text style={[styles.modalButtonText, { color: btn.style === 'cancel' ? colors.text : 'white' }]}>
+                      {btn.text}
+                    </Text>
+                  </Pressable>
+                ))
+              ) : (
+                <Pressable
+                  style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                  onPress={dismissAlert}
+                >
+                  <Text style={[styles.modalButtonText, { color: 'white' }]}>
+                    OK
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         </View>
