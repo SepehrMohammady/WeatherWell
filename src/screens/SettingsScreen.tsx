@@ -12,9 +12,10 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Linking,
-  Share
+  Linking
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -157,10 +158,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         favorites: favorites,
       };
       const backupJson = JSON.stringify(backupData, null, 2);
+      const fileName = `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`;
+      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
       
-      await Share.share({
-        message: backupJson,
-        title: `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`,
+      await FileSystem.writeAsStringAsync(filePath, backupJson, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      
+      await Sharing.shareAsync(filePath, {
+        mimeType: 'application/json',
+        dialogTitle: 'Export WeatherWell Backup',
+        UTI: 'public.json',
       });
     } catch (error) {
       Alert.alert('Error', 'Failed to export backup');
@@ -300,11 +308,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 {settings.weatherProvider === 'weatherapi' 
                   ? 'WeatherAPI - Most accurate with full astronomy data' 
                   : settings.weatherProvider === 'openweathermap'
-                    ? '✓ OpenWeatherMap - Reliable forecasts, limited astronomy'
+                    ? 'OpenWeatherMap - Reliable forecasts, limited astronomy'
                     : settings.weatherProvider === 'visualcrossing'
-                    ? '✓ Visual Crossing - Good data, no astronomy'
+                    ? 'Visual Crossing - Good data, no astronomy'
                     : settings.weatherProvider === 'openmeteo'
-                    ? '✓ Open-Meteo - Free, no moon phase data'
+                    ? 'Open-Meteo - Free, no moon phase data'
                     : settings.weatherProvider === 'qweather'
                     ? '⚠ QWeather - May require paid plan'
                     : '⚠ Meteostat - Historical data only, not for forecasts'
@@ -621,7 +629,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            📋 Scheduled: Daily and Hourly forecasts are sent at your chosen time.{'\n'}⚡ Dynamic: Weather alerts run in the background every ~{settings.refreshInterval} minutes and warn you when thresholds are exceeded or hazardous conditions are forecast within the next hour.
+            📋 Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}⚡ Dynamic alerts check every ~{settings.refreshInterval} min and warn before hazardous conditions.
           </Text>
           <SettingItem
             title="Enable Notifications"
@@ -1041,11 +1049,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               ))}
             </ScrollView>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: colors.border, marginTop: 16 }]}
+              style={[styles.closeModalButton, { backgroundColor: colors.primary }]}
               onPress={() => setShowTimePickerModal(false)}
             >
-              <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                Close
+              <Text style={[styles.modalButtonText, { color: 'white' }]}>
+                Done
               </Text>
             </TouchableOpacity>
           </View>
@@ -1303,6 +1311,12 @@ const styles = StyleSheet.create({
   },
   timePickerScroll: {
     maxHeight: 250,
+  },
+  closeModalButton: {
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
   },
   timeOption: {
     paddingVertical: 12,
