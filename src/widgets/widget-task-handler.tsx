@@ -37,7 +37,13 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'WIDGET_RESIZED': {
       const dataStr = await AsyncStorage.getItem(WIDGET_DATA_KEY);
       const data: WidgetData = dataStr ? JSON.parse(dataStr) : {};
-      props.renderWidget(<Widget {...data} />);
+      props.renderWidget(
+        <Widget
+          {...data}
+          widgetWidth={widgetInfo.width}
+          widgetHeight={widgetInfo.height}
+        />
+      );
       break;
     }
 

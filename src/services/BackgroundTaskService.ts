@@ -381,22 +381,8 @@ async function checkAndSendScheduledNotifications(
       if (lastSent !== today) {
         await sendRichDailyForecast(weatherData);
         await AsyncStorage.setItem(LAST_DAILY_FORECAST_KEY, today);
-        // Cancel and reschedule the fallback to prevent duplicate
-        await Notifications.cancelScheduledNotificationAsync('daily-forecast').catch(() => {});
-        await Notifications.scheduleNotificationAsync({
-          identifier: 'daily-forecast',
-          content: {
-            title: '🌤️ Daily Weather Forecast',
-            body: 'Tap to see today\'s full weather forecast, rain chances, and recommendations.',
-            data: { type: 'daily-forecast-trigger' },
-            sound: 'default',
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: targetHour,
-            minute: targetMinute,
-          },
-        }).catch(() => {});
+        // Reschedule with real weather data for tomorrow
+        await rescheduleWithData('daily-forecast', targetHour, targetMinute, weatherData);
         console.log(`📅 Rich daily forecast sent for ${today}`);
       }
     }
@@ -413,22 +399,8 @@ async function checkAndSendScheduledNotifications(
       if (lastSent !== today) {
         await sendRichHourlyForecast(weatherData);
         await AsyncStorage.setItem(LAST_HOURLY_FORECAST_KEY, today);
-        // Cancel and reschedule the fallback to prevent duplicate
-        await Notifications.cancelScheduledNotificationAsync('hourly-forecast').catch(() => {});
-        await Notifications.scheduleNotificationAsync({
-          identifier: 'hourly-forecast',
-          content: {
-            title: '⏰ Hourly Weather Update',
-            body: 'Tap to check the next few hours weather forecast and plan your day.',
-            data: { type: 'hourly-forecast-trigger' },
-            sound: 'default',
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: targetHour,
-            minute: targetMinute,
-          },
-        }).catch(() => {});
+        // Reschedule with real weather data for tomorrow
+        await rescheduleWithData('hourly-forecast', targetHour, targetMinute, weatherData);
         console.log(`⏰ Rich hourly forecast sent for ${today}`);
       }
     }
@@ -493,6 +465,52 @@ async function sendRichHourlyForecast(weatherData: WeatherData): Promise<void> {
     body,
     { type: 'hourly-forecast', location, minTemp, maxTemp, rainHours: rainHours.length }
   );
+}
+
+/**
+ * Reschedule a daily trigger notification with real weather data (for next day)
+ */
+async function rescheduleWithData(
+  identifier: string,
+  hour: number,
+  minute: number,
+  weatherData: WeatherData
+): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
+
+    const current = weatherData.current;
+    const today = weatherData.forecast.daily[0];
+    const location = weatherData.location.name;
+    const temperature = Math.round(current.temperature);
+    const condition = current.condition;
+    const highTemp = Math.round(today?.maxTemp || current.temperature);
+    const lowTemp = Math.round(today?.minTemp || current.temperature);
+    const rainChance = today?.precipitationChance || 0;
+
+    let title = '🌤️ Today\'s Weather';
+    let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
+    if (rainChance > 30) body += `. ${rainChance}% chance of rain`;
+
+    if (identifier === 'hourly-forecast') {
+      title = '⏰ Next Hours Weather';
+      const hourlyData = weatherData.forecast.hourly.slice(0, 6);
+      if (hourlyData.length > 0) {
+        const temps = hourlyData.map(h => Math.round(h.temperature));
+        body = `${location} next ${hourlyData.length}h: ${Math.min(...temps)}-${Math.max(...temps)}°C. Now ${Math.round(hourlyData[0].temperature)}°C`;
+      }
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      identifier,
+      content: { title, body, data: { type: identifier }, sound: 'default' },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+  } catch {}
 }
 
 /**

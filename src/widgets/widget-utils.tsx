@@ -47,7 +47,7 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
     // Trigger immediate widget update
     await requestWidgetUpdate({
       widgetName: 'WeatherWidget',
-      renderWidget: () => <WeatherWidget {...widgetData} />,
+      renderWidget: (info) => <WeatherWidget {...widgetData} widgetWidth={info.width} widgetHeight={info.height} />,
       widgetNotFound: () => {},
     });
   } catch (error) {
@@ -72,7 +72,7 @@ export async function refreshWidgetSettings(): Promise<void> {
 
     await requestWidgetUpdate({
       widgetName: 'WeatherWidget',
-      renderWidget: () => <WeatherWidget {...widgetData} />,
+      renderWidget: (info) => <WeatherWidget {...widgetData} widgetWidth={info.width} widgetHeight={info.height} />,
       widgetNotFound: () => {},
     });
   } catch (error) {

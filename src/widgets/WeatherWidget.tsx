@@ -14,6 +14,8 @@ interface WeatherWidgetProps {
   showHighLow?: boolean;
   showRainChance?: boolean;
   showConditions?: boolean;
+  widgetWidth?: number;
+  widgetHeight?: number;
 }
 
 export function WeatherWidget({
@@ -29,11 +31,25 @@ export function WeatherWidget({
   showHighLow = true,
   showRainChance = true,
   showConditions = true,
+  widgetWidth = 250,
+  widgetHeight = 100,
 }: WeatherWidgetProps) {
-  // Convert opacity to hex alpha (0.0-1.0 → 00-FF)
+  // Convert opacity to hex alpha in CSS #RRGGBBAA format
+  // (react-native-android-widget's convertColor expects this format)
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
-  const bgColor = `#${alphaHex}1A1A1A`;
-  const surfaceColor = `#${alphaHex}2A2A2A`;
+  const bgColor = `#1A1A1A${alphaHex}`;
+  const surfaceColor = `#2A2A2A${alphaHex}`;
+
+  // Responsive sizing based on widget dimensions
+  const scale = Math.min(widgetWidth / 250, widgetHeight / 100);
+  const tempSize = Math.max(28, Math.min(52, Math.round(40 * scale)));
+  const locationSize = Math.max(11, Math.min(18, Math.round(14 * scale)));
+  const detailSize = Math.max(10, Math.min(16, Math.round(13 * scale)));
+  const smallSize = Math.max(9, Math.min(14, Math.round(12 * scale)));
+  const conditionSize = Math.max(11, Math.min(18, Math.round(14 * scale)));
+  const padding = Math.max(10, Math.min(24, Math.round(16 * scale)));
+  const panelPadding = Math.max(6, Math.min(14, Math.round(10 * scale)));
+  const borderRadius = Math.max(14, Math.min(28, Math.round(20 * scale)));
 
   return (
     <FlexWidget
@@ -41,8 +57,8 @@ export function WeatherWidget({
         height: 'match_parent',
         width: 'match_parent',
         backgroundColor: bgColor,
-        borderRadius: 20,
-        padding: 16,
+        borderRadius: borderRadius,
+        padding: padding,
         flexDirection: 'column',
         justifyContent: 'space-between',
       }}
@@ -52,7 +68,7 @@ export function WeatherWidget({
       <TextWidget
         text={`📍 ${location}`}
         style={{
-          fontSize: 14,
+          fontSize: locationSize,
           color: '#B6BCBE',
         }}
         maxLines={1}
@@ -75,7 +91,7 @@ export function WeatherWidget({
           <TextWidget
             text={temperature}
             style={{
-              fontSize: 40,
+              fontSize: tempSize,
               fontWeight: 'bold',
               color: '#FFFFFF',
             }}
@@ -84,7 +100,7 @@ export function WeatherWidget({
             <TextWidget
               text={`Feels ${feelsLike}`}
               style={{
-                fontSize: 12,
+                fontSize: smallSize,
                 color: '#8A9299',
               }}
             />
@@ -102,22 +118,22 @@ export function WeatherWidget({
               flexDirection: 'column',
               alignItems: 'flex-end',
               backgroundColor: surfaceColor,
-              borderRadius: 12,
-              padding: 10,
+              borderRadius: Math.round(borderRadius * 0.6),
+              padding: panelPadding,
             }}
           >
             <TextWidget
               text={`H: ${high}`}
-              style={{ fontSize: 13, color: '#CB936A' }}
+              style={{ fontSize: detailSize, color: '#CB936A' }}
             />
             <TextWidget
               text={`L: ${low}`}
-              style={{ fontSize: 13, color: '#5F758E' }}
+              style={{ fontSize: detailSize, color: '#5F758E' }}
             />
             {showRainChance && rainChance ? (
               <TextWidget
                 text={`☔ ${rainChance}`}
-                style={{ fontSize: 12, color: '#B6BCBE', marginTop: 2 }}
+                style={{ fontSize: smallSize, color: '#B6BCBE', marginTop: 2 }}
               />
             ) : (
               <TextWidget
@@ -132,13 +148,13 @@ export function WeatherWidget({
               flexDirection: 'column',
               alignItems: 'flex-end',
               backgroundColor: surfaceColor,
-              borderRadius: 12,
-              padding: 10,
+              borderRadius: Math.round(borderRadius * 0.6),
+              padding: panelPadding,
             }}
           >
             <TextWidget
               text={`☔ ${rainChance}`}
-              style={{ fontSize: 14, color: '#B6BCBE' }}
+              style={{ fontSize: detailSize, color: '#B6BCBE' }}
             />
           </FlexWidget>
         ) : (
@@ -154,7 +170,7 @@ export function WeatherWidget({
         <TextWidget
           text={conditions || 'Tap to open WeatherWell'}
           style={{
-            fontSize: 14,
+            fontSize: conditionSize,
             color: '#CFAE95',
           }}
           maxLines={1}

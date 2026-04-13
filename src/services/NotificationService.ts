@@ -267,10 +267,54 @@ class NotificationService {
   }
 
   /**
-   * Schedule daily forecast notification
-   * Schedules a fallback notification at the configured time.
-   * The background task will send a rich version with real weather data when possible,
-   * and reschedule this to prevent duplicates.
+   * Schedule daily forecast notification with real weather data.
+   * Called from the app when weather data is available.
+   */
+  async scheduleDailyForecastWithData(weatherData: WeatherData): Promise<void> {
+    if (!this.notificationSettings.enableDailyForecast) return;
+
+    try {
+      await Notifications.cancelScheduledNotificationAsync('daily-forecast').catch(() => {});
+
+      const [hours, minutes] = this.notificationSettings.dailyForecastTime.split(':').map(Number);
+
+      const current = weatherData.current;
+      const today = weatherData.forecast.daily[0];
+      const location = weatherData.location.name;
+      const temperature = Math.round(current.temperature);
+      const condition = current.condition;
+      const highTemp = Math.round(today?.maxTemp || current.temperature);
+      const lowTemp = Math.round(today?.minTemp || current.temperature);
+      const rainChance = today?.precipitationChance || 0;
+
+      let body = `${location}: ${temperature}°C, ${condition}. High ${highTemp}°C, Low ${lowTemp}°C`;
+      if (rainChance > 30) body += `. ${rainChance}% chance of rain`;
+      if (current.uvIndex >= 8) body += `. High UV - wear sunscreen!`;
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'daily-forecast',
+        content: {
+          title: '🌤️ Today\'s Weather',
+          body,
+          data: { type: 'daily-forecast', temperature, condition, location, rainChance },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+
+      console.log(`📅 Daily forecast with data scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
+    } catch (error) {
+      console.error('Error scheduling daily forecast with data:', error);
+    }
+  }
+
+  /**
+   * Schedule daily forecast notification (fallback with no weather data).
+   * Only used if no weather data is available.
    */
   async scheduleDailyForecast(): Promise<void> {
     if (!this.notificationSettings.enableDailyForecast) return;
@@ -284,7 +328,7 @@ class NotificationService {
         identifier: 'daily-forecast',
         content: {
           title: '🌤️ Daily Weather Forecast',
-          body: 'Tap to see today\'s full weather forecast, rain chances, and recommendations.',
+          body: 'Open WeatherWell to see today\'s full forecast.',
           data: { type: 'daily-forecast-trigger' },
           sound: 'default',
         },
@@ -295,7 +339,7 @@ class NotificationService {
         },
       });
 
-      console.log(`📅 Daily forecast scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
+      console.log(`📅 Daily forecast fallback scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
     } catch (error) {
       console.error('Error scheduling daily forecast:', error);
     }
@@ -451,9 +495,58 @@ class NotificationService {
   }
 
   /**
-   * Schedule hourly forecast notification
-   * Schedules a fallback notification at the configured time.
-   * The background task will send a rich version with real weather data when possible.
+   * Schedule hourly forecast notification with real weather data.
+   * Called from the app when weather data is available.
+   */
+  async scheduleHourlyForecastWithData(weatherData: WeatherData): Promise<void> {
+    if (!this.notificationSettings.enableHourlyForecast) return;
+
+    try {
+      await Notifications.cancelScheduledNotificationAsync('hourly-forecast').catch(() => {});
+
+      const [hours, minutes] = this.notificationSettings.hourlyForecastTime.split(':').map(Number);
+
+      const hourlyData = weatherData.forecast.hourly.slice(0, 6);
+      const location = weatherData.location.name;
+
+      let body = `${location}: Check the upcoming hours forecast.`;
+      if (hourlyData.length > 0) {
+        const temps = hourlyData.map(h => Math.round(h.temperature));
+        const minTemp = Math.min(...temps);
+        const maxTemp = Math.max(...temps);
+        body = `${location} next ${hourlyData.length}h: ${minTemp}-${maxTemp}°C.`;
+
+        const rainHours = hourlyData.filter(h => h.precipitationChance > 30);
+        if (rainHours.length > 0) {
+          body += ` Rain expected in ${rainHours.length} hour(s).`;
+        }
+        body += ` Now ${Math.round(hourlyData[0].temperature)}°C, ${hourlyData[0].condition}`;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'hourly-forecast',
+        content: {
+          title: '⏰ Next Hours Weather',
+          body,
+          data: { type: 'hourly-forecast', location },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+
+      console.log(`⏰ Hourly forecast with data scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
+    } catch (error) {
+      console.error('Error scheduling hourly forecast with data:', error);
+    }
+  }
+
+  /**
+   * Schedule hourly forecast notification (fallback with no weather data).
+   * Only used if no weather data is available.
    */
   async scheduleHourlyForecast(): Promise<void> {
     if (!this.notificationSettings.enableHourlyForecast) return;
@@ -467,7 +560,7 @@ class NotificationService {
         identifier: 'hourly-forecast',
         content: {
           title: '⏰ Hourly Weather Update',
-          body: 'Tap to check the next few hours weather forecast and plan your day.',
+          body: 'Open WeatherWell to check the next few hours forecast.',
           data: { type: 'hourly-forecast-trigger' },
           sound: 'default',
         },
@@ -478,7 +571,7 @@ class NotificationService {
         },
       });
 
-      console.log(`⏰ Hourly forecast scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
+      console.log(`⏰ Hourly forecast fallback scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
     } catch (error) {
       console.error('Error scheduling hourly forecast:', error);
     }

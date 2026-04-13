@@ -254,10 +254,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleAddWidgetToHomeScreen = async () => {
     try {
-      const { requestPinWidget } = require('react-native-android-widget');
-      await requestPinWidget('WeatherWidget');
-    } catch (error) {
-      showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+      const { NativeModules } = require('react-native');
+      const { WidgetPinModule } = NativeModules;
+      if (WidgetPinModule) {
+        await WidgetPinModule.requestPinWidget();
+      } else {
+        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+      }
+    } catch (error: any) {
+      if (error?.code === 'UNSUPPORTED') {
+        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+      } else {
+        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+      }
     }
   };
 

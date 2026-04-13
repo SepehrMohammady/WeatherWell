@@ -29,6 +29,7 @@ import { useFavorites } from '../contexts/FavoritesContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { backgroundTaskService } from '../services/BackgroundTaskService';
 import { updateWidgetWithWeatherData } from '../widgets/widget-utils';
+import { notificationService } from '../services/NotificationService';
 
 export const HomeScreen: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -103,6 +104,12 @@ export const HomeScreen: React.FC = () => {
       // Update widget with fresh weather data
       await updateWidgetWithWeatherData(result.data);
       
+      // Schedule notifications with real weather data for configured times
+      if (settings.enableNotifications) {
+        await notificationService.scheduleDailyForecastWithData(result.data);
+        await notificationService.scheduleHourlyForecastWithData(result.data);
+      }
+
       // Check for weather alerts when app is opened
       // Background alerts are handled by BackgroundTaskService
       if (isInitialized && settings.enableNotifications) {
