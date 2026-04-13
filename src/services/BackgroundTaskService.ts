@@ -273,16 +273,16 @@ async function checkUpcomingConditions(
     const hourTime = new Date(hour.time);
     const timeStr = hourTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Check for upcoming rain
+    // Check for upcoming rain (umbrella alert with timing)
     if (settings.enableUmbrellaAlerts && hour.precipitationChance >= settings.rainThreshold) {
       if (await shouldSendAlert('upcoming-rain')) {
         await sendBackgroundNotification(
-          '☂️ Rain Coming Soon',
-          `${hour.precipitationChance}% chance of rain around ${timeStr}. Grab an umbrella!`,
+          '☂️ Umbrella Alert',
+          `${hour.precipitationChance}% chance of rain around ${timeStr}. Don't forget your umbrella!`,
           { type: 'upcoming-rain', time: timeStr }
         );
         await markAlertSent('upcoming-rain');
-        console.log(`☂️ Upcoming rain alert: ${hour.precipitationChance}% at ${timeStr}`);
+        console.log(`☂️ Umbrella alert: ${hour.precipitationChance}% at ${timeStr}`);
       }
     }
 
@@ -381,6 +381,22 @@ async function checkAndSendScheduledNotifications(
       if (lastSent !== today) {
         await sendRichDailyForecast(weatherData);
         await AsyncStorage.setItem(LAST_DAILY_FORECAST_KEY, today);
+        // Cancel and reschedule the fallback to prevent duplicate
+        await Notifications.cancelScheduledNotificationAsync('daily-forecast').catch(() => {});
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'daily-forecast',
+          content: {
+            title: '🌤️ Daily Weather Forecast',
+            body: 'Tap to see today\'s full weather forecast, rain chances, and recommendations.',
+            data: { type: 'daily-forecast-trigger' },
+            sound: 'default',
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: targetHour,
+            minute: targetMinute,
+          },
+        }).catch(() => {});
         console.log(`📅 Rich daily forecast sent for ${today}`);
       }
     }
@@ -397,6 +413,22 @@ async function checkAndSendScheduledNotifications(
       if (lastSent !== today) {
         await sendRichHourlyForecast(weatherData);
         await AsyncStorage.setItem(LAST_HOURLY_FORECAST_KEY, today);
+        // Cancel and reschedule the fallback to prevent duplicate
+        await Notifications.cancelScheduledNotificationAsync('hourly-forecast').catch(() => {});
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'hourly-forecast',
+          content: {
+            title: '⏰ Hourly Weather Update',
+            body: 'Tap to check the next few hours weather forecast and plan your day.',
+            data: { type: 'hourly-forecast-trigger' },
+            sound: 'default',
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: targetHour,
+            minute: targetMinute,
+          },
+        }).catch(() => {});
         console.log(`⏰ Rich hourly forecast sent for ${today}`);
       }
     }
@@ -472,10 +504,9 @@ async function cacheWidgetData(weatherData: WeatherData): Promise<void> {
     const today = weatherData.forecast.daily[0];
     const rainChance = today?.precipitationChance || 0;
 
-    // Read widget opacity from settings
+    // Read widget settings from app settings
     const settingsData = await AsyncStorage.getItem('appSettings');
     const appSettings = settingsData ? JSON.parse(settingsData) : {};
-    const opacity = appSettings.widgetOpacity ?? 0.85;
 
     const widgetData = {
       temperature: `${Math.round(current.temperature)}°`,
@@ -485,7 +516,11 @@ async function cacheWidgetData(weatherData: WeatherData): Promise<void> {
       low: `${Math.round(today?.minTemp || current.temperature)}°`,
       rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
       feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
-      opacity,
+      opacity: appSettings.widgetOpacity ?? 0.85,
+      showFeelsLike: appSettings.widgetShowFeelsLike ?? true,
+      showHighLow: appSettings.widgetShowHighLow ?? true,
+      showRainChance: appSettings.widgetShowRainChance ?? true,
+      showConditions: appSettings.widgetShowConditions ?? true,
     };
 
     await AsyncStorage.setItem(WIDGET_DATA_KEY, JSON.stringify(widgetData));

@@ -40,6 +40,10 @@ export interface AppSettings {
   showAirQuality: boolean;
   enableShareLocation: boolean;
   widgetOpacity: number;
+  widgetShowFeelsLike: boolean;
+  widgetShowHighLow: boolean;
+  widgetShowRainChance: boolean;
+  widgetShowConditions: boolean;
 }
 
 const defaultSettings: AppSettings = {
@@ -77,7 +81,11 @@ const defaultSettings: AppSettings = {
   showWindDirection: true,
   showAirQuality: true,
   enableShareLocation: true,
-  widgetOpacity: 0.85
+  widgetOpacity: 0.85,
+  widgetShowFeelsLike: true,
+  widgetShowHighLow: true,
+  widgetShowRainChance: true,
+  widgetShowConditions: true
 };
 
 interface SettingsContextType {

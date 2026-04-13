@@ -6,6 +6,21 @@ import { WeatherWidget } from './WeatherWidget';
 import { WIDGET_DATA_KEY } from './widget-task-handler';
 
 /**
+ * Read widget display settings from app settings
+ */
+async function getWidgetSettings() {
+  const settingsData = await AsyncStorage.getItem('appSettings');
+  const appSettings = settingsData ? JSON.parse(settingsData) : {};
+  return {
+    opacity: appSettings.widgetOpacity ?? 0.85,
+    showFeelsLike: appSettings.widgetShowFeelsLike ?? true,
+    showHighLow: appSettings.widgetShowHighLow ?? true,
+    showRainChance: appSettings.widgetShowRainChance ?? true,
+    showConditions: appSettings.widgetShowConditions ?? true,
+  };
+}
+
+/**
  * Cache weather data and trigger widget update from the foreground app
  */
 export async function updateWidgetWithWeatherData(weatherData: WeatherData): Promise<void> {
@@ -13,11 +28,7 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
     const current = weatherData.current;
     const today = weatherData.forecast.daily[0];
     const rainChance = today?.precipitationChance || 0;
-
-    // Read widget opacity from settings
-    const settingsData = await AsyncStorage.getItem('appSettings');
-    const appSettings = settingsData ? JSON.parse(settingsData) : {};
-    const opacity = appSettings.widgetOpacity ?? 0.85;
+    const widgetSettings = await getWidgetSettings();
 
     const widgetData = {
       temperature: `${Math.round(current.temperature)}°`,
@@ -27,7 +38,7 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
       low: `${Math.round(today?.minTemp || current.temperature)}°`,
       rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
       feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
-      opacity,
+      ...widgetSettings,
     };
 
     // Cache for background reads
@@ -37,12 +48,34 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
     await requestWidgetUpdate({
       widgetName: 'WeatherWidget',
       renderWidget: () => <WeatherWidget {...widgetData} />,
-      widgetNotFound: () => {
-        // Widget not on home screen, nothing to update
-      },
+      widgetNotFound: () => {},
     });
   } catch (error) {
-    // Widget update is non-critical
     console.log('Widget update skipped:', error instanceof Error ? error.message : 'unknown');
+  }
+}
+
+/**
+ * Re-render widget with current cached data and updated settings (e.g. opacity change)
+ */
+export async function refreshWidgetSettings(): Promise<void> {
+  try {
+    const dataStr = await AsyncStorage.getItem(WIDGET_DATA_KEY);
+    if (!dataStr) return;
+
+    const cachedData = JSON.parse(dataStr);
+    const widgetSettings = await getWidgetSettings();
+    const widgetData = { ...cachedData, ...widgetSettings };
+
+    // Update cache with new settings
+    await AsyncStorage.setItem(WIDGET_DATA_KEY, JSON.stringify(widgetData));
+
+    await requestWidgetUpdate({
+      widgetName: 'WeatherWidget',
+      renderWidget: () => <WeatherWidget {...widgetData} />,
+      widgetNotFound: () => {},
+    });
+  } catch (error) {
+    console.log('Widget settings refresh skipped:', error instanceof Error ? error.message : 'unknown');
   }
 }

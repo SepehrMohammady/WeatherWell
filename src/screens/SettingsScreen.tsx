@@ -25,6 +25,7 @@ import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/Setti
 import { useNotifications } from '../contexts/NotificationContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { APP_VERSION } from '../config/version';
+import { refreshWidgetSettings } from '../widgets/widget-utils';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -258,6 +259,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     } catch (error) {
       showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
     }
+  };
+
+  const handleWidgetSettingChange = async (key: string, value: any) => {
+    await updateSetting(key as any, value);
+    // Refresh widget with new settings
+    setTimeout(() => refreshWidgetSettings(), 300);
   };
 
   const handleOpenGitHub = () => {
@@ -858,13 +865,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Home Screen Widget
           </Text>
           <SettingItem
+            title="Add Widget to Home Screen"
+            subtitle="Tap to add the weather widget directly"
+            onPress={handleAddWidgetToHomeScreen}
+            rightElement={
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+            }
+          />
+          <SettingItem
             title="Widget Opacity"
             subtitle={`${Math.round((settings.widgetOpacity ?? 0.85) * 100)}%`}
             rightElement={
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <TouchableOpacity onPress={() => {
                   const current = settings.widgetOpacity ?? 0.85;
-                  if (current > 0.3) updateSetting('widgetOpacity', Math.round((current - 0.05) * 100) / 100);
+                  if (current > 0.3) handleWidgetSettingChange('widgetOpacity', Math.round((current - 0.05) * 100) / 100);
                 }}>
                   <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
                 </TouchableOpacity>
@@ -873,7 +888,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 </Text>
                 <TouchableOpacity onPress={() => {
                   const current = settings.widgetOpacity ?? 0.85;
-                  if (current < 1.0) updateSetting('widgetOpacity', Math.round((current + 0.05) * 100) / 100);
+                  if (current < 1.0) handleWidgetSettingChange('widgetOpacity', Math.round((current + 0.05) * 100) / 100);
                 }}>
                   <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
                 </TouchableOpacity>
@@ -881,11 +896,51 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Add Widget to Home Screen"
-            subtitle="Long-press home screen → Widgets → WeatherWell"
-            onPress={handleAddWidgetToHomeScreen}
+            title="Show Feels Like"
+            subtitle="Display feels-like temperature"
             rightElement={
-              <Ionicons name="add-outline" size={24} color={colors.primary} />
+              <Switch
+                value={settings.widgetShowFeelsLike ?? true}
+                onValueChange={(value) => handleWidgetSettingChange('widgetShowFeelsLike', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={(settings.widgetShowFeelsLike ?? true) ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
+          <SettingItem
+            title="Show High/Low"
+            subtitle="Display daily high and low temperatures"
+            rightElement={
+              <Switch
+                value={settings.widgetShowHighLow ?? true}
+                onValueChange={(value) => handleWidgetSettingChange('widgetShowHighLow', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={(settings.widgetShowHighLow ?? true) ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
+          <SettingItem
+            title="Show Rain Chance"
+            subtitle="Display precipitation probability"
+            rightElement={
+              <Switch
+                value={settings.widgetShowRainChance ?? true}
+                onValueChange={(value) => handleWidgetSettingChange('widgetShowRainChance', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={(settings.widgetShowRainChance ?? true) ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
+          <SettingItem
+            title="Show Conditions"
+            subtitle="Display weather condition text"
+            rightElement={
+              <Switch
+                value={settings.widgetShowConditions ?? true}
+                onValueChange={(value) => handleWidgetSettingChange('widgetShowConditions', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={(settings.widgetShowConditions ?? true) ? colors.accent : '#f4f3f4'}
+              />
             }
           />
         </View>

@@ -268,17 +268,36 @@ class NotificationService {
 
   /**
    * Schedule daily forecast notification
-   * Rich daily forecasts are now sent by the background task with real weather data.
-   * This method just cancels any existing placeholder scheduled notifications.
+   * Schedules a fallback notification at the configured time.
+   * The background task will send a rich version with real weather data when possible,
+   * and reschedule this to prevent duplicates.
    */
   async scheduleDailyForecast(): Promise<void> {
     if (!this.notificationSettings.enableDailyForecast) return;
 
     try {
       await Notifications.cancelScheduledNotificationAsync('daily-forecast').catch(() => {});
-      console.log('📅 Daily forecast delegated to background task');
+
+      const [hours, minutes] = this.notificationSettings.dailyForecastTime.split(':').map(Number);
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'daily-forecast',
+        content: {
+          title: '🌤️ Daily Weather Forecast',
+          body: 'Tap to see today\'s full weather forecast, rain chances, and recommendations.',
+          data: { type: 'daily-forecast-trigger' },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+
+      console.log(`📅 Daily forecast scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
     } catch (error) {
-      console.error('Error updating daily forecast schedule:', error);
+      console.error('Error scheduling daily forecast:', error);
     }
   }
 
@@ -433,17 +452,35 @@ class NotificationService {
 
   /**
    * Schedule hourly forecast notification
-   * Rich hourly forecasts are now sent by the background task with real weather data.
-   * This method just cancels any existing placeholder scheduled notifications.
+   * Schedules a fallback notification at the configured time.
+   * The background task will send a rich version with real weather data when possible.
    */
   async scheduleHourlyForecast(): Promise<void> {
     if (!this.notificationSettings.enableHourlyForecast) return;
 
     try {
       await Notifications.cancelScheduledNotificationAsync('hourly-forecast').catch(() => {});
-      console.log('⏰ Hourly forecast delegated to background task');
+
+      const [hours, minutes] = this.notificationSettings.hourlyForecastTime.split(':').map(Number);
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'hourly-forecast',
+        content: {
+          title: '⏰ Hourly Weather Update',
+          body: 'Tap to check the next few hours weather forecast and plan your day.',
+          data: { type: 'hourly-forecast-trigger' },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+
+      console.log(`⏰ Hourly forecast scheduled for ${hours}:${minutes.toString().padStart(2, '0')}`);
     } catch (error) {
-      console.error('Error updating hourly forecast schedule:', error);
+      console.error('Error scheduling hourly forecast:', error);
     }
   }
 

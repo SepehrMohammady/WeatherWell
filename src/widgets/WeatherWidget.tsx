@@ -10,6 +10,10 @@ interface WeatherWidgetProps {
   rainChance?: string;
   feelsLike?: string;
   opacity?: number;
+  showFeelsLike?: boolean;
+  showHighLow?: boolean;
+  showRainChance?: boolean;
+  showConditions?: boolean;
 }
 
 export function WeatherWidget({
@@ -21,6 +25,10 @@ export function WeatherWidget({
   rainChance,
   feelsLike,
   opacity = 0.85,
+  showFeelsLike = true,
+  showHighLow = true,
+  showRainChance = true,
+  showConditions = true,
 }: WeatherWidgetProps) {
   // Convert opacity to hex alpha (0.0-1.0 → 00-FF)
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
@@ -72,7 +80,7 @@ export function WeatherWidget({
               color: '#FFFFFF',
             }}
           />
-          {feelsLike ? (
+          {showFeelsLike && feelsLike ? (
             <TextWidget
               text={`Feels ${feelsLike}`}
               style={{
@@ -88,46 +96,75 @@ export function WeatherWidget({
           )}
         </FlexWidget>
 
-        <FlexWidget
-          style={{
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            backgroundColor: surfaceColor,
-            borderRadius: 12,
-            padding: 10,
-          }}
-        >
-          <TextWidget
-            text={`H: ${high}`}
-            style={{ fontSize: 13, color: '#CB936A' }}
-          />
-          <TextWidget
-            text={`L: ${low}`}
-            style={{ fontSize: 13, color: '#5F758E' }}
-          />
-          {rainChance ? (
+        {showHighLow ? (
+          <FlexWidget
+            style={{
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              backgroundColor: surfaceColor,
+              borderRadius: 12,
+              padding: 10,
+            }}
+          >
+            <TextWidget
+              text={`H: ${high}`}
+              style={{ fontSize: 13, color: '#CB936A' }}
+            />
+            <TextWidget
+              text={`L: ${low}`}
+              style={{ fontSize: 13, color: '#5F758E' }}
+            />
+            {showRainChance && rainChance ? (
+              <TextWidget
+                text={`☔ ${rainChance}`}
+                style={{ fontSize: 12, color: '#B6BCBE', marginTop: 2 }}
+              />
+            ) : (
+              <TextWidget
+                text=""
+                style={{ fontSize: 1, color: '#00000000' }}
+              />
+            )}
+          </FlexWidget>
+        ) : showRainChance && rainChance ? (
+          <FlexWidget
+            style={{
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              backgroundColor: surfaceColor,
+              borderRadius: 12,
+              padding: 10,
+            }}
+          >
             <TextWidget
               text={`☔ ${rainChance}`}
-              style={{ fontSize: 12, color: '#B6BCBE', marginTop: 2 }}
+              style={{ fontSize: 14, color: '#B6BCBE' }}
             />
-          ) : (
-            <TextWidget
-              text=""
-              style={{ fontSize: 1, color: '#00000000' }}
-            />
-          )}
-        </FlexWidget>
+          </FlexWidget>
+        ) : (
+          <TextWidget
+            text=""
+            style={{ fontSize: 1, color: '#00000000' }}
+          />
+        )}
       </FlexWidget>
 
       {/* Conditions */}
-      <TextWidget
-        text={conditions || 'Tap to open WeatherWell'}
-        style={{
-          fontSize: 14,
-          color: '#CFAE95',
-        }}
-        maxLines={1}
-      />
+      {showConditions ? (
+        <TextWidget
+          text={conditions || 'Tap to open WeatherWell'}
+          style={{
+            fontSize: 14,
+            color: '#CFAE95',
+          }}
+          maxLines={1}
+        />
+      ) : (
+        <TextWidget
+          text=""
+          style={{ fontSize: 1, color: '#00000000' }}
+        />
+      )}
     </FlexWidget>
   );
 }
