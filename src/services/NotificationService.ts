@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherData } from './types';
 
 // Configure notification handling behavior
@@ -756,7 +757,8 @@ class NotificationService {
   }
 
   /**
-   * Reschedule all notifications based on current settings
+   * Reschedule all notifications based on current settings.
+   * Reads cached weather data to include real data in notifications.
    */
   private async rescheduleNotifications(): Promise<void> {
     try {
@@ -765,8 +767,17 @@ class NotificationService {
 
       // Reschedule based on current settings
       if (this.notificationSettings.enableNotifications) {
-        await this.scheduleDailyForecast();
-        await this.scheduleHourlyForecast();
+        // Try to read cached weather data for rich notifications
+        const cachedDataStr = await AsyncStorage.getItem('weatherwell_last_weather').catch(() => null);
+        const cachedData: WeatherData | null = cachedDataStr ? JSON.parse(cachedDataStr) : null;
+
+        if (cachedData) {
+          await this.scheduleDailyForecastWithData(cachedData);
+          await this.scheduleHourlyForecastWithData(cachedData);
+        } else {
+          await this.scheduleDailyForecast();
+          await this.scheduleHourlyForecast();
+        }
       }
 
       console.log('🔄 Notifications rescheduled');

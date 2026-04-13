@@ -35,21 +35,26 @@ export function WeatherWidget({
   widgetHeight = 100,
 }: WeatherWidgetProps) {
   // Convert opacity to hex alpha in CSS #RRGGBBAA format
-  // (react-native-android-widget's convertColor expects this format)
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
   const bgColor = `#1A1A1A${alphaHex}`;
   const surfaceColor = `#2A2A2A${alphaHex}`;
 
-  // Responsive sizing based on widget dimensions
-  const scale = Math.min(widgetWidth / 250, widgetHeight / 100);
-  const tempSize = Math.max(28, Math.min(52, Math.round(40 * scale)));
-  const locationSize = Math.max(11, Math.min(18, Math.round(14 * scale)));
-  const detailSize = Math.max(10, Math.min(16, Math.round(13 * scale)));
-  const smallSize = Math.max(9, Math.min(14, Math.round(12 * scale)));
-  const conditionSize = Math.max(11, Math.min(18, Math.round(14 * scale)));
-  const padding = Math.max(10, Math.min(24, Math.round(16 * scale)));
-  const panelPadding = Math.max(6, Math.min(14, Math.round(10 * scale)));
-  const borderRadius = Math.max(14, Math.min(28, Math.round(20 * scale)));
+  // Scale independently by width and height
+  const wScale = widgetWidth / 250;
+  const hScale = widgetHeight / 100;
+  const scale = Math.min(wScale, hScale);
+
+  // Font sizes scale with overall scale
+  const tempSize = Math.max(28, Math.min(64, Math.round(40 * scale)));
+  const locationSize = Math.max(11, Math.min(22, Math.round(14 * scale)));
+  const detailSize = Math.max(10, Math.min(20, Math.round(13 * scale)));
+  const smallSize = Math.max(9, Math.min(18, Math.round(12 * scale)));
+  const conditionSize = Math.max(11, Math.min(22, Math.round(14 * scale)));
+
+  // Layout values
+  const padding = Math.max(8, Math.min(20, Math.round(12 * scale)));
+  const panelPadding = Math.max(6, Math.min(16, Math.round(10 * scale)));
+  const gap = Math.max(4, Math.min(16, Math.round(6 * hScale)));
 
   return (
     <FlexWidget
@@ -57,10 +62,11 @@ export function WeatherWidget({
         height: 'match_parent',
         width: 'match_parent',
         backgroundColor: bgColor,
-        borderRadius: borderRadius,
+        borderRadius: 16,
         padding: padding,
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        flexGap: gap,
       }}
       clickAction="OPEN_APP"
     >
@@ -118,7 +124,7 @@ export function WeatherWidget({
               flexDirection: 'column',
               alignItems: 'flex-end',
               backgroundColor: surfaceColor,
-              borderRadius: Math.round(borderRadius * 0.6),
+              borderRadius: 12,
               padding: panelPadding,
             }}
           >
@@ -148,7 +154,7 @@ export function WeatherWidget({
               flexDirection: 'column',
               alignItems: 'flex-end',
               backgroundColor: surfaceColor,
-              borderRadius: Math.round(borderRadius * 0.6),
+              borderRadius: 12,
               padding: panelPadding,
             }}
           >

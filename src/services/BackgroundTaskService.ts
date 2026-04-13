@@ -81,7 +81,8 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
     const weatherData = result.data;
     console.log(`✅ Background weather data fetched from ${result.source}`);
 
-    // Cache weather data for widget display
+    // Cache weather data for notifications and widget
+    await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(weatherData)).catch(() => {});
     await cacheWidgetData(weatherData);
 
     // Check for alerts and send notifications

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CurrentWeatherCard } from '../components/CurrentWeatherCard';
 import { HourlyForecastList } from '../components/HourlyForecastList';
 import { DailyForecastList } from '../components/DailyForecastList';
@@ -100,6 +101,9 @@ export const HomeScreen: React.FC = () => {
       setWeatherData(result.data);
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
+      
+      // Cache weather data for notifications to use
+      await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(result.data)).catch(() => {});
       
       // Update widget with fresh weather data
       await updateWidgetWithWeatherData(result.data);

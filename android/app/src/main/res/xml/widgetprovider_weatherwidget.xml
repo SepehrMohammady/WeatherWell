@@ -8,5 +8,6 @@
     android:initialLayout="@layout/rn_widget"
     android:description="@string/widget_weatherwidget_description"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen">
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional">
 </appwidget-provider>
