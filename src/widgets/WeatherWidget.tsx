@@ -56,8 +56,8 @@ export function WeatherWidget({
   const panelPadding = Math.max(6, Math.min(16, Math.round(10 * scale)));
   const gap = Math.max(2, Math.min(16, Math.round(6 * hScale)));
 
-  // Auto-hide conditions when widget is too short to fit all content
-  const autoHideConditions = widgetHeight < 110;
+  // Auto-hide conditions when widget is too short to fit all content (e.g. 2 rows)
+  const autoHideConditions = widgetHeight < 140;
 
   return (
     <FlexWidget
