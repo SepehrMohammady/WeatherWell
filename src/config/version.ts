@@ -1,2 +1,2 @@
 // Central version configuration for WeatherWell
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.7.11';

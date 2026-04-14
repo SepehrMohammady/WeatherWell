@@ -188,7 +188,24 @@ export function WeatherWidget({
         )}
       </FlexWidget>
 
-      {/* Tomorrow Forecast — compact row with label + temps */}
+      {/* Conditions — right below today temp, before tomorrow */}
+      {showConditions && !autoHideConditions ? (
+        <TextWidget
+          text={conditions || 'Tap to open WeatherWell'}
+          style={{
+            fontSize: conditionSize,
+            color: '#CFAE95',
+          }}
+          maxLines={1}
+        />
+      ) : (
+        <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
+      )}
+
+      {/* Spacer — pushes tomorrow row to the bottom */}
+      <FlexWidget style={{ flex: 1 }} />
+
+      {/* Tomorrow Forecast — anchored to bottom */}
       {showTomorrow && !autoHideTomorrow && tomorrowHigh ? (
         <FlexWidget
           style={{
@@ -211,20 +228,6 @@ export function WeatherWidget({
             style={{ fontSize: detailSize, color: '#B6BCBE' }}
           />
         </FlexWidget>
-      ) : (
-        <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
-      )}
-
-      {/* Conditions — shown only when height allows (3+ rows); flex:1 on temp row ensures this never overflows */}
-      {showConditions && !autoHideConditions ? (
-        <TextWidget
-          text={conditions || 'Tap to open WeatherWell'}
-          style={{
-            fontSize: conditionSize,
-            color: '#CFAE95',
-          }}
-          maxLines={1}
-        />
       ) : (
         <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
       )}
