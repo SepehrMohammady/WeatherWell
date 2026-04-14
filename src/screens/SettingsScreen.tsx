@@ -952,6 +952,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
             }
           />
+          <SettingItem
+            title="Show Tomorrow"
+            subtitle="Display tomorrow's high/low forecast"
+            rightElement={
+              <Switch
+                value={settings.widgetShowTomorrow ?? false}
+                onValueChange={(value) => handleWidgetSettingChange('widgetShowTomorrow', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={(settings.widgetShowTomorrow ?? false) ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
         </View>
 
         {/* Privacy */}

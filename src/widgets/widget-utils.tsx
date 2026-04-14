@@ -17,6 +17,7 @@ async function getWidgetSettings() {
     showHighLow: appSettings.widgetShowHighLow ?? true,
     showRainChance: appSettings.widgetShowRainChance ?? true,
     showConditions: appSettings.widgetShowConditions ?? true,
+    showTomorrow: appSettings.widgetShowTomorrow ?? false,
   };
 }
 
@@ -27,6 +28,7 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
   try {
     const current = weatherData.current;
     const today = weatherData.forecast.daily[0];
+    const tomorrow = weatherData.forecast.daily[1];
     const rainChance = today?.precipitationChance || 0;
     const widgetSettings = await getWidgetSettings();
 
@@ -38,6 +40,9 @@ export async function updateWidgetWithWeatherData(weatherData: WeatherData): Pro
       low: `${Math.round(today?.minTemp || current.temperature)}°`,
       rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
       feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
+      tomorrowHigh: tomorrow ? `${Math.round(tomorrow.maxTemp)}°` : undefined,
+      tomorrowLow: tomorrow ? `${Math.round(tomorrow.minTemp)}°` : undefined,
+      tomorrowCondition: tomorrow?.condition,
       ...widgetSettings,
     };
 

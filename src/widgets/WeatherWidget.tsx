@@ -9,11 +9,15 @@ interface WeatherWidgetProps {
   low?: string;
   rainChance?: string;
   feelsLike?: string;
+  tomorrowHigh?: string;
+  tomorrowLow?: string;
+  tomorrowCondition?: string;
   opacity?: number;
   showFeelsLike?: boolean;
   showHighLow?: boolean;
   showRainChance?: boolean;
   showConditions?: boolean;
+  showTomorrow?: boolean;
   widgetWidth?: number;
   widgetHeight?: number;
 }
@@ -26,11 +30,15 @@ export function WeatherWidget({
   low = '--°',
   rainChance,
   feelsLike,
+  tomorrowHigh,
+  tomorrowLow,
+  tomorrowCondition,
   opacity = 0.85,
   showFeelsLike = true,
   showHighLow = true,
   showRainChance = true,
   showConditions = true,
+  showTomorrow = false,
   widgetWidth = 250,
   widgetHeight = 100,
 }: WeatherWidgetProps) {
@@ -57,6 +65,8 @@ export function WeatherWidget({
 
   // Show conditions only when height is large enough (3+ rows typically ≥ 170dp)
   const autoHideConditions = widgetHeight < 170;
+  // Show tomorrow only when height is large enough
+  const autoHideTomorrow = widgetHeight < 140;
 
   return (
     <FlexWidget
@@ -174,6 +184,33 @@ export function WeatherWidget({
           />
         )}
       </FlexWidget>
+
+      {/* Tomorrow Forecast — compact row with label + temps */}
+      {showTomorrow && !autoHideTomorrow && tomorrowHigh ? (
+        <FlexWidget
+          style={{
+            flexDirection: 'row',
+            width: 'match_parent',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: surfaceColor,
+            borderRadius: 8,
+            padding: Math.max(3, panelPadding - 2),
+          }}
+        >
+          <TextWidget
+            text={`Tomorrow${tomorrowCondition ? `: ${tomorrowCondition}` : ''}`}
+            style={{ fontSize: smallSize, color: '#CFAE95' }}
+            maxLines={1}
+          />
+          <TextWidget
+            text={`${tomorrowHigh} / ${tomorrowLow || '--°'}`}
+            style={{ fontSize: detailSize, color: '#B6BCBE' }}
+          />
+        </FlexWidget>
+      ) : (
+        <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
+      )}
 
       {/* Conditions — shown only when height allows (3+ rows); flex:1 on temp row ensures this never overflows */}
       {showConditions && !autoHideConditions ? (

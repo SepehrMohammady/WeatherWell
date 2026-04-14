@@ -1,6 +1,6 @@
 {
   "name": "weatherwell",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -10,8 +10,7 @@
     "sync-version": "node scripts/update-version.js",
     "version:patch": "node scripts/increment-version.js patch",
     "version:minor": "node scripts/increment-version.js minor",
-    "version:major": "node scripts/increment-version.js major",
-    "postinstall": "npx patch-package"
+    "version:major": "node scripts/increment-version.js major"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -43,7 +42,6 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
-    "patch-package": "^8.0.1",
     "typescript": "~5.9.2"
   },
   "private": true,

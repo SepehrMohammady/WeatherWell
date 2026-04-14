@@ -17,11 +17,15 @@ interface WidgetData {
   low?: string;
   rainChance?: string;
   feelsLike?: string;
+  tomorrowHigh?: string;
+  tomorrowLow?: string;
+  tomorrowCondition?: string;
   opacity?: number;
   showFeelsLike?: boolean;
   showHighLow?: boolean;
   showRainChance?: boolean;
   showConditions?: boolean;
+  showTomorrow?: boolean;
 }
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
