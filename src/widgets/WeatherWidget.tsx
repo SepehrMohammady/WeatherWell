@@ -44,8 +44,10 @@ export function WeatherWidget({
 }: WeatherWidgetProps) {
   // Convert opacity to hex alpha in CSS #RRGGBBAA format
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
-  const bgColor = `#1A1A1A${alphaHex}`;
-  const surfaceColor = `#2A2A2A${alphaHex}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bgColor = `#1A1A1A${alphaHex}` as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const surfaceColor = `#2A2A2A${alphaHex}` as any;
 
   // Scale by width (height is handled by flex layout)
   const wScale = widgetWidth / 250;
@@ -77,7 +79,7 @@ export function WeatherWidget({
         borderRadius: 16,
         padding: padding,
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
         flexGap: gap,
         overflow: 'hidden',
       }}
@@ -93,10 +95,9 @@ export function WeatherWidget({
         maxLines={1}
       />
 
-      {/* Temperature Row — flex:1 fills remaining space, ensuring conditions stay visible */}
+      {/* Temperature Row */}
       <FlexWidget
         style={{
-          flex: 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
