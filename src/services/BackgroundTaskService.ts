@@ -511,8 +511,13 @@ async function rescheduleWithData(
 
     if (identifier === 'hourly-forecast') {
       title = '⏰ Hourly Weather Update';
-      const now = new Date();
-      const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) > now).slice(0, 6);
+      // Filter by fire time, not current time
+      const fireTime = new Date();
+      fireTime.setHours(hour, minute, 0, 0);
+      if (fireTime <= new Date()) {
+        fireTime.setDate(fireTime.getDate() + 1);
+      }
+      const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) >= fireTime).slice(0, 6);
       if (hourlyData.length > 0) {
         const tempTrend = hourlyData.map(h => {
           const hr = new Date(h.time).getHours();

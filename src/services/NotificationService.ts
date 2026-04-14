@@ -515,8 +515,15 @@ class NotificationService {
 
       const [hours, minutes] = this.notificationSettings.hourlyForecastTime.split(':').map(Number);
 
-      const now = new Date();
-      const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) > now).slice(0, 6);
+      // Filter hours based on notification fire time, not current time
+      // The notification content is set now but fires at the scheduled time
+      const fireTime = new Date();
+      fireTime.setHours(hours, minutes, 0, 0);
+      // If fire time already passed today, it fires tomorrow
+      if (fireTime <= new Date()) {
+        fireTime.setDate(fireTime.getDate() + 1);
+      }
+      const hourlyData = weatherData.forecast.hourly.filter(h => new Date(h.time) >= fireTime).slice(0, 6);
       const location = weatherData.location.name;
 
       let body = `📍 ${location}`;
