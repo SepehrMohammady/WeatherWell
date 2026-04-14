@@ -49,9 +49,11 @@ export function WeatherWidget({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const surfaceColor = `#2A2A2A${alphaHex}` as any;
 
-  // Scale by width (height is handled by flex layout)
+  // Scale by both width and height — height budget divided by rows to show
   const wScale = widgetWidth / 250;
-  const scale = Math.min(wScale, widgetHeight / 100);
+  const contentRows = 2 + (showTomorrow ? 1 : 0) + (showConditions ? 1 : 0);
+  const hScale = widgetHeight / (contentRows * 50); // 50dp per row at scale=1
+  const scale = Math.min(wScale, Math.max(0.55, hScale));
 
   // Font sizes scale with overall scale
   const tempSize = Math.max(28, Math.min(64, Math.round(40 * scale)));
@@ -65,10 +67,10 @@ export function WeatherWidget({
   const panelPadding = Math.max(4, Math.min(16, Math.round(10 * scale)));
   const gap = Math.max(2, Math.min(12, Math.round(5 * scale)));
 
-  // Show conditions only when height is large enough (3+ rows typically ≥ 170dp)
-  const autoHideConditions = widgetHeight < 170;
-  // Show tomorrow only when height is large enough
-  const autoHideTomorrow = widgetHeight < 140;
+  // Hide only when truly too small to render anything useful
+  const autoHideConditions = widgetHeight < 70;
+  // Show tomorrow in almost all sizes
+  const autoHideTomorrow = widgetHeight < 60;
 
   return (
     <FlexWidget
@@ -79,7 +81,7 @@ export function WeatherWidget({
         borderRadius: 16,
         padding: padding,
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         flexGap: gap,
         overflow: 'hidden',
       }}
