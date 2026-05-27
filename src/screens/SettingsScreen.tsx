@@ -992,7 +992,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="Export Backup"
-            subtitle="Save all settings and favorites as .weatherwell file"
+            subtitle="Save all settings and favorites"
             rightElement={
               <TouchableOpacity onPress={handleExport}>
                 <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
@@ -1002,7 +1002,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
           <SettingItem
             title="Import Backup"
-            subtitle="Restore settings and favorites from .weatherwell file"
+            subtitle="Restore settings and favorites"
             rightElement={
               <TouchableOpacity onPress={handleImport}>
                 <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
