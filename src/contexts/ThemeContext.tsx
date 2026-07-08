@@ -14,6 +14,7 @@ export interface ThemeColors {
   accent: string;
   error: string;
   border: string;
+  card: string;
   gradient: string[];
 }
 
@@ -28,6 +29,7 @@ const lightTheme: ThemeColors = {
   accent: '#CB936A',         // Warm terracotta accent
   error: '#CD9C8B',          // Muted rose for errors
   border: '#E7E7E7',         // Very light grey border
+  card: '#F0F0F0',           // Subtle chip/button background
   gradient: ['#E7CFC1', '#D3B19A'] // Warm neutral gradient
 };
 
@@ -41,6 +43,7 @@ const darkTheme: ThemeColors = {
   accent: '#CFAE95',         // Light neutral accent
   error: '#D6AD9D',          // Soft rose for errors
   border: '#5E6D74',         // Dark grey-blue border
+  card: '#3A3A3A',           // Lighter chip/button background
   gradient: ['#3A4A54', '#1A1A1A'] // Darker cool gradient (was #5E6D74, #3A3A3A)
 };
 

@@ -183,14 +183,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       const fileName = `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`;
       
       const file = new File(Paths.cache, fileName);
-      file.write(backupJson);
-      
+      file.write(backupJson, { encoding: 'utf8' });
+
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
         await Sharing.shareAsync(file.uri, {
           mimeType: 'application/octet-stream',
           dialogTitle: 'Export WeatherWell Backup',
         });
+        showAlert('Success', 'Backup exported successfully');
       } else {
         showAlert('Error', 'Sharing is not available on this device');
       }

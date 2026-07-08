@@ -44,6 +44,7 @@ export interface AppSettings {
   widgetShowHighLow: boolean;
   widgetShowRainChance: boolean;
   widgetShowConditions: boolean;
+  widgetShowTomorrow: boolean;
 }
 
 const defaultSettings: AppSettings = {
@@ -85,7 +86,8 @@ const defaultSettings: AppSettings = {
   widgetShowFeelsLike: true,
   widgetShowHighLow: true,
   widgetShowRainChance: true,
-  widgetShowConditions: true
+  widgetShowConditions: true,
+  widgetShowTomorrow: false
 };
 
 interface SettingsContextType {
