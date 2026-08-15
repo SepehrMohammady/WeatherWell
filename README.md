@@ -1,207 +1,172 @@
+<div align="center">
+
+<img src="assets/icon.png" width="120" alt="WeatherWell app icon">
+
 # WeatherWell
 
-A comprehensive cross-platform weather application built with **React Native** and **Expo** for Android, iOS, and Web. WeatherWell provides detailed weather information with smart features like umbrella alarms, clothing suggestions, and real-time notifications.
+**Ad-free weather forecasts, with smart daily insights.**
 
-![Version](https://img.shields.io/badge/version-0.6.5-blue)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-green)
-![License](https://img.shields.io/badge/license-MIT-purple)
+No ads. No accounts. No tracking. Just the weather — and a nudge when you'll need an umbrella.
 
-## ✨ Features
+[![Version](https://img.shields.io/badge/version-1.0.5-4A90E2)](https://github.com/SepehrMohammady/WeatherWell/releases)
+[![Platform](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/SepehrMohammady/WeatherWell/releases)
+[![License](https://img.shields.io/badge/license-MIT-8E7CC3)](LICENSE)
+[![Privacy](https://img.shields.io/badge/tracking-none-00B894)](https://semo-lab.com/weatherwell/privacy-policy/)
 
-### 🌤️ Core Weather Data
-- **Current Weather**: Real-time temperature, conditions, and atmospheric data
-- **Hourly Forecast**: 24-hour predictions with auto-scroll to current hour
-- **Daily Forecast**: 7-day extended forecast with expandable details
-- **Air Quality Index**: Real-time AQI with pollutant breakdowns and health advice
+[**⬇ Download**](https://github.com/SepehrMohammady/WeatherWell/releases/latest) · [**🌐 Website**](https://semo-lab.com/weatherwell/) · [**🔒 Privacy Policy**](https://semo-lab.com/weatherwell/privacy-policy/)
 
-### 📊 Comprehensive Metrics
-- Temperature (current, feels-like, min/max)
-- Wind speed and direction with interactive compass
-- Precipitation levels and probability
-- UV Index with safety recommendations
-- Visibility conditions
-- Humidity and atmospheric pressure
-
-### 🌙 Astronomical Data
-- Per-day sunrise and sunset times
-- Moon phases with illumination percentage
-- Expandable daily astronomy details
-
-### 🎯 Smart Features
-- **Umbrella Alert**: Intelligent notifications when rain is expected
-- **Clothing Suggestions**: Daily outfit recommendations based on conditions
-- **UV Protection**: Alerts when UV index is dangerously high
-- **Air Quality Advice**: Mask and indoor activity recommendations
-
-### 🔔 Notification System
-- Scheduled daily and hourly forecast notifications
-- Dynamic background weather alerts (work even when app is closed)
-- Severe weather alerts
-- Temperature, UV, wind, rain, and AQI threshold alerts
-- Configurable thresholds for all alert types
-- Alert cooldown to prevent notification spam
-- Customizable notification times
-
-### 🎨 User Experience
-- **Neutral Paradise Theme**: Warm, muted color palette
-- **Dark Mode**: Full light/dark theme support (follows device theme)
-- **Location Search**: Worldwide city search with autocomplete
-- **Weather Sharing**: Customizable weather reports
-- **Settings Export/Import**: Backup and restore settings + favorites as .weatherwell files
-- **App-Styled Dialogs**: All dialogs use themed modals matching the app design
-
-## 🛠️ Tech Stack
-
-- **Framework**: React Native with Expo
-- **Language**: TypeScript
-- **State Management**: React Context API
-- **Storage**: AsyncStorage for persistent settings
-- **Weather APIs**: 6 providers with automatic fallback
-- **Platforms**: Android, iOS, Web
-
-## 🌐 Weather API Providers
-
-WeatherWell supports multiple weather data providers for reliability:
-
-| Provider | Features | API Key Required |
-|----------|----------|------------------|
-| WeatherAPI.com | Comprehensive global data, air quality | Yes |
-| OpenWeatherMap | Reliable worldwide forecasts | Yes |
-| Visual Crossing | Advanced weather intelligence | Yes |
-| Open-Meteo | Free, open-source API | No |
-| QWeather | Chinese & global data, air quality | Yes |
-| Meteostat | Historical weather data | Yes (RapidAPI) |
-
-## 📱 Installation & Setup
-
-### Prerequisites
-- Node.js 16+
-- npm or yarn
-- Android Studio (for Android development)
-- Xcode (for iOS development, macOS only)
-
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/SepehrMohammady/WeatherWell.git
-   cd WeatherWell
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm start
-   ```
-
-4. **Run on your device**
-   - **Android**: `npm run android`
-   - **iOS**: `npm run ios`
-   - **Web**: `npm run web`
-
-## 🚀 Building for Production
-
-### Android Release APK
-```bash
-cd android
-./gradlew assembleRelease
-```
-The APK will be at `android/app/build/outputs/apk/release/app-release.apk`
-
-### Install on Device
-```bash
-adb install -r android/app/build/outputs/apk/release/app-release.apk
-```
-
-## 📁 Project Structure
-
-```
-src/
-├── components/          # Reusable UI components
-│   ├── CurrentWeatherCard.tsx
-│   ├── DailyForecastList.tsx
-│   ├── HourlyForecastList.tsx
-│   ├── SmartFeaturesCard.tsx
-│   ├── ShareComponent.tsx
-│   ├── WeatherDetailModal.tsx
-│   └── RealCompass.tsx
-├── screens/             # Main app screens
-│   ├── HomeScreen.tsx
-│   ├── SettingsScreen.tsx
-│   └── SearchScreen.tsx
-├── services/            # API and business logic
-│   ├── WeatherAPIService.ts
-│   ├── OpenWeatherMapService.ts
-│   ├── OpenMeteoService.ts
-│   ├── QWeatherService.ts
-│   ├── MeteostatService.ts
-│   ├── VisualCrossingService.ts
-│   ├── WeatherServiceFactory.ts
-│   ├── LocationService.ts
-│   ├── LocationSearchService.ts
-│   ├── NotificationService.ts
-│   ├── BackgroundTaskService.ts
-│   └── types.ts
-├── contexts/            # React Context providers
-│   ├── ThemeContext.tsx
-│   ├── SettingsContext.tsx
-│   ├── FavoritesContext.tsx
-│   └── NotificationContext.tsx
-├── config/
-│   └── version.ts
-└── utils/
-    └── temperatureUtils.ts
-```
-
-## ⚙️ Configuration
-
-### API Keys
-The app includes working API keys by default. To use your own:
-
-1. Open Settings (⚙️ icon)
-2. Scroll to API Keys section
-3. Tap the key icon next to any provider
-4. Enter your API key
-
-### Display Options
-Customize which weather metrics are shown:
-- Feels Like Temperature
-- Humidity, Pressure, Visibility
-- UV Index, Wind Speed, Wind Direction
-- Air Quality
-
-### Notification Settings
-Configure alerts for:
-- Temperature thresholds (high/low)
-- Rain probability threshold
-- UV index threshold
-- Wind speed threshold
-- Daily/hourly forecast times
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Weather data provided by WeatherAPI.com, OpenWeatherMap, Open-Meteo, QWeather, Visual Crossing, and Meteostat
-- Icons from Expo Vector Icons
-- Built with React Native and Expo
+</div>
 
 ---
 
-**WeatherWell** v0.5.0 - Your reliable companion for weather updates! 🌤️
+<div align="center">
 
-© 2026 Sepehr Mohammady
+| Today at a glance | Hourly & 7-day | Share a report |
+|:---:|:---:|:---:|
+| <img src="store-assets/screenshots/01-home-dark.png" width="230" alt="WeatherWell home screen showing current temperature, humidity, wind, UV index and air quality"> | <img src="store-assets/screenshots/02-forecasts-dark.png" width="230" alt="Hourly forecast strip and seven-day forecast list"> | <img src="store-assets/screenshots/04-share-dark.png" width="230" alt="Share options screen with toggles for location, current weather, hourly, daily and astronomy"> |
+| **Live compass** | **Home-screen widget** | **Light theme** |
+| <img src="store-assets/screenshots/05-compass-dark.png" width="230" alt="Wind direction compass using the device magnetometer"> | <img src="store-assets/screenshots/06-widget-dark.png" width="230" alt="Home-screen widget showing temperature, high and low, rain chance and a refresh button"> | <img src="store-assets/screenshots/07-home-light.png" width="230" alt="WeatherWell home screen in light theme"> |
+
+</div>
+
+---
+
+## Why WeatherWell?
+
+Most weather apps sell your location to advertisers. This one doesn't have advertisers.
+
+WeatherWell ships with **no advertising SDK, no analytics, no crash reporting and no user accounts** — verified by an audit of its own source. Your coordinates go to the weather service *you* choose and nowhere else; your settings, favourites and cached forecasts never leave your phone. There's nothing to sign up for and nothing to switch off.
+
+It's also **free and open source** under the MIT licence.
+
+## What it does
+
+### 🌤️ The weather itself
+Current conditions, a 24-hour hourly strip that starts at the hour you're in, and a 7-day forecast. Temperature and feels-like, wind speed and direction, precipitation, UV index, visibility, humidity, pressure — and **air quality** with PM2.5 readings, all in tappable tiles that open a detail view with a plain-English explanation.
+
+### 🎯 Smart daily insights
+The app reads the rest of your day and tells you what to do about it:
+
+| Insight | What it tells you |
+|---|---|
+| **Umbrella Alert** | Whether to take one, based on the highest rain chance in your remaining hours |
+| **Clothing Suggestion** | What to wear, based on the *coldest* hour still ahead — not just right now |
+| **UV Protection** | Sunglasses and sunscreen advice from the peak UV still to come |
+| **Air Quality** | Mask and outdoor-activity guidance from the current AQI |
+
+### 🔔 Alerts that respect your settings
+Rain, UV, strong wind, high and low temperature, and air quality — each with a threshold you set yourself. Add a scheduled daily and hourly forecast at times you pick. Alerts keep working when the app is closed, and a cooldown stops the same warning arriving twice.
+
+### 📱 Home-screen widget
+Resizable, with its own refresh button that fetches fresh weather without opening the app. Choose what it shows: feels-like, high/low, rain chance, conditions, tomorrow's forecast — and how transparent it sits on your wallpaper.
+
+### 🧭 And the rest
+- **Live compass** showing wind direction against your device's real heading
+- **Astronomy** — sunrise, sunset, moon phase and illumination, per day
+- **Share a weather report** with exactly the sections you want, astronomy included
+- **Favourite cities** with worldwide search
+- **Backup & restore** every setting and favourite to a file you keep
+- **Light and dark themes**, °C or °F
+
+## Choose your weather source
+
+Six providers, switchable at any time in Settings. The app ships with working keys, and you can drop in your own.
+
+| Provider | Good for | Your own key? |
+|---|---|---|
+| **WeatherAPI** *(default)* | Comprehensive global data with air quality | Optional |
+| **OpenWeatherMap** | Reliable worldwide forecasts | Optional |
+| **Visual Crossing** | Detailed weather intelligence | Optional |
+| **Open-Meteo** | Free and open — no key at all | Not needed |
+| **QWeather** | Strong coverage in China and Asia | Optional |
+| **Meteostat** | Historical observations | Optional (RapidAPI) |
+
+If your chosen provider is unreachable, WeatherWell quietly falls back to another so you still get a forecast.
+
+## Get it
+
+**[Download the latest APK →](https://github.com/SepehrMohammady/WeatherWell/releases/latest)**
+
+Requires **Android 7.0 or newer**. Not on Google Play yet, so Android will ask you to approve the install from your browser.
+
+> **Upgrading from 0.7.x?** The app ID changed, so the new version installs alongside the old one. Export a backup from the old app first (**Settings → Export Backup**), import it into the new one, then uninstall the old app.
+
+## Privacy in one paragraph
+
+WeatherWell collects nothing. There are no accounts, no analytics, no crash reporting and no ads. When you look up the weather, your coordinates — or the city you searched — go to the weather provider you selected, which sees your IP address as any web request would. Everything else, including settings, favourites and cached forecasts, stays in the app's private storage on your device. Uninstalling removes it all.
+
+Full details: **[Privacy Policy](https://semo-lab.com/weatherwell/privacy-policy/)**
+
+---
+
+<details>
+<summary><b>🛠 Build from source</b></summary>
+
+<br>
+
+Built with **React Native 0.81** and **Expo SDK 54** in TypeScript, using React Context for state and AsyncStorage for persistence.
+
+```bash
+git clone https://github.com/SepehrMohammady/WeatherWell.git
+cd WeatherWell
+npm install
+npm run android          # run on a connected device or emulator
+```
+
+Release APK:
+
+```bash
+cd android
+./gradlew assembleRelease
+# output: android/app/build/outputs/apk/release/app-release.apk
+```
+
+Version numbers live in `src/config/version.ts`; run `npm run sync-version` to propagate them to `package.json` and `app.json`, and bump `versionCode` in `app.json` and `android/app/build.gradle` alongside.
+
+</details>
+
+<details>
+<summary><b>📁 How the code is organised</b></summary>
+
+<br>
+
+```
+src/
+├── components/     UI pieces — weather card, forecast lists,
+│                   recommendations, compass, share sheet
+├── screens/        Home, Settings, Search
+├── services/       Six weather providers behind a common interface,
+│                   plus location, notifications and background refresh
+├── contexts/       Theme, settings, favourites, notifications
+├── widgets/        Home-screen widget and its headless task handler
+└── config/         Central version number
+```
+
+The Android widget is a hybrid: its layout is rendered from React, while the refresh button and its spinner are native views in `android/app/src/main/res/layout/rn_widget.xml`, driven by `WeatherWidget.java`.
+
+</details>
+
+<details>
+<summary><b>🤝 Contributing</b></summary>
+
+<br>
+
+Issues and pull requests are welcome.
+
+1. Fork the repository
+2. Create a branch: `git checkout -b feature/your-idea`
+3. Commit your changes and push
+4. Open a pull request
+
+</details>
+
+---
+
+<div align="center">
+
+Weather data from WeatherAPI, OpenWeatherMap, Visual Crossing, Open-Meteo, QWeather and Meteostat.
+Icons from Expo Vector Icons.
+
+**Made by [SeMo Lab](https://semo-lab.com/)** · MIT Licensed · © 2026
+
+</div>
