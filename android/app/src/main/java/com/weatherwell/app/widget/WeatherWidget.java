@@ -1,4 +1,4 @@
-package com.weatherwell.widget;
+package com.weatherwell.app.widget;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 import com.reactnativeandroidwidget.RNWidgetProvider;
-import com.weatherwell.R;
+import com.weatherwell.app.R;
 
 public class WeatherWidget extends RNWidgetProvider {
 

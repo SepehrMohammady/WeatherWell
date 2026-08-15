@@ -3,12 +3,12 @@
     "name": "WeatherWell",
     "slug": "weatherwell",
     "owner": "sepehrmohammady",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "description": "A comprehensive cross-platform weather application",
+    "description": "Ad-free weather forecasts with smart daily insights",
     "githubUrl": "https://github.com/SepehrMohammady/WeatherWell",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -24,10 +24,10 @@
         "backgroundColor": "#ffffff",
         "monochromeImage": "./assets/adaptive-icon.png"
       },
-      "versionCode": 43,
+      "versionCode": 44,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.weatherwell",
+      "package": "com.weatherwell.app",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",

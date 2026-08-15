@@ -1,6 +1,6 @@
 {
   "name": "weatherwell",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -38,6 +38,6 @@
     "typescript": "~5.9.2"
   },
   "private": true,
-  "description": "Cross-platform weather application with smart recommendations",
-  "author": "SepehrMohammady"
+  "description": "Ad-free weather forecasts with smart daily insights",
+  "author": "SeMo Lab"
 }

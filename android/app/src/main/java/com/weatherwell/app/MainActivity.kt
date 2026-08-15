@@ -1,4 +1,4 @@
-package com.weatherwell
+package com.weatherwell.app
 
 import android.os.Build
 import android.os.Bundle

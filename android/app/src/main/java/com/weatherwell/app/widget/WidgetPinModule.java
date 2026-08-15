@@ -1,4 +1,4 @@
-package com.weatherwell.widget;
+package com.weatherwell.app.widget;
 
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -12,7 +12,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 
-import com.weatherwell.R;
+import com.weatherwell.app.R;
 
 public class WidgetPinModule extends ReactContextBaseJavaModule {
 

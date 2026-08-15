@@ -1,4 +1,4 @@
-package com.weatherwell
+package com.weatherwell.app
 
 import android.app.Application
 import android.content.res.Configuration
@@ -16,7 +16,7 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
 
-import com.weatherwell.widget.WidgetPinPackage
+import com.weatherwell.app.widget.WidgetPinPackage
 
 class MainApplication : Application(), ReactApplication {
 

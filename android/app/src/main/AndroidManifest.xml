@@ -36,7 +36,7 @@
         android:label="WeatherWell">
         <intent-filter>
             <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            <action android:name="com.weatherwell.WIDGET_CLICK" />
+            <action android:name="com.weatherwell.app.WIDGET_CLICK" />
         </intent-filter>
         <meta-data
             android:name="android.appwidget.provider"
