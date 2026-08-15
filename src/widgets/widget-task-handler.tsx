@@ -58,15 +58,33 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
     case 'WIDGET_CLICK': {
       if (props.clickAction === 'REFRESH') {
+        // Show the dimmed refresh icon immediately so the tap registers
+        const cached = await readCachedWidgetData();
+        props.renderWidget(
+          <Widget
+            {...cached}
+            isRefreshing
+            widgetWidth={widgetInfo.width}
+            widgetHeight={widgetInfo.height}
+          />
+        );
+
+        // Fetch fresh data, keeping the refreshing state visible at least 800ms
         let data: WidgetData | null = null;
         try {
-          data = (await fetchAndCacheWidgetData()) as WidgetData | null;
+          const [fresh] = await Promise.all([
+            fetchAndCacheWidgetData(),
+            new Promise((resolve) => setTimeout(resolve, 800)),
+          ]);
+          data = fresh as WidgetData | null;
         } catch (error) {
           console.log('Widget refresh failed:', error instanceof Error ? error.message : 'unknown');
         }
         if (!data) {
-          data = await readCachedWidgetData();
+          data = cached;
         }
+
+        // Final render always clears the refreshing state
         props.renderWidget(
           <Widget
             {...data}

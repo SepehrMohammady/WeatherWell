@@ -676,7 +676,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             Notifications
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            📋 Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}⚡ Dynamic alerts check based on your refresh interval ({settings.refreshInterval} min) and warn before hazardous conditions.
+            Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}Dynamic alerts check based on your refresh interval ({settings.refreshInterval} min) and warn before hazardous conditions.
           </Text>
           <SettingItem
             title="Enable Notifications"

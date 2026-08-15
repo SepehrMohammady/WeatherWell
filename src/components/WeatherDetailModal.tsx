@@ -95,36 +95,36 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
     const current = weatherData.current;
     switch (metricType) {
       case 'humidity':
-        if (current.humidity > 70) return '💧 High humidity - stay hydrated and cool';
-        if (current.humidity < 30) return '🏜️ Low humidity - use moisturizer and drink water';
-        return '✅ Comfortable humidity level';
+        if (current.humidity > 70) return 'High humidity - stay hydrated and cool';
+        if (current.humidity < 30) return 'Low humidity - use moisturizer and drink water';
+        return 'Comfortable humidity level';
       case 'wind':
-        if (current.windSpeed > 30) return '💨 Strong winds - secure loose items';
-        if (current.windSpeed > 15) return '🍃 Moderate winds - good for outdoor activities';
-        return '🌤️ Light winds - perfect for any outdoor plans';
+        if (current.windSpeed > 30) return 'Strong winds - secure loose items';
+        if (current.windSpeed > 15) return 'Moderate winds - good for outdoor activities';
+        return 'Light winds - perfect for any outdoor plans';
       case 'uv':
-        if (current.uvIndex >= 8) return '🕶️ Very high UV - wear sunscreen SPF 30+';
-        if (current.uvIndex >= 6) return '☀️ High UV - consider sun protection';
-        if (current.uvIndex >= 3) return '🧴 Moderate UV - light protection recommended';
-        return '🌤️ Low UV - minimal protection needed';
+        if (current.uvIndex >= 8) return 'Very high UV - wear sunscreen SPF 30+';
+        if (current.uvIndex >= 6) return 'High UV - consider sun protection';
+        if (current.uvIndex >= 3) return 'Moderate UV - light protection recommended';
+        return 'Low UV - minimal protection needed';
       case 'pressure':
-        if (current.pressure > 1020) return '📈 High pressure - stable weather expected';
-        if (current.pressure < 1000) return '📉 Low pressure - weather changes possible';
-        return '⚖️ Normal pressure - stable conditions';
+        if (current.pressure > 1020) return 'High pressure - stable weather expected';
+        if (current.pressure < 1000) return 'Low pressure - weather changes possible';
+        return 'Normal pressure - stable conditions';
       case 'windDir':
-        return `🧭 Wind coming from the ${current.windDirection} direction`;
+        return `Wind coming from the ${current.windDirection} direction`;
       case 'visibility':
-        if (current.visibility >= 10) return '👁️ Excellent visibility - perfect for all activities';
-        if (current.visibility >= 5) return '🌤️ Good visibility - safe for driving and outdoor activities';
-        if (current.visibility >= 2) return '🌫️ Reduced visibility - drive carefully, use headlights';
-        return '⚠️ Poor visibility - avoid unnecessary travel, use extreme caution';
+        if (current.visibility >= 10) return 'Excellent visibility - perfect for all activities';
+        if (current.visibility >= 5) return 'Good visibility - safe for driving and outdoor activities';
+        if (current.visibility >= 2) return 'Reduced visibility - drive carefully, use headlights';
+        return 'Poor visibility - avoid unnecessary travel, use extreme caution';
       case 'airquality':
         const aqi = weatherData.airQuality?.aqi || 0;
-        if (aqi <= 50) return '✅ Good air quality - safe for outdoor activities';
-        if (aqi <= 100) return '🟡 Moderate - acceptable for most people';
-        if (aqi <= 150) return '🟠 Unhealthy for sensitive groups - limit prolonged outdoor activities';
-        if (aqi <= 200) return '🔴 Unhealthy - everyone should limit outdoor activities';
-        return '🟣 Very unhealthy - avoid outdoor activities';
+        if (aqi <= 50) return 'Good air quality - safe for outdoor activities';
+        if (aqi <= 100) return 'Moderate - acceptable for most people';
+        if (aqi <= 150) return 'Unhealthy for sensitive groups - limit prolonged outdoor activities';
+        if (aqi <= 200) return 'Unhealthy - everyone should limit outdoor activities';
+        return 'Very unhealthy - avoid outdoor activities';
       default:
         return '';
     }
@@ -168,7 +168,9 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           </View>
 
           <View style={[styles.tipCard, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.tipTitle, { color: colors.text }]}>💡 Tip</Text>
+            <Text style={[styles.tipTitle, { color: colors.text }]}>
+              <Ionicons name="bulb-outline" size={16} color={colors.text} /> Tip
+            </Text>
             <Text style={[styles.tip, { color: colors.text + 'CC' }]}>
               {getHealthTip()}
             </Text>
@@ -201,7 +203,7 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'wind' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                💨 Wind Speed Guide
+                Wind Speed Guide
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
                 • 0-5 km/h: Calm - smoke rises vertically{'\n'}
@@ -234,7 +236,7 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'pressure' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                📊 Pressure Trends
+                Pressure Trends
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
                 • Rising pressure: Fair weather ahead{'\n'}

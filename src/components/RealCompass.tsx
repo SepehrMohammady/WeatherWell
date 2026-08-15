@@ -162,7 +162,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>🧭 Real Compass</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Compass</Text>
       <Text style={[styles.subtitle, { color: colors.text + '80' }]}>
         {calibrationStatus}
       </Text>
@@ -265,13 +265,16 @@ export const RealCompass: React.FC<RealCompassProps> = ({
         <Text style={[styles.deviceHeading, { color: colors.text + '80' }]}>
           Device heading: {Math.round(deviceHeading)}°
         </Text>
-        <Text style={[styles.accuracyText, { color: colors.text + '60' }]}>
-          {headingAccuracy > 0.8 ? '🟢 High accuracy' : headingAccuracy > 0.5 ? '🟡 Medium accuracy' : '🔴 Low accuracy - move away from metal objects'}
+        <Text style={[
+          styles.accuracyText,
+          { color: headingAccuracy > 0.8 ? '#27ae60' : headingAccuracy > 0.5 ? '#d4a017' : '#e74c3c' }
+        ]}>
+          {headingAccuracy > 0.8 ? '● High accuracy' : headingAccuracy > 0.5 ? '● Medium accuracy' : '● Low accuracy - move away from metal objects'}
         </Text>
       </View>
       
       <Text style={[styles.instruction, { color: colors.text + '60' }]}>
-        📱 For best accuracy: Hold phone flat, away from metal objects, and move in figure-8 pattern to calibrate
+        For best accuracy: Hold phone flat, away from metal objects, and move in figure-8 pattern to calibrate
       </Text>
     </View>
   );

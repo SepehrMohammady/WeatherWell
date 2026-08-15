@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -31,7 +32,9 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={[styles.location, { color: colors.text }]}>📍 {location.name}</Text>
+        <Text style={[styles.location, { color: colors.text }]}>
+          <Ionicons name="location-outline" size={18} color={colors.text} /> {location.name}
+        </Text>
         <Text style={[styles.country, { color: colors.text + '80' }]}>{location.country}</Text>
       </View>
       

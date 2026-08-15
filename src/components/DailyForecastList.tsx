@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { DailyForecast } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -30,7 +31,10 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>📅 Future Forecast</Text>
+      <View style={styles.titleRow}>
+        <Ionicons name="calendar-outline" size={20} color={colors.text} />
+        <Text style={[styles.title, { color: colors.text }]}>Future Forecast</Text>
+      </View>
       {dailyData.slice(0, 7).map((day, index) => (
         <View key={index} style={styles.dayItem}>
           <View style={styles.leftSection}>
@@ -54,13 +58,19 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
             
             <View style={styles.detailsContainer}>
               <View style={styles.detailItem}>
-                <Text style={[styles.detailText, { color: colors.text + '60' }]}>💧 {day.precipitationChance}%</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>
+                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '60'} /> {day.precipitationChance}%
+                </Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={[styles.detailText, { color: colors.text + '60' }]}>🌬️ {Math.round(day.windSpeed)} km/h</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>
+                  <MaterialCommunityIcons name="weather-windy" size={12} color={colors.text + '60'} /> {Math.round(day.windSpeed)} km/h
+                </Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={[styles.detailText, { color: colors.text + '60' }]}>💦 {day.humidity}%</Text>
+                <Text style={[styles.detailText, { color: colors.text + '60' }]}>
+                  <MaterialCommunityIcons name="water-percent" size={13} color={colors.text + '60'} /> {day.humidity}%
+                </Text>
               </View>
             </View>
           </View>
@@ -77,11 +87,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingBottom: 12,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 20,
+    paddingBottom: 12,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    padding: 20,
-    paddingBottom: 12,
   },
   dayItem: {
     flexDirection: 'row',

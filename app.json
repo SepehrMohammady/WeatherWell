@@ -3,7 +3,7 @@
     "name": "WeatherWell",
     "slug": "weatherwell",
     "owner": "sepehrmohammady",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff",
         "monochromeImage": "./assets/adaptive-icon.png"
       },
-      "versionCode": 38,
+      "versionCode": 39,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.weatherwell",

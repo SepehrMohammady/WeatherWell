@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { HourlyForecast } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -70,7 +71,10 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>⏰ Hourly Forecast</Text>
+      <View style={styles.titleRow}>
+        <Ionicons name="time-outline" size={20} color={colors.text} />
+        <Text style={[styles.title, { color: colors.text }]}>Hourly Forecast</Text>
+      </View>
       <ScrollView 
         ref={scrollViewRef}
         horizontal 
@@ -104,9 +108,13 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
               />
               <Text style={[styles.temperature, { color: colors.primary }]}>{formatTemperature(hour.temperature, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
               <View style={styles.precipitation}>
-                <Text style={[styles.precipText, { color: colors.text + '80' }]}>💧 {hour.precipitationChance}%</Text>
+                <Text style={[styles.precipText, { color: colors.text + '80' }]}>
+                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '80'} /> {hour.precipitationChance}%
+                </Text>
               </View>
-              <Text style={[styles.wind, { color: colors.text + '60' }]}>🌬️ {Math.round(hour.windSpeed)}</Text>
+              <Text style={[styles.wind, { color: colors.text + '60' }]}>
+                <MaterialCommunityIcons name="weather-windy" size={11} color={colors.text + '60'} /> {Math.round(hour.windSpeed)}
+              </Text>
             </View>
           );
         })}
@@ -121,11 +129,16 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 8,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 20,
+    paddingBottom: 12,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    padding: 20,
-    paddingBottom: 12,
   },
   scrollContent: {
     paddingHorizontal: 12,

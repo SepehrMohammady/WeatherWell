@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+
+type IconName = keyof typeof Ionicons.glyphMap;
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -43,11 +45,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     const precipChance = Math.max(dailyPrecip, hourlyMaxPrecip);
     
     if (precipChance > 70) {
-      return { text: "Definitely bring an umbrella!", emoji: "☂️", color: "#e17055" };
+      return { text: "Definitely bring an umbrella!", icon: "umbrella" as IconName, color: "#e17055" };
     } else if (precipChance > 30) {
-      return { text: "Consider bringing an umbrella", emoji: "🌂", color: "#fdcb6e" };
+      return { text: "Consider bringing an umbrella", icon: "umbrella-outline" as IconName, color: "#fdcb6e" };
     } else {
-      return { text: "No umbrella needed today", emoji: "☀️", color: "#00b894" };
+      return { text: "No umbrella needed today", icon: "sunny-outline" as IconName, color: "#00b894" };
     }
   };
 
@@ -60,13 +62,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       : currentTemp;
 
     if (minTemp < 5) {
-      return { text: "Heavy winter coat, scarf, gloves", emoji: "🧥", color: "#74b9ff" };
+      return { text: "Heavy winter coat, scarf, gloves", icon: "snow" as IconName, color: "#74b9ff" };
     } else if (minTemp < 15) {
-      return { text: "Jacket or warm sweater", emoji: "🧥", color: "#81ecec" };
+      return { text: "Jacket or warm sweater", icon: "shirt" as IconName, color: "#81ecec" };
     } else if (minTemp < 25) {
-      return { text: "Light sweater or long sleeves", emoji: "👕", color: "#00b894" };
+      return { text: "Light sweater or long sleeves", icon: "shirt-outline" as IconName, color: "#00b894" };
     } else {
-      return { text: "T-shirt or light clothing", emoji: "👔", color: "#fdcb6e" };
+      return { text: "T-shirt or light clothing", icon: "shirt-outline" as IconName, color: "#fdcb6e" };
     }
   };
 
@@ -79,13 +81,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       : currentUV;
     
     if (maxUV >= 8) {
-      return { text: "Wear sunglasses & sunscreen SPF 30+", emoji: "🕶️", color: "#e17055" };
+      return { text: "Wear sunglasses & sunscreen SPF 30+", icon: "glasses" as IconName, color: "#e17055" };
     } else if (maxUV >= 6) {
-      return { text: "Consider sunglasses & sunscreen", emoji: "🧴", color: "#fdcb6e" };
+      return { text: "Consider sunglasses & sunscreen", icon: "glasses-outline" as IconName, color: "#fdcb6e" };
     } else if (maxUV >= 3) {
-      return { text: "Light sun protection recommended", emoji: "☀️", color: "#00b894" };
+      return { text: "Light sun protection recommended", icon: "sunny-outline" as IconName, color: "#00b894" };
     } else {
-      return { text: "No sun protection needed", emoji: "🌤️", color: "#74b9ff" };
+      return { text: "No sun protection needed", icon: "partly-sunny-outline" as IconName, color: "#74b9ff" };
     }
   };
 
@@ -93,11 +95,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     // AQI is now 0-500 scale (EPA standard)
     const aqi = weatherData.airQuality?.aqi || 0;
     if (aqi > 150) {
-      return { text: "Wear a mask outdoors", emoji: "😷", color: "#e17055" };
+      return { text: "Wear a mask outdoors", icon: "alert-circle" as IconName, color: "#e17055" };
     } else if (aqi > 100) {
-      return { text: "Consider wearing a mask", emoji: "😐", color: "#fdcb6e" };
+      return { text: "Consider wearing a mask", icon: "warning-outline" as IconName, color: "#fdcb6e" };
     } else {
-      return { text: "No mask needed", emoji: "😊", color: "#00b894" };
+      return { text: "No mask needed", icon: "checkmark-circle-outline" as IconName, color: "#00b894" };
     }
   };
 
@@ -105,13 +107,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     // AQI is now 0-500 scale (EPA standard)
     const aqi = weatherData.airQuality?.aqi || 0;
     if (aqi <= 50) {
-      return { text: "Air quality is good", emoji: "💚", color: "#00b894" };
+      return { text: "Air quality is good", icon: "leaf" as IconName, color: "#00b894" };
     } else if (aqi <= 100) {
-      return { text: "Moderate air quality", emoji: "💛", color: "#fdcb6e" };
+      return { text: "Moderate air quality", icon: "leaf-outline" as IconName, color: "#fdcb6e" };
     } else if (aqi <= 150) {
-      return { text: "Unhealthy for sensitive", emoji: "🧡", color: "#e17055" };
+      return { text: "Unhealthy for sensitive", icon: "warning-outline" as IconName, color: "#e17055" };
     } else {
-      return { text: "Unhealthy air quality", emoji: "🔴", color: "#d63031" };
+      return { text: "Unhealthy air quality", icon: "alert-circle" as IconName, color: "#d63031" };
     }
   };
 
@@ -177,7 +179,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  💨 Daily Air Quality
+                  Daily Air Quality
                 </Text>
                 <TouchableOpacity onPress={() => setExpandedItem(null)}>
                   <Ionicons name="close" size={24} color={colors.text} />
@@ -215,9 +217,9 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {type === 'umbrella' && '☂️ Hourly Rain Forecast'}
-                {type === 'clothing' && '🧥 Hourly Temperature'}
-                {type === 'uv' && '☀️ Hourly UV Index'}
+                {type === 'umbrella' && 'Hourly Rain Forecast'}
+                {type === 'clothing' && 'Hourly Temperature'}
+                {type === 'uv' && 'Hourly UV Index'}
               </Text>
               <TouchableOpacity onPress={() => setExpandedItem(null)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -297,8 +299,8 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {type === 'sun' && '☀️ Daily Sun Times'}
-                {type === 'moon' && '🌙 Moon Phases'}
+                {type === 'sun' && 'Daily Sun Times'}
+                {type === 'moon' && 'Moon Phases'}
               </Text>
               <TouchableOpacity onPress={() => setShowAstronomyDetail(null)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -322,10 +324,10 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                         {hasSunData ? (
                           <>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              ☀️ {dayAstronomy.sunrise}
+                              <MaterialCommunityIcons name="weather-sunset-up" size={14} color={colors.text} /> {dayAstronomy.sunrise}
                             </Text>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              🌇 {dayAstronomy.sunset}
+                              <MaterialCommunityIcons name="weather-sunset-down" size={14} color={colors.text} /> {dayAstronomy.sunset}
                             </Text>
                           </>
                         ) : (
@@ -367,14 +369,17 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     <>
       {/* Recommendations Section */}
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.text }]}>💡 Recommendations</Text>
+        <View style={styles.titleRow}>
+          <Ionicons name="bulb-outline" size={20} color={colors.text} />
+          <Text style={[styles.title, { color: colors.text }]}>Recommendations</Text>
+        </View>
         
         <TouchableOpacity 
           style={styles.featureCard} 
           onPress={() => setExpandedItem('umbrella')}
         >
           <View style={[styles.featureIcon, { backgroundColor: umbrella.color + '20' }]}>
-            <Text style={styles.featureEmoji}>{umbrella.emoji}</Text>
+            <Ionicons name={umbrella.icon} size={24} color={umbrella.color} />
           </View>
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Umbrella Alert</Text>
@@ -391,7 +396,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           onPress={() => setExpandedItem('clothing')}
         >
           <View style={[styles.featureIcon, { backgroundColor: clothing.color + '20' }]}>
-            <Text style={styles.featureEmoji}>{clothing.emoji}</Text>
+            <Ionicons name={clothing.icon} size={24} color={clothing.color} />
           </View>
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Clothing Suggestion</Text>
@@ -408,7 +413,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           onPress={() => setExpandedItem('uv')}
         >
           <View style={[styles.featureIcon, { backgroundColor: uvProtection.color + '20' }]}>
-            <Text style={styles.featureEmoji}>{uvProtection.emoji}</Text>
+            <Ionicons name={uvProtection.icon} size={24} color={uvProtection.color} />
           </View>
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>UV Protection</Text>
@@ -427,7 +432,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             onPress={() => setExpandedItem('airquality')}
           >
             <View style={[styles.featureIcon, { backgroundColor: airQuality.color + '20' }]}>
-              <Text style={styles.featureEmoji}>{airQuality.emoji}</Text>
+              <Ionicons name={airQuality.icon} size={24} color={airQuality.color} />
             </View>
             <View style={styles.featureContent}>
               <Text style={[styles.featureTitle, { color: colors.text }]}>Air Quality</Text>
@@ -451,14 +456,17 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
 
       {/* Astronomy Section with expandable details */}
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🌟 Astronomy</Text>
+        <View style={styles.titleRow}>
+          <Ionicons name="planet-outline" size={20} color={colors.text} />
+          <Text style={[styles.title, { color: colors.text }]}>Astronomy</Text>
+        </View>
         
         <TouchableOpacity 
           style={styles.featureCard}
           onPress={() => setShowAstronomyDetail('sun')}
         >
           <View style={[styles.featureIcon, { backgroundColor: '#fdcb6e20' }]}>
-            <Text style={styles.featureEmoji}>☀️</Text>
+            <Ionicons name="sunny" size={24} color="#fdcb6e" />
           </View>
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Sun Times</Text>
@@ -507,7 +515,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           onPress={() => setShowAstronomyDetail('moon')}
         >
           <View style={[styles.featureIcon, { backgroundColor: '#74b9ff20' }]}>
-            <Text style={styles.featureEmoji}>🌙</Text>
+            <Ionicons name="moon" size={24} color="#74b9ff" />
           </View>
           <View style={styles.featureContent}>
             <Text style={[styles.featureTitle, { color: colors.text }]}>Moon Phase</Text>
@@ -534,11 +542,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingBottom: 12,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 20,
+    paddingBottom: 12,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    padding: 20,
-    paddingBottom: 12,
   },
   featureCard: {
     flexDirection: 'row',
@@ -553,9 +566,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
-  },
-  featureEmoji: {
-    fontSize: 24,
   },
   featureContent: {
     flex: 1,

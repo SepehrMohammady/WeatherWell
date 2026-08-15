@@ -158,7 +158,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       if (astronomy.moonPhase) {
         shareText += `Moon: ${astronomy.moonPhase}`;
         if (astronomy.moonIllumination > 0) {
-          shareText += ` (${Math.round(astronomy.moonIllumination)}% illuminated)`;
+          shareText += ` (${Math.round(astronomy.moonIllumination * 100)}% illuminated)`;
         }
         shareText += '\n';
       }
