@@ -8,7 +8,7 @@
 
 No ads. No accounts. No tracking. Just the weather — and a nudge when you'll need an umbrella.
 
-[![Version](https://img.shields.io/badge/version-1.0.5-4A90E2)](https://github.com/SepehrMohammady/WeatherWell/releases)
+[![Version](https://img.shields.io/github/v/release/SepehrMohammady/WeatherWell?label=version&color=4A90E2)](https://github.com/SepehrMohammady/WeatherWell/releases/latest)
 [![Platform](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](https://github.com/SepehrMohammady/WeatherWell/releases)
 [![License](https://img.shields.io/badge/license-MIT-8E7CC3)](LICENSE)
 [![Privacy](https://img.shields.io/badge/tracking-none-00B894)](https://semo-lab.com/weatherwell/privacy-policy/)
