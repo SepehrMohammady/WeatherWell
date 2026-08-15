@@ -111,15 +111,16 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       shareText += '\n';
     }
 
-    // Hourly Forecast — starting from the current hour
+    // Hourly Forecast — starting from the NEXT full hour
     if (shareOptions.includeHourly && forecast.hourly.length > 0) {
-      const startOfCurrentHour = new Date();
-      startOfCurrentHour.setMinutes(0, 0, 0);
+      const nextHourStart = new Date();
+      nextHourStart.setMinutes(0, 0, 0);
+      nextHourStart.setHours(nextHourStart.getHours() + 1);
       const upcomingHours = forecast.hourly
-        .filter(hour => new Date(hour.time) >= startOfCurrentHour)
+        .filter(hour => new Date(hour.time) >= nextHourStart)
         .slice(0, 12);
       if (upcomingHours.length > 0) {
-        shareText += '⏰ Next 12 Hours:\n';
+        shareText += upcomingHours.length >= 12 ? '⏰ Next 12 Hours:\n' : '⏰ Next Hours:\n';
         upcomingHours.forEach(hour => {
           const time = new Date(hour.time).toLocaleTimeString([], {
             hour: '2-digit',

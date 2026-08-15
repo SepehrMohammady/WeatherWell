@@ -58,10 +58,13 @@ export class OpenMeteoService implements WeatherService {
       region = loc.admin1 || '';
     }
 
-    // Transform hourly forecast
+    // Transform hourly forecast — rolling window from the current hour
+    const startOfCurrentHour = new Date();
+    startOfCurrentHour.setMinutes(0, 0, 0);
     const hourlyForecast: HourlyForecast[] = [];
     if (hourly.time) {
-      for (let i = 0; i < Math.min(hourly.time.length, 24); i++) {
+      for (let i = 0; i < hourly.time.length && hourlyForecast.length < 24; i++) {
+        if (new Date(hourly.time[i]) < startOfCurrentHour) continue;
         hourlyForecast.push({
           time: hourly.time[i],
           temperature: hourly.temperature_2m?.[i] || 0,

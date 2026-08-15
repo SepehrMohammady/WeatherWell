@@ -5,8 +5,8 @@ import { FlexWidget, TextWidget, SvgWidget } from 'react-native-android-widget';
 const REFRESH_PATH = 'M17.65,6.35C16.2,4.9 14.21,4 12,4c-4.42,0 -7.99,3.58 -7.99,8s3.57,8 7.99,8c3.73,0 6.84,-2.55 7.73,-6h-2.08c-0.82,2.33 -3.04,4 -5.65,4 -3.31,0 -6,-2.69 -6,-6s2.69,-6 6,-6c1.66,0 3.14,0.69 4.22,1.78L13,11h7V4l-2.35,2.35z';
 const DROP_PATH = 'M12,2C6.67,6.55 4,10.48 4,13.8 4,18.78 7.8,22 12,22s8,-3.22 8,-8.2C20,10.48 17.33,6.55 12,2z';
 
-function iconSvg(path: string, color: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${color}" d="${path}"/></svg>`;
+function iconSvg(path: string, color: string, rotate: number = 0): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g transform="rotate(${rotate} 12 12)"><path fill="${color}" d="${path}"/></g></svg>`;
 }
 
 interface WeatherWidgetProps {
@@ -29,6 +29,7 @@ interface WeatherWidgetProps {
   widgetWidth?: number;
   widgetHeight?: number;
   isRefreshing?: boolean;
+  refreshAngle?: number;
 }
 
 export function WeatherWidget({
@@ -51,6 +52,7 @@ export function WeatherWidget({
   widgetWidth = 250,
   widgetHeight = 100,
   isRefreshing = false,
+  refreshAngle = 0,
 }: WeatherWidgetProps) {
   // Convert opacity to hex alpha in CSS #RRGGBBAA format
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
@@ -118,7 +120,7 @@ export function WeatherWidget({
         />
         <SvgWidget
           clickAction="REFRESH"
-          svg={iconSvg(REFRESH_PATH, isRefreshing ? '#5F6A72' : '#B6BCBE')}
+          svg={iconSvg(REFRESH_PATH, isRefreshing ? '#8A9299' : '#B6BCBE', isRefreshing ? refreshAngle : 0)}
           style={{
             width: refreshSize,
             height: refreshSize,

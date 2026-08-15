@@ -132,8 +132,12 @@ export class WeatherAPIService implements WeatherService {
       }
     }));
 
+    // Rolling window: from the current hour across day boundaries (not just today)
+    const startOfCurrentHour = new Date();
+    startOfCurrentHour.setMinutes(0, 0, 0);
     const hourlyForecast: HourlyForecast[] = data.forecast.forecastday
       .flatMap((day: any) => day.hour)
+      .filter((hour: any) => new Date(hour.time) >= startOfCurrentHour)
       .slice(0, 24)
       .map((hour: any) => ({
         time: hour.time,

@@ -122,9 +122,14 @@ export class VisualCrossingService implements WeatherService {
   private transformHourlyForecast(days: any[]): HourlyForecast[] {
     const hourly: HourlyForecast[] = [];
     
+    // Rolling window: from the current hour across day boundaries
+    const startOfCurrentHour = new Date();
+    startOfCurrentHour.setMinutes(0, 0, 0);
+
     days.slice(0, 2).forEach(day => {
       if (day.hours) {
         day.hours.forEach((hour: any) => {
+          if (new Date(`${day.datetime}T${hour.datetime}`) < startOfCurrentHour) return;
           hourly.push({
             time: `${day.datetime}T${hour.datetime}`,
             temperature: hour.temp || 0,

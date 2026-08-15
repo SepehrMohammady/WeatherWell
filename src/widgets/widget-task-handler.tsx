@@ -58,18 +58,27 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
     case 'WIDGET_CLICK': {
       if (props.clickAction === 'REFRESH') {
-        // Show the dimmed refresh icon immediately so the tap registers
+        // Spin the refresh icon while fetching so the tap visibly registers
         const cached = await readCachedWidgetData();
-        props.renderWidget(
-          <Widget
-            {...cached}
-            isRefreshing
-            widgetWidth={widgetInfo.width}
-            widgetHeight={widgetInfo.height}
-          />
-        );
+        const renderSpinFrame = (angle: number) =>
+          props.renderWidget(
+            <Widget
+              {...cached}
+              isRefreshing
+              refreshAngle={angle}
+              widgetWidth={widgetInfo.width}
+              widgetHeight={widgetInfo.height}
+            />
+          );
 
-        // Fetch fresh data, keeping the refreshing state visible at least 800ms
+        renderSpinFrame(0);
+        let angle = 0;
+        const spinner = setInterval(() => {
+          angle = (angle + 60) % 360;
+          renderSpinFrame(angle);
+        }, 250);
+
+        // Fetch fresh data, keeping the spinner visible at least 800ms
         let data: WidgetData | null = null;
         try {
           const [fresh] = await Promise.all([
@@ -79,6 +88,8 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           data = fresh as WidgetData | null;
         } catch (error) {
           console.log('Widget refresh failed:', error instanceof Error ? error.message : 'unknown');
+        } finally {
+          clearInterval(spinner);
         }
         if (!data) {
           data = cached;
