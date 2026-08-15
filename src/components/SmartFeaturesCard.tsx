@@ -9,6 +9,36 @@ interface FeatureIconSpec {
   color: string;
 }
 
+/**
+ * Minutes since midnight from "6:43 AM", "06:43 AM" or "18:43".
+ * Providers return 12-hour times, which Date() cannot parse.
+ */
+function parseTimeToMinutes(time?: string): number | null {
+  if (!time) return null;
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (isNaN(hours) || isNaN(minutes)) return null;
+
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem === 'PM' && hours !== 12) hours += 12;
+  if (meridiem === 'AM' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
+function formatDaylight(sunrise?: string, sunset?: string): string {
+  const start = parseTimeToMinutes(sunrise);
+  const end = parseTimeToMinutes(sunset);
+  if (start === null || end === null) return 'Data not available';
+
+  // Guard against a sunset past midnight (polar regions)
+  const total = end >= start ? end - start : end + 24 * 60 - start;
+  return `${Math.floor(total / 60)}h ${total % 60}m`;
+}
+
 const FeatureIcon: React.FC<{ spec: FeatureIconSpec }> = ({ spec }) =>
   spec.lib === 'mci' ? (
     <MaterialCommunityIcons name={spec.icon as any} size={24} color={spec.color} />
@@ -488,35 +518,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                 : 'Data not available'}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              Daylight: {(() => {
-                try {
-                  // Check if we have valid sunrise and sunset times
-                  if (!weatherData.astronomy.sunrise || !weatherData.astronomy.sunset || 
-                      weatherData.astronomy.sunrise === 'N/A' || weatherData.astronomy.sunset === 'N/A') {
-                    return 'Data not available';
-                  }
-                  
-                  const sunrise = new Date(`1970-01-01T${weatherData.astronomy.sunrise}`);
-                  const sunset = new Date(`1970-01-01T${weatherData.astronomy.sunset}`);
-                  
-                  // Check if dates are valid
-                  if (isNaN(sunrise.getTime()) || isNaN(sunset.getTime())) {
-                    return 'Data not available';
-                  }
-                  
-                  const diff = sunset.getTime() - sunrise.getTime();
-                  const hours = Math.floor(diff / (1000 * 60 * 60));
-                  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                  
-                  if (isNaN(hours) || isNaN(minutes)) {
-                    return 'Data not available';
-                  }
-                  
-                  return `${hours}h ${minutes}m`;
-                } catch (error) {
-                  return 'Data not available';
-                }
-              })()}
+              Daylight: {formatDaylight(weatherData.astronomy.sunrise, weatherData.astronomy.sunset)}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
