@@ -97,13 +97,22 @@ export const HomeScreen: React.FC = () => {
         settings.meteostatApiKey || undefined
       );
       
+      // Show the name the user actually picked — providers often return the
+      // nearest station district (e.g. "Lambeth" for London) instead
+      if (customLocation) {
+        result.data.location.name = customLocation.name;
+        if (customLocation.country) {
+          result.data.location.country = customLocation.country;
+        }
+      }
+
       setWeatherData(result.data);
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
-      
+
       // Cache weather data for notifications to use
       await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(result.data)).catch(() => {});
-      
+
       // Update widget with fresh weather data
       await updateWidgetWithWeatherData(result.data);
       
