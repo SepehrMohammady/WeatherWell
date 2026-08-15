@@ -28,4 +28,25 @@
         android:id="@+id/rn_widget_collection_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Native refresh spinner overlay — see layout/rn_widget.xml -->
+    <FrameLayout
+        android:id="@+id/widget_refresh_overlay"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/widget_refresh_badge"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/widget_refresh_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#B6BCBE" />
+    </FrameLayout>
 </FrameLayout>

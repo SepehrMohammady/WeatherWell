@@ -58,27 +58,9 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
     case 'WIDGET_CLICK': {
       if (props.clickAction === 'REFRESH') {
-        // Spin the refresh icon while fetching so the tap visibly registers
-        const cached = await readCachedWidgetData();
-        const renderSpinFrame = (angle: number) =>
-          props.renderWidget(
-            <Widget
-              {...cached}
-              isRefreshing
-              refreshAngle={angle}
-              widgetWidth={widgetInfo.width}
-              widgetHeight={widgetInfo.height}
-            />
-          );
-
-        renderSpinFrame(0);
-        let angle = 0;
-        const spinner = setInterval(() => {
-          angle = (angle + 60) % 360;
-          renderSpinFrame(angle);
-        }, 250);
-
-        // Fetch fresh data, keeping the spinner visible at least 800ms
+        // WeatherWidget.java shows a native spinner overlay while this runs.
+        // Fetch fresh data, keeping the spinner visible at least 800ms; the
+        // final render rebuilds the layout, which hides the spinner again.
         let data: WidgetData | null = null;
         try {
           const [fresh] = await Promise.all([
@@ -88,14 +70,11 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           data = fresh as WidgetData | null;
         } catch (error) {
           console.log('Widget refresh failed:', error instanceof Error ? error.message : 'unknown');
-        } finally {
-          clearInterval(spinner);
         }
         if (!data) {
-          data = cached;
+          data = await readCachedWidgetData();
         }
 
-        // Final render always clears the refreshing state
         props.renderWidget(
           <Widget
             {...data}
@@ -103,6 +82,15 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
             widgetHeight={widgetInfo.height}
           />
         );
+
+        // Hide the native spinner — the launcher recycles the widget view tree
+        // on full updates, so the overlay does not reset by itself
+        try {
+          const { NativeModules } = require('react-native');
+          await NativeModules.WidgetPinModule?.hideWidgetRefreshSpinner?.();
+        } catch {
+          // cosmetic only
+        }
       }
       break;
     }
