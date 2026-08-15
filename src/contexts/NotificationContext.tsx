@@ -5,11 +5,8 @@ import { WeatherData } from '../services/types';
 
 interface NotificationContextType {
   isInitialized: boolean;
-  pushToken: string | null;
   initializeNotifications: () => Promise<boolean>;
   checkWeatherAlerts: (weatherData: WeatherData) => Promise<void>;
-  sendTestNotification: () => Promise<void>;
-  sendWeatherUpdate: (weatherData: WeatherData, type?: 'daily' | 'hourly') => Promise<void>;
   updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
 }
 
@@ -30,7 +27,6 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const { settings } = useSettings();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [pushToken, setPushToken] = useState<string | null>(null);
 
   useEffect(() => {
     initializeNotifications();
@@ -86,13 +82,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       const success = await notificationService.initialize();
       setIsInitialized(success);
-      
+
       if (success) {
-        const token = notificationService.getPushToken();
-        setPushToken(token);
         console.log('🔔 Notification service initialized successfully');
       }
-      
+
       return success;
     } catch (error) {
       console.error('❌ Failed to initialize notifications:', error);
@@ -110,31 +104,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   };
 
-  const sendTestNotification = async (): Promise<void> => {
-    if (!isInitialized) return;
-    
-    try {
-      await notificationService.sendTestNotification();
-    } catch (error) {
-      console.error('Error sending test notification:', error);
-    }
-  };
-
   const updateNotificationSettings = (settings: Partial<NotificationSettings>): void => {
     notificationService.updateSettings(settings);
   };
 
-  const sendWeatherUpdate = async (weatherData: WeatherData, type: 'daily' | 'hourly' = 'daily'): Promise<void> => {
-    return notificationService.sendWeatherUpdateNotification(weatherData, type);
-  };
-
   const contextValue: NotificationContextType = {
     isInitialized,
-    pushToken,
     initializeNotifications,
     checkWeatherAlerts,
-    sendTestNotification,
-    sendWeatherUpdate,
     updateNotificationSettings,
   };
 

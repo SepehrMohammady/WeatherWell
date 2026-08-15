@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 /**
  * MeteostatService - Historical Weather Data Provider
@@ -18,37 +18,6 @@ export class MeteostatService implements WeatherService {
 
   constructor(apiKey: string = '93d3a5f1d3msh36569bf37d01a27p1c06ecjsna9f86b114ae8') {
     this.apiKey = apiKey;
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    // Meteostat provides historical data, so we get the most recent available data
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const endDate = this.formatDate(today);
-    const startDate = this.formatDate(yesterday);
-    
-    try {
-      // Get hourly data for the last 24 hours
-      const hourlyResponse = await axios.get(`${this.baseUrl}/point/hourly`, {
-        params: {
-          lat,
-          lon,
-          start: startDate,
-          end: endDate
-        },
-        headers: {
-          'X-RapidAPI-Key': this.apiKey,
-          'X-RapidAPI-Host': 'meteostat.p.rapidapi.com'
-        }
-      });
-
-      return this.transformToWeatherData(hourlyResponse.data, lat, lon);
-    } catch (error) {
-      console.error('Error fetching current weather from Meteostat:', error);
-      throw new Error('Failed to fetch current weather data');
-    }
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -104,48 +73,6 @@ export class MeteostatService implements WeatherService {
     }
   }
 
-  async searchLocations(query: string): Promise<Location[]> {
-    // Meteostat doesn't provide location search
-    // Return empty array - locations should be provided via coordinates
-    console.log('Meteostat does not support location search by name');
-    return [];
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const dailyResponse = await axios.get(`${this.baseUrl}/point/daily`, {
-        params: {
-          lat,
-          lon,
-          start: date,
-          end: date
-        },
-        headers: {
-          'X-RapidAPI-Key': this.apiKey,
-          'X-RapidAPI-Host': 'meteostat.p.rapidapi.com'
-        }
-      });
-
-      const hourlyResponse = await axios.get(`${this.baseUrl}/point/hourly`, {
-        params: {
-          lat,
-          lon,
-          start: date,
-          end: date
-        },
-        headers: {
-          'X-RapidAPI-Key': this.apiKey,
-          'X-RapidAPI-Host': 'meteostat.p.rapidapi.com'
-        }
-      });
-
-      return this.transformForecastData(dailyResponse.data, hourlyResponse.data, lat, lon);
-    } catch (error) {
-      console.error('Error fetching historical weather from Meteostat:', error);
-      throw new Error('Failed to fetch historical weather data');
-    }
-  }
-
   isAvailable(): boolean {
     return !!this.apiKey;
   }
@@ -159,58 +86,6 @@ export class MeteostatService implements WeatherService {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private transformToWeatherData(hourlyData: any, lat: number, lon: number): WeatherData {
-    const data = hourlyData.data || [];
-    const latest = data[data.length - 1] || {};
-
-    // Transform hourly data
-    const hourlyForecast: HourlyForecast[] = data.slice(-24).map((hour: any) => ({
-      time: hour.time,
-      temperature: hour.temp || 0,
-      condition: this.getWeatherCondition(hour.coco),
-      icon: this.getWeatherIcon(hour.coco),
-      humidity: hour.rhum || 0,
-      windSpeed: hour.wspd || 0,
-      precipitationChance: hour.prcp > 0 ? 70 : 20,
-      precipitationMm: hour.prcp || 0,
-      uvIndex: 0, // Not available
-      pressure: hour.pres || 1013,
-      visibility: 10 // Not available, default
-    }));
-
-    return {
-      location: {
-        name: `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
-        country: '',
-        region: '',
-        lat,
-        lon
-      },
-      current: {
-        temperature: latest.temp || 0,
-        condition: this.getWeatherCondition(latest.coco),
-        icon: this.getWeatherIcon(latest.coco),
-        humidity: latest.rhum || 0,
-        windSpeed: latest.wspd || 0,
-        windDirection: this.getWindDirection(latest.wdir || 0),
-        pressure: latest.pres || 1013,
-        uvIndex: 0,
-        visibility: 10,
-        feelsLike: latest.temp || 0 // Approximate
-      },
-      forecast: {
-        daily: [],
-        hourly: hourlyForecast
-      },
-      astronomy: {
-        sunrise: '', // Meteostat doesn't provide astronomy data
-        sunset: '',
-        moonPhase: '',
-        moonIllumination: -1 // -1 indicates data not available
-      }
-    };
   }
 
   private transformForecastData(

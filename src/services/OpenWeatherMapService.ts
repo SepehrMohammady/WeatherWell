@@ -1,41 +1,13 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 export class OpenWeatherMapService implements WeatherService {
   private apiKey: string;
   private readonly baseUrl = 'https://api.openweathermap.org/data/2.5';
-  private readonly geocodingUrl = 'https://api.openweathermap.org/geo/1.0';
   private readonly fallbackApiKey = '2f16c38d61c17ac94d944a5a66ca0e96'; // Demo key
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || this.fallbackApiKey;
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    try {
-      const [weatherResponse, airQualityResponse] = await Promise.all([
-        axios.get(`${this.baseUrl}/weather`, {
-          params: {
-            lat,
-            lon,
-            appid: this.apiKey,
-            units: 'metric'
-          }
-        }),
-        axios.get(`${this.baseUrl}/air_pollution`, {
-          params: {
-            lat,
-            lon,
-            appid: this.apiKey
-          }
-        }).catch(() => null) // Air quality might not be available
-      ]);
-
-      return this.transformCurrentWeatherData(weatherResponse.data, airQualityResponse?.data);
-    } catch (error) {
-      console.error('Error fetching current weather from OpenWeatherMap:', error);
-      throw new Error('Failed to fetch current weather data');
-    }
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -57,98 +29,12 @@ export class OpenWeatherMapService implements WeatherService {
     }
   }
 
-  async searchLocations(query: string): Promise<Location[]> {
-    try {
-      const response = await axios.get(`${this.geocodingUrl}/direct`, {
-        params: {
-          q: query,
-          limit: 5,
-          appid: this.apiKey
-        }
-      });
-
-      return response.data.map((location: any) => ({
-        name: location.name,
-        country: location.country,
-        region: location.state || location.country,
-        lat: location.lat,
-        lon: location.lon
-      }));
-    } catch (error) {
-      console.error('Error searching locations with OpenWeatherMap:', error);
-      throw new Error('Failed to search locations');
-    }
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const timestamp = Math.floor(new Date(date).getTime() / 1000);
-      const response = await axios.get(`${this.baseUrl}/onecall/timemachine`, {
-        params: {
-          lat,
-          lon,
-          dt: timestamp,
-          appid: this.apiKey,
-          units: 'metric'
-        }
-      });
-
-      return this.transformHistoricalData(response.data);
-    } catch (error) {
-      console.error('Error fetching historical weather from OpenWeatherMap:', error);
-      throw new Error('Failed to fetch historical weather data');
-    }
-  }
-
   isAvailable(): boolean {
     return this.apiKey.length > 0;
   }
 
   getApiSource(): string {
     return this.apiKey === this.fallbackApiKey ? 'OpenWeatherMap' : 'OpenWeatherMap (Custom)';
-  }
-
-  private transformCurrentWeatherData(weatherData: any, airQualityData?: any): WeatherData {
-    return {
-      location: {
-        name: weatherData.name,
-        country: weatherData.sys.country,
-        region: weatherData.sys.country,
-        lat: weatherData.coord.lat,
-        lon: weatherData.coord.lon
-      },
-      current: {
-        temperature: weatherData.main.temp,
-        condition: weatherData.weather[0].description,
-        icon: `https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`,
-        humidity: weatherData.main.humidity,
-        windSpeed: weatherData.wind.speed * 3.6, // Convert m/s to km/h
-        windDirection: this.getWindDirection(weatherData.wind.deg || 0),
-        pressure: weatherData.main.pressure,
-        uvIndex: 0, // Not available in current weather endpoint
-        visibility: (weatherData.visibility || 10000) / 1000, // Convert m to km
-        feelsLike: weatherData.main.feels_like
-      },
-      forecast: {
-        daily: [],
-        hourly: []
-      },
-      astronomy: {
-        sunrise: new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString(),
-        sunset: new Date(weatherData.sys.sunset * 1000).toLocaleTimeString(),
-        moonPhase: '', // OpenWeatherMap doesn't provide moon data
-        moonIllumination: -1 // -1 indicates data not available
-      },
-      airQuality: airQualityData ? {
-        aqi: airQualityData.list[0].main.aqi,
-        co: airQualityData.list[0].components.co,
-        no2: airQualityData.list[0].components.no2,
-        o3: airQualityData.list[0].components.o3,
-        so2: airQualityData.list[0].components.so2,
-        pm2_5: airQualityData.list[0].components.pm2_5,
-        pm10: airQualityData.list[0].components.pm10
-      } : undefined
-    };
   }
 
   private transformForecastData(data: any): WeatherData {
@@ -226,42 +112,6 @@ export class OpenWeatherMapService implements WeatherService {
       astronomy: {
         sunrise: new Date(data.city.sunrise * 1000).toLocaleTimeString(),
         sunset: new Date(data.city.sunset * 1000).toLocaleTimeString(),
-        moonPhase: '', // OpenWeatherMap doesn't provide moon data
-        moonIllumination: -1 // -1 indicates data not available
-      }
-    };
-  }
-
-  private transformHistoricalData(data: any): WeatherData {
-    const current = data.current || data.data[0];
-    
-    return {
-      location: {
-        name: '',
-        country: '',
-        region: '',
-        lat: data.lat,
-        lon: data.lon
-      },
-      current: {
-        temperature: current.temp,
-        condition: current.weather[0].description,
-        icon: `https://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`,
-        humidity: current.humidity,
-        windSpeed: current.wind_speed * 3.6,
-        windDirection: this.getWindDirection(current.wind_deg || 0),
-        pressure: current.pressure,
-        uvIndex: current.uvi || 0,
-        visibility: (current.visibility || 10000) / 1000,
-        feelsLike: current.feels_like
-      },
-      forecast: {
-        daily: [],
-        hourly: []
-      },
-      astronomy: {
-        sunrise: new Date(current.sunrise * 1000).toLocaleTimeString(),
-        sunset: new Date(current.sunset * 1000).toLocaleTimeString(),
         moonPhase: '', // OpenWeatherMap doesn't provide moon data
         moonIllumination: -1 // -1 indicates data not available
       }

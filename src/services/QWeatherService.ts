@@ -1,18 +1,12 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 export class QWeatherService implements WeatherService {
   private apiKey: string;
   private readonly baseUrl = 'https://devapi.qweather.com/v7';
-  private readonly geoUrl = 'https://geoapi.qweather.com/v2';
 
   constructor(apiKey: string = 'b196010778a24af19765ed70af849801') {
     this.apiKey = apiKey;
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    const forecast = await this.getForecast(lat, lon, 1);
-    return forecast;
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -80,62 +74,6 @@ export class QWeatherService implements WeatherService {
     } catch (error) {
       console.error('Error fetching forecast from QWeather:', error);
       throw new Error('Failed to fetch forecast data');
-    }
-  }
-
-  async searchLocations(query: string): Promise<Location[]> {
-    try {
-      const response = await axios.get(`${this.geoUrl}/city/lookup`, {
-        params: {
-          location: query,
-          key: this.apiKey,
-          lang: 'en',
-          number: 10
-        }
-      });
-
-      if (!response.data.location || response.data.code !== '200') {
-        return [];
-      }
-
-      return response.data.location.map((loc: any) => ({
-        name: loc.name,
-        region: loc.adm2 || loc.adm1,
-        country: loc.country,
-        latitude: parseFloat(loc.lat),
-        longitude: parseFloat(loc.lon)
-      }));
-    } catch (error) {
-      console.error('Error searching locations from QWeather:', error);
-      return [];
-    }
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const location = `${lon.toFixed(2)},${lat.toFixed(2)}`;
-      
-      const response = await axios.get(`${this.baseUrl}/historical/weather`, {
-        params: {
-          location,
-          date,
-          key: this.apiKey,
-          lang: 'en'
-        }
-      });
-
-      // Transform historical data (simplified - reuses current structure)
-      return this.transformWeatherData(
-        { now: response.data.weatherDaily?.[0] || {} },
-        response.data,
-        { hourly: [] },
-        null,
-        lat,
-        lon
-      );
-    } catch (error) {
-      console.error('Error fetching historical weather from QWeather:', error);
-      throw new Error('Failed to fetch historical weather data');
     }
   }
 

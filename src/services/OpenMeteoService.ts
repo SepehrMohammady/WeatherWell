@@ -1,17 +1,11 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 export class OpenMeteoService implements WeatherService {
   private readonly baseUrl = 'https://api.open-meteo.com/v1';
-  private readonly geocodingUrl = 'https://geocoding-api.open-meteo.com/v1';
 
   constructor() {
     // Open-Meteo is free and doesn't require an API key
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    const forecast = await this.getForecast(lat, lon, 1);
-    return forecast;
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -34,55 +28,6 @@ export class OpenMeteoService implements WeatherService {
     } catch (error) {
       console.error('Error fetching forecast from Open-Meteo:', error);
       throw new Error('Failed to fetch forecast data');
-    }
-  }
-
-  async searchLocations(query: string): Promise<Location[]> {
-    try {
-      const response = await axios.get(`${this.geocodingUrl}/search`, {
-        params: {
-          name: query,
-          count: 10,
-          language: 'en',
-          format: 'json'
-        }
-      });
-
-      if (!response.data.results) {
-        return [];
-      }
-
-      return response.data.results.map((location: any) => ({
-        name: location.name,
-        region: location.admin1 || '',
-        country: location.country || '',
-        latitude: location.latitude,
-        longitude: location.longitude
-      }));
-    } catch (error) {
-      console.error('Error searching locations from Open-Meteo:', error);
-      return [];
-    }
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/forecast`, {
-        params: {
-          latitude: lat,
-          longitude: lon,
-          start_date: date,
-          end_date: date,
-          hourly: 'temperature_2m,relative_humidity_2m,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m',
-          daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset',
-          timezone: 'auto'
-        }
-      });
-
-      return this.transformForecastData(response.data, null, lat, lon);
-    } catch (error) {
-      console.error('Error fetching historical weather from Open-Meteo:', error);
-      throw new Error('Failed to fetch historical weather data');
     }
   }
 

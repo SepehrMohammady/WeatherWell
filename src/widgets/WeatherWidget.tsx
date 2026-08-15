@@ -87,15 +87,34 @@ export function WeatherWidget({
       }}
       clickAction="OPEN_APP"
     >
-      {/* Location */}
-      <TextWidget
-        text={`📍 ${location}`}
+      {/* Location + refresh */}
+      <FlexWidget
         style={{
-          fontSize: locationSize,
-          color: '#B6BCBE',
+          flexDirection: 'row',
+          width: 'match_parent',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
-        maxLines={1}
-      />
+      >
+        <TextWidget
+          text={`📍 ${location}`}
+          style={{
+            fontSize: locationSize,
+            color: '#B6BCBE',
+          }}
+          maxLines={1}
+        />
+        <TextWidget
+          text="🔄"
+          clickAction="REFRESH"
+          style={{
+            fontSize: locationSize,
+            color: '#B6BCBE',
+            paddingLeft: 12,
+            paddingRight: 2,
+          }}
+        />
+      </FlexWidget>
 
       {/* Temperature Row */}
       <FlexWidget

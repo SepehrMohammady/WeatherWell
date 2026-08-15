@@ -22,7 +22,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/SettingsContext';
-import { useNotifications } from '../contexts/NotificationContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { APP_VERSION } from '../config/version';
 import { refreshWidgetSettings } from '../widgets/widget-utils';
@@ -34,8 +33,7 @@ interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
-  const { isInitialized } = useNotifications();
-  const { favorites, addToFavorites, removeFromFavorites, clearFavorites } = useFavorites();
+  const { favorites, addToFavorites, clearFavorites } = useFavorites();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
@@ -250,7 +248,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   };
 
   const handleOpenWebsite = () => {
-    Linking.openURL('https://sepehrmohammady.ir/');
+    Linking.openURL('https://semo-lab.com/weatherwell/');
   };
 
   const handleAddWidgetToHomeScreen = async () => {
@@ -277,22 +275,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     setTimeout(() => refreshWidgetSettings(), 300);
   };
 
-  const handleOpenGitHub = () => {
-    Linking.openURL('https://github.com/SepehrMohammady/WeatherWell');
-  };
-
   const SettingItem: React.FC<{
     title: string;
     subtitle?: string;
     description?: string;
     rightElement?: React.ReactNode;
     onPress?: () => void;
-    compact?: boolean;
     isLast?: boolean;
-  }> = ({ title, subtitle, description, rightElement, onPress, compact = false, isLast = false }) => (
+  }> = ({ title, subtitle, description, rightElement, onPress, isLast = false }) => (
     <TouchableOpacity
       style={[
-        compact ? styles.settingItemCompact : styles.settingItem, 
+        styles.settingItem,
         { backgroundColor: colors.surface },
         isLast && styles.settingItemLast
       ]}
@@ -1040,15 +1033,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
           <SettingItem
             title="Developer"
-            description="Sepehr Mohammady"
+            description="SeMo Lab"
             onPress={handleOpenWebsite}
             rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
-          />
-          <SettingItem
-            title="Source Code"
-            description="github.com/SepehrMohammady/WeatherWell"
-            onPress={handleOpenGitHub}
-            rightElement={<Ionicons name="logo-github" size={20} color={colors.primary} />}
           />
           <SettingItem
             title="Privacy"
@@ -1063,7 +1050,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             WeatherWell provides accurate weather forecasts with privacy-first approach. No personal data is collected or shared.
           </Text>
           <Text style={[styles.copyrightText, { color: colors.textSecondary }]}>
-            © 2026 Sepehr Mohammady. Open source under MIT License.
+            © 2026 SeMo Lab. Open source under MIT License.
           </Text>
         </View>
 
@@ -1333,14 +1320,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
-  },
-  settingItemCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    marginBottom: 6,
   },
   settingItemLast: {
     marginBottom: 0,

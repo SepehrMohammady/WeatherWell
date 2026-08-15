@@ -72,19 +72,8 @@ export interface HourlyForecast {
   visibility?: number;
 }
 
-export interface Location {
-  name: string;
-  country: string;
-  region: string;
-  lat: number;
-  lon: number;
-}
-
 export interface WeatherService {
-  getCurrentWeather(lat: number, lon: number): Promise<WeatherData>;
   getForecast(lat: number, lon: number, days?: number): Promise<WeatherData>;
-  searchLocations(query: string): Promise<Location[]>;
-  getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData>;
   isAvailable(): boolean;
   getApiSource(): string;
 }

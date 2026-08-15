@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  ScrollView, 
-  StyleSheet, 
-  RefreshControl, 
-  Alert,
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
   Text,
   StatusBar,
   TouchableOpacity,
@@ -44,7 +43,7 @@ export const HomeScreen: React.FC = () => {
 
   const { colors } = useTheme();
   const { settings } = useSettings();
-  const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { checkWeatherAlerts, isInitialized } = useNotifications();
   const locationService = LocationService.getInstance();
 
@@ -164,44 +163,6 @@ export const HomeScreen: React.FC = () => {
       } else {
         await addToFavorites(selectedLocation);
       }
-    }
-  };
-
-  const handleUmbrellaAlert = () => {
-    if (weatherData) {
-      const precipChance = weatherData.forecast.daily[0]?.precipitationChance || 0;
-      Alert.alert(
-        '☂️ Umbrella Alert',
-        `There's a ${precipChance}% chance of rain today. ${
-          precipChance > 70 ? 'Definitely bring an umbrella!' :
-          precipChance > 30 ? 'Consider bringing an umbrella.' :
-          'You probably won\'t need an umbrella.'
-        }`,
-        [{ text: 'OK' }]
-      );
-    }
-  };
-
-  const handleClothingSuggestion = () => {
-    if (weatherData) {
-      const temp = weatherData.current.temperature;
-      let suggestion = '';
-      
-      if (temp < 5) {
-        suggestion = 'It\'s very cold! Wear a heavy winter coat, scarf, and gloves.';
-      } else if (temp < 15) {
-        suggestion = 'It\'s quite cool. A jacket or warm sweater would be perfect.';
-      } else if (temp < 25) {
-        suggestion = 'Pleasant temperature. A light sweater or long sleeves should be comfortable.';
-      } else {
-        suggestion = 'It\'s warm! T-shirt or light clothing will be perfect.';
-      }
-
-      Alert.alert(
-        '👕 Clothing Suggestion',
-        `Current temperature: ${Math.round(temp)}°C (feels like ${Math.round(weatherData.current.feelsLike)}°C)\n\n${suggestion}`,
-        [{ text: 'OK' }]
-      );
     }
   };
 
@@ -329,11 +290,7 @@ export const HomeScreen: React.FC = () => {
           <CurrentWeatherCard weatherData={weatherData} apiSource={apiSource} />
           <HourlyForecastList hourlyData={weatherData.forecast.hourly} />
           <DailyForecastList dailyData={weatherData.forecast.daily} />
-          <SmartFeaturesCard 
-            weatherData={weatherData}
-            onUmbrellaAlert={handleUmbrellaAlert}
-            onClothingSuggestion={handleClothingSuggestion}
-          />
+          <SmartFeaturesCard weatherData={weatherData} />
           
           {/* Share Component */}
           <View style={styles.shareContainer}>
@@ -416,11 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-  },
-  locationActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   favoriteButton: {
     marginRight: 6,

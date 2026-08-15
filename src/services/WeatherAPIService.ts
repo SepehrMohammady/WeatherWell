@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 export class WeatherAPIService implements WeatherService {
   private apiKey: string;
@@ -8,23 +8,6 @@ export class WeatherAPIService implements WeatherService {
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || this.fallbackApiKey;
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/current.json`, {
-        params: {
-          key: this.apiKey,
-          q: `${lat},${lon}`,
-          aqi: 'yes'
-        }
-      });
-
-      return this.transformCurrentWeatherData(response.data);
-    } catch (error) {
-      console.error('Error fetching current weather:', error);
-      throw new Error('Failed to fetch current weather data');
-    }
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -43,45 +26,6 @@ export class WeatherAPIService implements WeatherService {
     } catch (error) {
       console.error('Error fetching forecast:', error);
       throw new Error('Failed to fetch forecast data');
-    }
-  }
-
-  async searchLocations(query: string): Promise<Location[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/search.json`, {
-        params: {
-          key: this.apiKey,
-          q: query
-        }
-      });
-
-      return response.data.map((location: any) => ({
-        name: location.name,
-        country: location.country,
-        region: location.region,
-        lat: location.lat,
-        lon: location.lon
-      }));
-    } catch (error) {
-      console.error('Error searching locations:', error);
-      throw new Error('Failed to search locations');
-    }
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/history.json`, {
-        params: {
-          key: this.apiKey,
-          q: `${lat},${lon}`,
-          dt: date
-        }
-      });
-
-      return this.transformHistoricalData(response.data);
-    } catch (error) {
-      console.error('Error fetching historical weather:', error);
-      throw new Error('Failed to fetch historical weather data');
     }
   }
 
@@ -224,30 +168,4 @@ export class WeatherAPIService implements WeatherService {
     };
   }
 
-  private transformHistoricalData(data: any): WeatherData {
-    const currentWeather = this.transformCurrentWeatherData(data);
-    const historicalDay = data.forecast.forecastday[0];
-    
-    return {
-      ...currentWeather,
-      current: {
-        temperature: historicalDay.day.avgtemp_c,
-        condition: historicalDay.day.condition.text,
-        icon: historicalDay.day.condition.icon,
-        humidity: historicalDay.day.avghumidity,
-        windSpeed: historicalDay.day.maxwind_kph,
-        windDirection: '',
-        pressure: 1013, // Default value as historical data might not have pressure
-        uvIndex: historicalDay.day.uv,
-        visibility: historicalDay.day.avgvis_km,
-        feelsLike: historicalDay.day.avgtemp_c
-      },
-      astronomy: {
-        sunrise: historicalDay.astro.sunrise,
-        sunset: historicalDay.astro.sunset,
-        moonPhase: historicalDay.astro.moon_phase,
-        moonIllumination: parseFloat(historicalDay.astro.moon_illumination) / 100
-      }
-    };
-  }
 }

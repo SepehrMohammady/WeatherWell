@@ -5,15 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherServiceFactory } from './WeatherServiceFactory';
 import { defaultNotificationSettings, NotificationSettings } from './NotificationService';
 import { WeatherData } from './types';
-import { WIDGET_DATA_KEY } from '../widgets/widget-task-handler';
+import { WIDGET_DATA_KEY, buildWidgetData } from '../widgets/widget-utils';
 
 // Task names
 export const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
 
 // Storage keys
 const LAST_LOCATION_KEY = 'weatherwell_last_location';
-const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
-const SETTINGS_KEY = 'weatherwell_settings';
+const APP_SETTINGS_KEY = 'appSettings';
 const LAST_ALERTS_KEY = 'weatherwell_last_alerts';
 const ALERT_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hour cooldown per alert type
 const LAST_DAILY_FORECAST_KEY = 'weatherwell_last_daily_forecast';
@@ -23,6 +22,35 @@ interface StoredLocation {
   latitude: number;
   longitude: number;
   timestamp: number;
+}
+
+/**
+ * Derive NotificationSettings from the app settings the user actually edits
+ * (stored under 'appSettings' by SettingsContext).
+ */
+function notificationSettingsFromAppSettings(appSettings: Record<string, any>): NotificationSettings {
+  const d = defaultNotificationSettings;
+  return {
+    enableNotifications: appSettings.enableNotifications ?? d.enableNotifications,
+    enableSevereWeatherAlerts: appSettings.enableSevereWeatherAlerts ?? d.enableSevereWeatherAlerts,
+    enableDailyForecast: appSettings.enableDailyForecast ?? d.enableDailyForecast,
+    enableHourlyForecast: appSettings.enableHourlyForecast ?? d.enableHourlyForecast,
+    enableTemperatureAlerts: appSettings.enableTemperatureAlerts ?? d.enableTemperatureAlerts,
+    enableUVAlerts: appSettings.enableUVAlerts ?? d.enableUVAlerts,
+    enableUmbrellaAlerts: appSettings.enableUmbrellaAlerts ?? d.enableUmbrellaAlerts,
+    enableAQIAlerts: appSettings.enableAQIAlerts ?? d.enableAQIAlerts,
+    aqiThreshold: appSettings.aqiThreshold ?? d.aqiThreshold,
+    enableWindAlerts: appSettings.enableWindAlerts ?? d.enableWindAlerts,
+    dailyForecastTime: appSettings.dailyForecastTime ?? d.dailyForecastTime,
+    hourlyForecastTime: appSettings.hourlyForecastTime ?? d.hourlyForecastTime,
+    temperatureThreshold: {
+      high: appSettings.temperatureThresholdHigh ?? d.temperatureThreshold.high,
+      low: appSettings.temperatureThresholdLow ?? d.temperatureThreshold.low,
+    },
+    uvThreshold: appSettings.uvThreshold ?? d.uvThreshold,
+    rainThreshold: appSettings.rainThreshold ?? d.rainThreshold,
+    windSpeedThreshold: appSettings.windSpeedThreshold ?? d.windSpeedThreshold,
+  };
 }
 
 /**
@@ -49,21 +77,16 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
 
-    // Get notification settings
-    const notificationSettingsData = await AsyncStorage.getItem(NOTIFICATION_SETTINGS_KEY);
-    const notificationSettings: NotificationSettings = notificationSettingsData 
-      ? JSON.parse(notificationSettingsData) 
-      : defaultNotificationSettings;
+    // Get app settings (provider, API keys, and notification preferences)
+    const settingsData = await AsyncStorage.getItem(APP_SETTINGS_KEY);
+    const settings = settingsData ? JSON.parse(settingsData) : {};
+    const notificationSettings = notificationSettingsFromAppSettings(settings);
 
     // Check if notifications are enabled
     if (!notificationSettings.enableNotifications) {
       console.log('⏸️ Notifications disabled, skipping background task');
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
-
-    // Get weather provider settings
-    const settingsData = await AsyncStorage.getItem(SETTINGS_KEY);
-    const settings = settingsData ? JSON.parse(settingsData) : {};
 
     // Fetch weather data
     console.log('📡 Fetching weather data in background...');
@@ -553,29 +576,7 @@ async function rescheduleWithData(
  */
 async function cacheWidgetData(weatherData: WeatherData): Promise<void> {
   try {
-    const current = weatherData.current;
-    const today = weatherData.forecast.daily[0];
-    const rainChance = today?.precipitationChance || 0;
-
-    // Read widget settings from app settings
-    const settingsData = await AsyncStorage.getItem('appSettings');
-    const appSettings = settingsData ? JSON.parse(settingsData) : {};
-
-    const widgetData = {
-      temperature: `${Math.round(current.temperature)}°`,
-      location: weatherData.location.name,
-      conditions: current.condition,
-      high: `${Math.round(today?.maxTemp || current.temperature)}°`,
-      low: `${Math.round(today?.minTemp || current.temperature)}°`,
-      rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
-      feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
-      opacity: appSettings.widgetOpacity ?? 0.85,
-      showFeelsLike: appSettings.widgetShowFeelsLike ?? true,
-      showHighLow: appSettings.widgetShowHighLow ?? true,
-      showRainChance: appSettings.widgetShowRainChance ?? true,
-      showConditions: appSettings.widgetShowConditions ?? true,
-    };
-
+    const widgetData = await buildWidgetData(weatherData);
     await AsyncStorage.setItem(WIDGET_DATA_KEY, JSON.stringify(widgetData));
     console.log('📱 Widget data cached');
   } catch (error) {
@@ -606,8 +607,6 @@ async function sendBackgroundNotification(
  * Background Task Service for managing background weather fetches
  */
 class BackgroundTaskService {
-  private isRegistered: boolean = false;
-
   /**
    * Register the background fetch task
    * Should be called once when the app starts
@@ -638,28 +637,11 @@ class BackgroundTaskService {
         startOnBoot: true, // Start after device reboot
       });
 
-      this.isRegistered = true;
       console.log(`✅ Background weather task registered (interval: ~${intervalMinutes}min)`);
       return true;
     } catch (error) {
       console.error('❌ Failed to register background task:', error);
       return false;
-    }
-  }
-
-  /**
-   * Unregister the background fetch task
-   */
-  async unregisterBackgroundTask(): Promise<void> {
-    try {
-      const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_WEATHER_TASK);
-      if (isRegistered) {
-        await BackgroundFetch.unregisterTaskAsync(BACKGROUND_WEATHER_TASK);
-        this.isRegistered = false;
-        console.log('✅ Background weather task unregistered');
-      }
-    } catch (error) {
-      console.error('❌ Failed to unregister background task:', error);
     }
   }
 
@@ -675,42 +657,7 @@ class BackgroundTaskService {
     await AsyncStorage.setItem(LAST_LOCATION_KEY, JSON.stringify(locationData));
     console.log('📍 Location saved for background task');
   }
-
-  /**
-   * Check the status of background fetch
-   */
-  async getBackgroundFetchStatus(): Promise<{
-    status: BackgroundFetch.BackgroundFetchStatus | null;
-    isRegistered: boolean;
-    statusText: string;
-  }> {
-    const status = await BackgroundFetch.getStatusAsync();
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_WEATHER_TASK);
-    
-    let statusText = 'Unknown';
-    switch (status) {
-      case BackgroundFetch.BackgroundFetchStatus.Available:
-        statusText = 'Available';
-        break;
-      case BackgroundFetch.BackgroundFetchStatus.Restricted:
-        statusText = 'Restricted by system';
-        break;
-      case BackgroundFetch.BackgroundFetchStatus.Denied:
-        statusText = 'Denied by user';
-        break;
-    }
-
-    return { status, isRegistered, statusText };
-  }
-
-  /**
-   * Get whether the task is registered
-   */
-  getIsRegistered(): boolean {
-    return this.isRegistered;
-  }
 }
 
 // Export singleton instance
 export const backgroundTaskService = new BackgroundTaskService();
-export default backgroundTaskService;

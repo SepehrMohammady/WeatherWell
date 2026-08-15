@@ -3,7 +3,7 @@
     "name": "WeatherWell",
     "slug": "weatherwell",
     "owner": "sepehrmohammady",
-    "version": "0.7.13",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,10 +24,10 @@
         "backgroundColor": "#ffffff",
         "monochromeImage": "./assets/adaptive-icon.png"
       },
-      "versionCode": 37,
+      "versionCode": 38,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sepehrmohammady.weatherwell",
+      "package": "com.weatherwell",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",

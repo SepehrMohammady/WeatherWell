@@ -8,13 +8,6 @@ import { WeatherService } from './types';
 import { WeatherProvider } from '../contexts/SettingsContext';
 
 export class WeatherServiceFactory {
-  private static weatherApiService: WeatherAPIService;
-  private static openWeatherMapService: OpenWeatherMapService;
-  private static visualCrossingService: VisualCrossingService;
-  private static openMeteoService: OpenMeteoService;
-  private static qweatherService: QWeatherService;
-  private static meteostatService: MeteostatService;
-
   static getWeatherAPIService(apiKey?: string): WeatherAPIService {
     // Always create new instance with current API key
     return new WeatherAPIService(apiKey);

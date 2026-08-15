@@ -1,4 +1,4 @@
-package com.sepehrmohammady.weatherwell.widget;
+package com.weatherwell.widget;
 
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;

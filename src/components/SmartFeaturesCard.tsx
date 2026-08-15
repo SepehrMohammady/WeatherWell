@@ -1,23 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
-import { useSettings } from '../contexts/SettingsContext';
 
 interface SmartFeaturesCardProps {
   weatherData: WeatherData;
-  onUmbrellaAlert?: () => void;
-  onClothingSuggestion?: () => void;
 }
 
-export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({ 
-  weatherData, 
-  onUmbrellaAlert,
-  onClothingSuggestion 
+export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
+  weatherData
 }) => {
   const { colors } = useTheme();
-  const { settings } = useSettings();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showAstronomyDetail, setShowAstronomyDetail] = useState<string | null>(null);
 

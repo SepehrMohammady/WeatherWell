@@ -21,6 +21,7 @@ interface ShareOptions {
   includeCurrent: boolean;
   includeHourly: boolean;
   includeDaily: boolean;
+  includeAstronomy: boolean;
   includeFeelsLike: boolean;
   includeHumidity: boolean;
   includePressure: boolean;
@@ -46,6 +47,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
     includeCurrent: true,
     includeHourly: false,
     includeDaily: false,
+    includeAstronomy: false,
     includeFeelsLike: settings.showFeelsLike,
     includeHumidity: settings.showHumidity,
     includePressure: settings.showPressure,
@@ -109,17 +111,24 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       shareText += '\n';
     }
 
-    // Hourly Forecast
+    // Hourly Forecast — starting from the current hour
     if (shareOptions.includeHourly && forecast.hourly.length > 0) {
-      shareText += '⏰ Next 12 Hours:\n';
-      forecast.hourly.slice(0, 12).forEach((hour, index) => {
-        const time = new Date(hour.time).toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+      const startOfCurrentHour = new Date();
+      startOfCurrentHour.setMinutes(0, 0, 0);
+      const upcomingHours = forecast.hourly
+        .filter(hour => new Date(hour.time) >= startOfCurrentHour)
+        .slice(0, 12);
+      if (upcomingHours.length > 0) {
+        shareText += '⏰ Next 12 Hours:\n';
+        upcomingHours.forEach(hour => {
+          const time = new Date(hour.time).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          shareText += `${time}: ${formatTemperature(hour.temperature)} - ${hour.condition}\n`;
         });
-        shareText += `${time}: ${formatTemperature(hour.temperature)} - ${hour.condition}\n`;
-      });
-      shareText += '\n';
+        shareText += '\n';
+      }
     }
 
     // Daily Forecast
@@ -136,6 +145,26 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       shareText += '\n';
     }
 
+    // Astronomy
+    const astronomy = weatherData.astronomy;
+    if (shareOptions.includeAstronomy && astronomy && (astronomy.sunrise || astronomy.sunset || astronomy.moonPhase)) {
+      shareText += '🌅 Astronomy:\n';
+      if (astronomy.sunrise) {
+        shareText += `Sunrise: ${astronomy.sunrise}\n`;
+      }
+      if (astronomy.sunset) {
+        shareText += `Sunset: ${astronomy.sunset}\n`;
+      }
+      if (astronomy.moonPhase) {
+        shareText += `Moon: ${astronomy.moonPhase}`;
+        if (astronomy.moonIllumination > 0) {
+          shareText += ` (${Math.round(astronomy.moonIllumination)}% illuminated)`;
+        }
+        shareText += '\n';
+      }
+      shareText += '\n';
+    }
+
     // Footer
     shareText += '━━━━━━━━━━━━━━━━\n';
     shareText += '📱 Shared from WeatherWell';
@@ -143,7 +172,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
     return shareText;
   };
 
-  const handleShare = async (platform?: string) => {
+  const handleShare = async () => {
     const shareText = generateShareText();
     const shareOptions = {
       message: shareText,
@@ -158,10 +187,6 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
         Alert.alert('Share Error', 'Failed to share weather data');
       }
     }
-  };
-
-  const handleQuickShare = () => {
-    handleShare();
   };
 
   const ShareOption: React.FC<{
@@ -196,7 +221,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       <View style={styles.shareButtons}>
         <TouchableOpacity
           style={[styles.quickShareButton, { backgroundColor: colors.primary }]}
-          onPress={handleQuickShare}
+          onPress={() => handleShare()}
         >
           <Ionicons name="share-outline" size={20} color="white" />
           <Text style={styles.quickShareText}>Quick Share</Text>
@@ -271,8 +296,17 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
                 title="Daily Forecast"
                 subtitle="7-day weather forecast"
                 value={shareOptions.includeDaily}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setShareOptions(prev => ({ ...prev, includeDaily: value }))
+                }
+              />
+
+              <ShareOption
+                title="Astronomy"
+                subtitle="Sunrise, sunset and moon phase"
+                value={shareOptions.includeAstronomy}
+                onValueChange={(value) =>
+                  setShareOptions(prev => ({ ...prev, includeAstronomy: value }))
                 }
               />
 

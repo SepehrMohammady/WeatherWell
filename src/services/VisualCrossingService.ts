@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WeatherService, WeatherData, Location, DailyForecast, HourlyForecast } from './types';
+import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
 
 export class VisualCrossingService implements WeatherService {
   private apiKey: string;
@@ -8,11 +8,6 @@ export class VisualCrossingService implements WeatherService {
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || this.fallbackApiKey;
-  }
-
-  async getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-    const forecast = await this.getForecast(lat, lon, 1);
-    return forecast;
   }
 
   async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
@@ -37,33 +32,6 @@ export class VisualCrossingService implements WeatherService {
     } catch (error) {
       console.error('Error fetching forecast from Visual Crossing:', error);
       throw new Error('Failed to fetch forecast data from Visual Crossing');
-    }
-  }
-
-  async searchLocations(query: string): Promise<Location[]> {
-    // Visual Crossing doesn't have a dedicated search endpoint, 
-    // so we'll return empty array and let other services handle location search
-    return [];
-  }
-
-  async getHistoricalWeather(lat: number, lon: number, date: string): Promise<WeatherData> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/${lat},${lon}/${date}`,
-        {
-          params: {
-            key: this.apiKey,
-            unitGroup: 'metric',
-            include: 'days,hours',
-            elements: 'datetime,temp,tempmax,tempmin,humidity,precip,precipprob,windspeed,winddir,visibility,uvindex,conditions,icon'
-          }
-        }
-      );
-
-      return this.transformForecastData(response.data);
-    } catch (error) {
-      console.error('Error fetching historical weather from Visual Crossing:', error);
-      throw new Error('Failed to fetch historical weather data');
     }
   }
 

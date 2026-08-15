@@ -7,11 +7,11 @@ export interface Location {
   id: string;
 }
 
-export interface SearchService {
+interface SearchService {
   searchLocations(query: string): Promise<Location[]>;
 }
 
-export class WeatherAPISearchService implements SearchService {
+class WeatherAPISearchService implements SearchService {
   private readonly baseUrl = 'https://api.weatherapi.com/v1';
   private readonly apiKey = '725bd54f9a1b458884f85421252509'; // Same key as main service
 

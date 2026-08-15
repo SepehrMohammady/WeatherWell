@@ -1,4 +1,4 @@
-package com.sepehrmohammady.weatherwell.widget;
+package com.weatherwell.widget;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
