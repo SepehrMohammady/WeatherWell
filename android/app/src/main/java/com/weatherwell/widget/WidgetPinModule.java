@@ -50,24 +50,14 @@ public class WidgetPinModule extends ReactContextBaseJavaModule {
     }
 
     /**
-     * Hide the native refresh spinner overlay. Called from the widget task
-     * handler when a refresh finishes — launchers recycle the widget view tree
-     * on full updates, so the overlay visibility set by WeatherWidget.java's
-     * partial update would otherwise survive the re-render.
+     * Restore the native refresh button after a refresh finishes — launchers
+     * recycle the widget view tree on full renders, so the spinner state set by
+     * WeatherWidget.java's partial update would otherwise survive the re-render.
      */
     @ReactMethod
     public void hideWidgetRefreshSpinner(Promise promise) {
         try {
-            Context context = getReactApplicationContext();
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            ComponentName thisWidget = new ComponentName(context, WeatherWidget.class);
-            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
-
-            for (int appWidgetId : appWidgetIds) {
-                RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.rn_widget);
-                views.setViewVisibility(R.id.widget_refresh_overlay, View.GONE);
-                appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views);
-            }
+            WeatherWidget.setRefreshing(getReactApplicationContext(), false);
             promise.resolve(true);
         } catch (Exception e) {
             promise.resolve(false);

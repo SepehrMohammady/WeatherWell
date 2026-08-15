@@ -251,6 +251,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     Linking.openURL('https://semo-lab.com/weatherwell/');
   };
 
+  const handleOpenPrivacyPolicy = () => {
+    Linking.openURL('https://semo-lab.com/weatherwell/privacy-policy/');
+  };
+
   const handleAddWidgetToHomeScreen = async () => {
     try {
       const { NativeModules } = require('react-native');
@@ -1023,7 +1027,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </Text>
           <SettingItem
             title="WeatherWell"
-            description="Cross-platform weather app"
+            description="Ad-free weather forecasts"
             rightElement={null}
           />
           <SettingItem
@@ -1038,10 +1042,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
           />
           <SettingItem
-            title="Privacy"
+            title="Privacy Policy"
             description="No personal data is collected or shared"
+            onPress={handleOpenPrivacyPolicy}
             isLast={true}
-            rightElement={null}
+            rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
           />
         </View>
 

@@ -29,18 +29,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Native refresh spinner overlay, shown via partiallyUpdateAppWidget from
-         WeatherWidget.java while the JS headless refresh runs. Hidden by default,
-         so every full widget render automatically resets it. -->
+    <!-- Native refresh control (FeedWell-style): the button is the only refresh
+         icon; WeatherWidget.java swaps it for the spinner via partial updates
+         while the JS headless refresh runs, then WidgetPinModule restores it. -->
     <FrameLayout
         android:id="@+id/widget_refresh_overlay"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_gravity="top|end"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="10dp"
-        android:background="@drawable/widget_refresh_badge"
-        android:visibility="gone">
+        android:layout_marginTop="9dp"
+        android:layout_marginEnd="9dp">
+
+        <ImageButton
+            android:id="@+id/widget_refresh_button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:src="@drawable/ic_widget_refresh"
+            android:scaleType="centerInside"
+            android:padding="5dp"
+            android:contentDescription="Refresh weather" />
 
         <ProgressBar
             android:id="@+id/widget_refresh_progress"
@@ -49,6 +57,8 @@
             android:layout_height="match_parent"
             android:padding="4dp"
             android:indeterminate="true"
-            android:indeterminateTint="#B6BCBE" />
+            android:indeterminateTint="#B6BCBE"
+            android:background="@drawable/widget_refresh_badge"
+            android:visibility="gone" />
     </FrameLayout>
 </FrameLayout>

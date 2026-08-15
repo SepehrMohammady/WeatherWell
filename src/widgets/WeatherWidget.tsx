@@ -1,8 +1,8 @@
 import React from 'react';
 import { FlexWidget, TextWidget, SvgWidget } from 'react-native-android-widget';
 
-// Material Design glyph paths (24dp viewBox) — same refresh glyph FeedWell's widget uses
-const REFRESH_PATH = 'M17.65,6.35C16.2,4.9 14.21,4 12,4c-4.42,0 -7.99,3.58 -7.99,8s3.57,8 7.99,8c3.73,0 6.84,-2.55 7.73,-6h-2.08c-0.82,2.33 -3.04,4 -5.65,4 -3.31,0 -6,-2.69 -6,-6s2.69,-6 6,-6c1.66,0 3.14,0.69 4.22,1.78L13,11h7V4l-2.35,2.35z';
+// Material Design glyph path (24dp viewBox); the refresh button itself is a
+// native overlay in rn_widget.xml — see WeatherWidget.java
 const DROP_PATH = 'M12,2C6.67,6.55 4,10.48 4,13.8 4,18.78 7.8,22 12,22s8,-3.22 8,-8.2C20,10.48 17.33,6.55 12,2z';
 
 function iconSvg(path: string, color: string): string {
@@ -74,7 +74,6 @@ export function WeatherWidget({
   const padding = Math.max(8, Math.min(20, Math.round(12 * scale)));
   const panelPadding = Math.max(4, Math.min(16, Math.round(10 * scale)));
   const gap = Math.max(2, Math.min(12, Math.round(5 * scale)));
-  const refreshSize = Math.max(16, Math.min(28, Math.round(18 * scale)));
   const dropSize = Math.max(10, Math.min(18, Math.round(12 * scale)));
 
   // Hide only when truly too small to render anything useful
@@ -97,33 +96,16 @@ export function WeatherWidget({
       }}
       clickAction="OPEN_APP"
     >
-      {/* Location + refresh */}
-      <FlexWidget
+      {/* Location — right margin clears the native refresh button overlay */}
+      <TextWidget
+        text={location}
         style={{
-          flexDirection: 'row',
-          width: 'match_parent',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          fontSize: locationSize,
+          color: '#B6BCBE',
+          marginRight: 36,
         }}
-      >
-        <TextWidget
-          text={location}
-          style={{
-            fontSize: locationSize,
-            color: '#B6BCBE',
-          }}
-          maxLines={1}
-        />
-        <SvgWidget
-          clickAction="REFRESH"
-          svg={iconSvg(REFRESH_PATH, '#B6BCBE')}
-          style={{
-            width: refreshSize,
-            height: refreshSize,
-            marginLeft: 12,
-          }}
-        />
-      </FlexWidget>
+        maxLines={1}
+      />
 
       {/* Temperature Row */}
       <FlexWidget
