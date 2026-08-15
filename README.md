@@ -19,18 +19,6 @@ No ads. No accounts. No tracking. Just the weather — and a nudge when you'll n
 
 ---
 
-<div align="center">
-
-| Today at a glance | Hourly & 7-day | Share a report |
-|:---:|:---:|:---:|
-| <img src="store-assets/screenshots/01-home-dark.png" width="230" alt="WeatherWell home screen showing current temperature, humidity, wind, UV index and air quality"> | <img src="store-assets/screenshots/02-forecasts-dark.png" width="230" alt="Hourly forecast strip and seven-day forecast list"> | <img src="store-assets/screenshots/04-share-dark.png" width="230" alt="Share options screen with toggles for location, current weather, hourly, daily and astronomy"> |
-| **Live compass** | **Home-screen widget** | **Light theme** |
-| <img src="store-assets/screenshots/05-compass-dark.png" width="230" alt="Wind direction compass using the device magnetometer"> | <img src="store-assets/screenshots/06-widget-dark.png" width="230" alt="Home-screen widget showing temperature, high and low, rain chance and a refresh button"> | <img src="store-assets/screenshots/07-home-light.png" width="230" alt="WeatherWell home screen in light theme"> |
-
-</div>
-
----
-
 ## Why WeatherWell?
 
 Most weather apps sell your location to advertisers. This one doesn't have advertisers.
