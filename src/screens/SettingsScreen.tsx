@@ -264,12 +264,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       } else {
         showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
       }
-    } catch (error: any) {
-      if (error?.code === 'UNSUPPORTED') {
-        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
-      } else {
-        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
-      }
+    } catch {
+      showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
     }
   };
 

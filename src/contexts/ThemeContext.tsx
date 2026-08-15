@@ -6,7 +6,6 @@ export type Theme = 'light' | 'dark';
 
 export interface ThemeColors {
   primary: string;
-  secondary: string;
   background: string;
   surface: string;
   text: string;
@@ -21,7 +20,6 @@ export interface ThemeColors {
 // Neutral Paradise Color Palette
 const lightTheme: ThemeColors = {
   primary: '#A17F66',        // Warm brown from palette
-  secondary: '#5F758E',      // Muted blue-grey
   background: '#F0F0F0',     // Light neutral background
   surface: '#FFFFFF',        // Clean white surface
   text: '#758793',           // Dark grey-blue for text
@@ -35,7 +33,6 @@ const lightTheme: ThemeColors = {
 
 const darkTheme: ThemeColors = {
   primary: '#CB936A',        // Warm terracotta
-  secondary: '#5E6D74',      // Dark grey-blue
   background: '#1A1A1A',     // Darker background (was #2D2D2D)
   surface: '#2A2A2A',        // Darker surface (was #3A3A3A)
   text: '#E7E7E7',           // Light grey text
@@ -51,7 +48,6 @@ interface ThemeContextType {
   theme: Theme;
   colors: ThemeColors;
   toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -119,7 +115,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const colors = theme === 'light' ? lightTheme : darkTheme;
 
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

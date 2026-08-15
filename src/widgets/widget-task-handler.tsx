@@ -4,8 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherWidget } from './WeatherWidget';
 import { WIDGET_DATA_KEY, fetchAndCacheWidgetData } from './widget-utils';
 
-export { WIDGET_DATA_KEY } from './widget-utils';
-
 const nameToWidget = {
   WeatherWidget: WeatherWidget,
 };
@@ -94,9 +92,6 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       }
       break;
     }
-
-    case 'WIDGET_DELETED':
-      break;
 
     default:
       break;

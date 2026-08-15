@@ -55,7 +55,6 @@ export class VisualCrossingService implements WeatherService {
       location: {
         name: data.resolvedAddress?.split(',')[0] || 'Unknown',
         country: data.resolvedAddress?.split(',').pop()?.trim() || 'Unknown',
-        region: data.resolvedAddress?.split(',')[1]?.trim() || '',
         lat: data.latitude,
         lon: data.longitude
       },
@@ -96,7 +95,6 @@ export class VisualCrossingService implements WeatherService {
       precipitationMm: day.precip || 0,
       windSpeed: day.windspeed || 0,
       humidity: day.humidity || 0,
-      uvIndex: day.uvindex || 0,
       astronomy: {
         sunrise: this.formatTime(day.sunrise),
         sunset: this.formatTime(day.sunset),

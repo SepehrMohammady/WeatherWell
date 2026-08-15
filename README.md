@@ -109,7 +109,7 @@ cd android
 # output: android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Version numbers live in `src/config/version.ts`; run `npm run sync-version` to propagate them to `package.json` and `app.json`, and bump `versionCode` in `app.json` and `android/app/build.gradle` alongside.
+Version numbers live in `src/config/version.ts`. Run `npm run version:patch` (or `:minor` / `:major`) to bump it — that propagates to `package.json` and `app.json` and increments the Android `versionCode`. Gradle reads both values straight from `app.json`, so there is nothing to edit by hand.
 
 </details>
 

@@ -79,7 +79,6 @@ export class OpenWeatherMapService implements WeatherService {
           icon: `https://openweathermap.org/img/wn/${items[0].weather[0].icon}@2x.png`,
           humidity: Math.round(humidities.reduce((a: number, b: number) => a + b, 0) / humidities.length),
           windSpeed: Math.max(...winds),
-          uvIndex: 0, // Not available in this endpoint
           precipitationChance: Math.max(...precipChances),
           precipitationMm: precipAmounts.reduce((a: number, b: number) => a + b, 0)
         };
@@ -89,7 +88,6 @@ export class OpenWeatherMapService implements WeatherService {
       location: {
         name: data.city.name,
         country: data.city.country,
-        region: data.city.country,
         lat: data.city.coord.lat,
         lon: data.city.coord.lon
       },

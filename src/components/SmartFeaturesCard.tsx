@@ -137,11 +137,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     // AQI is now 0-500 scale (EPA standard)
     const aqi = weatherData.airQuality?.aqi || 0;
     if (aqi > 150) {
-      return { text: "Wear a mask outdoors", icon: "alert-circle", lib: "ion" as IconLib, color: "#e17055" };
+      return { text: "Wear a mask outdoors" };
     } else if (aqi > 100) {
-      return { text: "Consider wearing a mask", icon: "warning-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
+      return { text: "Consider wearing a mask" };
     } else {
-      return { text: "No mask needed", icon: "checkmark-circle-outline", lib: "ion" as IconLib, color: "#00b894" };
+      return { text: "No mask needed" };
     }
   };
 

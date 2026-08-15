@@ -1,54 +1,51 @@
 # Version Management
 
-WeatherWell uses a centralized version management system to ensure all configuration files stay synchronized.
+WeatherWell keeps every version number in sync from a single source, so a release
+never ships with mismatched values.
 
-## Central Version Source
+## Single source of truth
 
-The single source of truth for the app version is located in:
 ```
-src/config/version.ts
-```
-
-## Version Synchronization
-
-### Manual Sync
-To synchronize all version files with the central version:
-```bash
-npm run sync-version
+src/config/version.ts     ->  export const APP_VERSION = '1.0.7';
 ```
 
-### Automated Version Increments
-To increment the version and auto-sync all files:
+Everything else is derived from it.
+
+## Bumping a version
 
 ```bash
-# Patch version (0.1.3 -> 0.1.4)
-npm run version:patch
-
-# Minor version (0.1.3 -> 0.2.0)  
-npm run version:minor
-
-# Major version (0.1.3 -> 1.0.0)
-npm run version:major
+npm run version:patch    # 1.0.7 -> 1.0.8   (bug fixes)
+npm run version:minor    # 1.0.7 -> 1.1.0   (new features)
+npm run version:major    # 1.0.7 -> 2.0.0   (breaking changes)
 ```
 
-## Files Synchronized
+That single command:
 
-The following files are automatically updated by scripts:
-- `package.json`
-- `app.json` (Expo configuration)
-- `package-lock.json`
+1. Updates `src/config/version.ts`
+2. Propagates the version to `package.json`, `package-lock.json` and `app.json`
+3. Increments `expo.android.versionCode` in `app.json` by one
 
-### Manual Updates Required
-The following files must be updated manually:
-- `android/app/build.gradle` - Update `versionCode` (increment by 1) and `versionName`
-- `.github/copilot-instructions.md` - Update version references
+If you edit `version.ts` by hand, run `npm run sync-version` to propagate it.
+That command only bumps `versionCode` when the version actually changed, so it is
+safe to run repeatedly.
 
-## Usage Workflow
+## Android version numbers
 
-1. **For feature additions**: `npm run version:minor`
-2. **For bug fixes**: `npm run version:patch`
-3. **For breaking changes**: `npm run version:major`
-4. **Manual sync after editing version.ts**: `npm run sync-version`
-5. **Don't forget**: Update `build.gradle` manually!
+`android/app/build.gradle` **reads both values directly from `app.json`**:
 
-This prevents version mismatches and ensures consistent versioning across all configuration files.
+```gradle
+def appJson = new groovy.json.JsonSlurper().parseText(file("$projectRoot/app.json").text)
+def appVersionName = appJson.expo.version ?: "1.0.0"
+def appVersionCode = appJson.expo.android?.versionCode ?: 1
+```
+
+There is nothing to edit in Gradle. Google Play rejects an upload whose
+`versionCode` is not higher than the previous one, which is why every version
+bump increments it automatically.
+
+## Release checklist
+
+1. `npm run version:patch` (or minor/major)
+2. `npx tsc --noEmit`
+3. `cd android && ./gradlew bundleRelease` — signed AAB for Play
+4. Commit and tag

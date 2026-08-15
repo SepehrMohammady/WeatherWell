@@ -5,9 +5,7 @@ import { WeatherData } from '../services/types';
 
 interface NotificationContextType {
   isInitialized: boolean;
-  initializeNotifications: () => Promise<boolean>;
   checkWeatherAlerts: (weatherData: WeatherData) => Promise<void>;
-  updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -110,9 +108,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const contextValue: NotificationContextType = {
     isInitialized,
-    initializeNotifications,
     checkWeatherAlerts,
-    updateNotificationSettings,
   };
 
   return (
@@ -121,5 +117,3 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     </NotificationContext.Provider>
   );
 };
-
-export default NotificationProvider;

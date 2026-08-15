@@ -2,7 +2,6 @@ export interface WeatherData {
   location: {
     name: string;
     country: string;
-    region: string;
     lat: number;
     lon: number;
   };
@@ -47,7 +46,6 @@ export interface DailyForecast {
   icon: string;
   humidity: number;
   windSpeed: number;
-  uvIndex: number;
   precipitationChance: number;
   precipitationMm: number;
   astronomy?: {

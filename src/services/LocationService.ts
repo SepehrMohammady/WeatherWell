@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 
-export interface LocationCoords {
+interface LocationCoords {
   latitude: number;
   longitude: number;
 }

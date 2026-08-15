@@ -20,7 +20,7 @@ export class MeteostatService implements WeatherService {
     this.apiKey = apiKey;
   }
 
-  async getForecast(lat: number, lon: number, days: number = 7): Promise<WeatherData> {
+  async getForecast(lat: number, lon: number): Promise<WeatherData> {
     try {
       const today = new Date();
       const pastDate = new Date(today);
@@ -110,7 +110,6 @@ export class MeteostatService implements WeatherService {
       precipitationMm: day.prcp || 0,
       windSpeed: day.wspd || 0,
       humidity: 0, // Not available in daily
-      uvIndex: 0
     }));
 
     // Transform hourly forecast
@@ -132,7 +131,6 @@ export class MeteostatService implements WeatherService {
       location: {
         name: `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
         country: '',
-        region: '',
         lat,
         lon
       },

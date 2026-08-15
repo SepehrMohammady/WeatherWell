@@ -122,15 +122,13 @@ export class QWeatherService implements WeatherService {
       precipitationChance: parseFloat(day.precip) || 0,
       precipitationMm: parseFloat(day.precip) || 0,
       windSpeed: parseFloat(day.windSpeedDay) || 0,
-      humidity: parseFloat(day.humidity) || 0,
-      uvIndex: parseFloat(day.uvIndex) || 0
+      humidity: parseFloat(day.humidity) || 0
     }));
 
     return {
       location: {
         name: `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
         country: '',
-        region: '',
         lat,
         lon
       },

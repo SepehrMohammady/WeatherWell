@@ -24,7 +24,7 @@ export class OpenMeteoService implements WeatherService {
 
       // Open-Meteo doesn't support reverse geocoding, so we'll use coordinates
       // The location name will be set by the caller if available
-      return this.transformForecastData(response.data, null, lat, lon);
+      return this.transformForecastData(response.data, lat, lon);
     } catch (error) {
       console.error('Error fetching forecast from Open-Meteo:', error);
       throw new Error('Failed to fetch forecast data');
@@ -39,24 +39,14 @@ export class OpenMeteoService implements WeatherService {
     return 'Open-Meteo';
   }
 
-  private transformForecastData(data: any, locationData: any, lat: number, lon: number): WeatherData {
+  private transformForecastData(data: any, lat: number, lon: number): WeatherData {
     const current = data.current || {};
     const hourly = data.hourly || {};
     const daily = data.daily || {};
 
-    // Get location name
-    // Open-Meteo doesn't provide reverse geocoding, so we use a simple format
-    // The actual location name should be provided by the app when calling this service
-    let locationName = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
-    let country = '';
-    let region = '';
-    
-    if (locationData && locationData.results && locationData.results.length > 0) {
-      const loc = locationData.results[0];
-      locationName = loc.name;
-      country = loc.country || '';
-      region = loc.admin1 || '';
-    }
+    // Open-Meteo doesn't provide reverse geocoding, so the coordinates stand in
+    // for the location name; HomeScreen overrides it with the name the user picked.
+    const locationName = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
 
     // Transform hourly forecast — rolling window from the current hour
     const startOfCurrentHour = new Date();
@@ -95,7 +85,6 @@ export class OpenMeteoService implements WeatherService {
           precipitationMm: daily.precipitation_sum?.[i] || 0,
           windSpeed: daily.wind_speed_10m_max?.[i] || 0,
           humidity: 0, // Not available in daily data
-          uvIndex: daily.uv_index_max?.[i] || 0,
           astronomy: {
             sunrise: this.formatTime(daily.sunrise?.[i]),
             sunset: this.formatTime(daily.sunset?.[i]),
@@ -109,8 +98,7 @@ export class OpenMeteoService implements WeatherService {
     return {
       location: {
         name: locationName,
-        country: country,
-        region: region,
+        country: '',
         lat: lat,
         lon: lon
       },

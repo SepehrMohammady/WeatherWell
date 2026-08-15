@@ -49,3 +49,6 @@ coverage/
 
 # Copilot instructions (local development only)
 .github/copilot-instructions.md
+
+# Signing credentials (never commit)
+android/keystore.properties

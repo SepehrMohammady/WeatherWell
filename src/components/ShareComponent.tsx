@@ -7,9 +7,7 @@ import {
   Modal,
   Switch,
   Alert,
-  ScrollView,
-  Pressable
-} from 'react-native';
+  ScrollView,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Share } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';

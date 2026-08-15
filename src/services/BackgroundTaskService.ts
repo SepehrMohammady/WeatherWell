@@ -8,7 +8,7 @@ import { WeatherData } from './types';
 import { WIDGET_DATA_KEY, buildWidgetData } from '../widgets/widget-utils';
 
 // Task names
-export const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
+const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
 
 // Storage keys
 const LAST_LOCATION_KEY = 'weatherwell_last_location';

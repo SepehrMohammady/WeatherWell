@@ -37,7 +37,14 @@ const filesToUpdate = [
     path: 'app.json',
     update: (content) => {
       const app = JSON.parse(content);
+      const isNewVersion = app.expo.version !== centralVersion;
       app.expo.version = centralVersion;
+      // Play requires a higher versionCode for every upload. android/app/build.gradle
+      // reads both values straight from here, so this is the only place to bump.
+      if (isNewVersion) {
+        app.expo.android.versionCode = (app.expo.android.versionCode || 0) + 1;
+        console.log(`🔢 Bumped android.versionCode to ${app.expo.android.versionCode}`);
+      }
       return JSON.stringify(app, null, 2);
     }
   },

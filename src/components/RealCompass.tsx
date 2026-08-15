@@ -20,7 +20,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
   const [subscription, setSubscription] = useState<any>(null);
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [headingAccuracy, setHeadingAccuracy] = useState(0);
-  const [headingHistory, setHeadingHistory] = useState<number[]>([]);
+  const [, setHeadingHistory] = useState<number[]>([]);
   const [calibrationStatus, setCalibrationStatus] = useState<string>('Initializing...');
 
   const center = size / 2;

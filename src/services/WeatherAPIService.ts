@@ -42,7 +42,6 @@ export class WeatherAPIService implements WeatherService {
       location: {
         name: data.location.name,
         country: data.location.country,
-        region: data.location.region,
         lat: data.location.lat,
         lon: data.location.lon
       },
@@ -121,7 +120,6 @@ export class WeatherAPIService implements WeatherService {
       icon: day.day.condition.icon,
       humidity: day.day.avghumidity,
       windSpeed: day.day.maxwind_kph,
-      uvIndex: day.day.uv,
       precipitationChance: day.day.daily_chance_of_rain,
       precipitationMm: day.day.totalprecip_mm,
       astronomy: {
