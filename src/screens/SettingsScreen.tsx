@@ -255,6 +255,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     Linking.openURL('https://semo-lab.com/weatherwell/privacy-policy/');
   };
 
+  const handleOpenPlayListing = (packageName: string) => {
+    // Prefer the Play Store app, fall back to the browser if it is unavailable
+    const marketUrl = `market://details?id=${packageName}`;
+    const webUrl = `https://play.google.com/store/apps/details?id=${packageName}`;
+    Linking.openURL(marketUrl).catch(() => Linking.openURL(webUrl));
+  };
+
+  const handleOpenDeveloperPage = () => {
+    const marketUrl = 'market://dev?id=6449174405168948991';
+    const webUrl = 'https://play.google.com/store/apps/dev?id=6449174405168948991';
+    Linking.openURL(marketUrl).catch(() => Linking.openURL(webUrl));
+  };
+
   const handleAddWidgetToHomeScreen = async () => {
     try {
       const { NativeModules } = require('react-native');
@@ -1046,12 +1059,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
         </View>
 
+        {/* More from SeMo Lab */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            More from SeMo Lab
+          </Text>
+          <SettingItem
+            title="FeedWell"
+            description="Ad-free RSS reader. Clean reading, no distractions."
+            onPress={() => handleOpenPlayListing('com.feedwell.app')}
+            rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
+          />
+          <SettingItem
+            title="LedgerWell"
+            description="Track personal debts and credits, multi-currency."
+            onPress={() => handleOpenPlayListing('com.ledgerwell.app')}
+            rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
+          />
+          <SettingItem
+            title="All SeMo Lab apps"
+            description="See everything we make on Google Play"
+            onPress={handleOpenDeveloperPage}
+            isLast={true}
+            rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
+          />
+        </View>
+
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
             WeatherWell provides accurate weather forecasts with privacy-first approach. No personal data is collected or shared.
           </Text>
           <Text style={[styles.copyrightText, { color: colors.textSecondary }]}>
-            © 2026 SeMo Lab. Open source under MIT License.
+            © 2026 SeMo Lab
           </Text>
         </View>
 
@@ -1327,6 +1366,7 @@ const styles = StyleSheet.create({
   },
   settingContent: {
     flex: 1,
+    marginRight: 12, // keep long descriptions clear of the trailing icon
   },
   settingTitle: {
     fontSize: 16,
