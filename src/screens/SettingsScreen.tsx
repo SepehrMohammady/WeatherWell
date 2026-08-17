@@ -30,6 +30,10 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
+const TESTERS = [
+  'Benyamin Izadpanah',
+];
+
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, toggleTheme, colors } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
@@ -1029,6 +1033,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
         </View>
 
+        {/* Testers */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Testers
+          </Text>
+          <View style={[styles.testersCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.testersThanks, { color: colors.text }]}>
+              Thank you for your valuable feedback!
+            </Text>
+            {TESTERS.map((name) => (
+              <Text key={name} style={[styles.testerName, { color: colors.textSecondary }]}>
+                {name}
+              </Text>
+            ))}
+          </View>
+        </View>
+
         {/* About Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -1302,6 +1323,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  testersCard: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  testersThanks: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  testerName: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
   safeArea: {
     flex: 1,
   },

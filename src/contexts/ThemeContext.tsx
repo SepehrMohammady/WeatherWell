@@ -17,31 +17,33 @@ export interface ThemeColors {
   gradient: string[];
 }
 
-// Neutral Paradise Color Palette
+// Neutral Paradise palette — modern minimal pass:
+// light theme gets real text contrast, dark theme gets a true dark ground,
+// both keep the warm sand/copper brand accents.
 const lightTheme: ThemeColors = {
-  primary: '#A17F66',        // Warm brown from palette
-  background: '#F0F0F0',     // Light neutral background
+  primary: '#9C7355',        // Warm brown, deepened for contrast on white
+  background: '#F6F5F3',     // Soft warm off-white
   surface: '#FFFFFF',        // Clean white surface
-  text: '#758793',           // Dark grey-blue for text
-  textSecondary: '#8A9299',  // Darker grey for better visibility on white
+  text: '#22272C',           // Near-black (was grey-blue, hard to read)
+  textSecondary: '#6B7378',  // Legible mid-grey for secondary text
   accent: '#CB936A',         // Warm terracotta accent
-  error: '#CD9C8B',          // Muted rose for errors
-  border: '#E7E7E7',         // Very light grey border
-  card: '#F0F0F0',           // Subtle chip/button background
-  gradient: ['#E7CFC1', '#D3B19A'] // Warm neutral gradient
+  error: '#C0604E',          // Clear but muted error red
+  border: '#E9E7E4',         // Hairline warm border
+  card: '#F1EFEC',           // Subtle chip/button background
+  gradient: ['#D9B99F', '#C29873'] // Warm header gradient, deep enough for white text
 };
 
 const darkTheme: ThemeColors = {
   primary: '#CB936A',        // Warm terracotta
-  background: '#1A1A1A',     // Darker background (was #2D2D2D)
-  surface: '#2A2A2A',        // Darker surface (was #3A3A3A)
-  text: '#E7E7E7',           // Light grey text
-  textSecondary: '#B6BCBE',  // Muted grey for secondary
+  background: '#101214',     // True dark ground (was #1A1A1A)
+  surface: '#1B1E21',        // Elevated surface
+  text: '#ECEDEE',           // High-contrast light text
+  textSecondary: '#A6ADB3',  // Muted grey for secondary
   accent: '#CFAE95',         // Light neutral accent
-  error: '#D6AD9D',          // Soft rose for errors
-  border: '#5E6D74',         // Dark grey-blue border
-  card: '#3A3A3A',           // Lighter chip/button background
-  gradient: ['#3A4A54', '#1A1A1A'] // Darker cool gradient (was #5E6D74, #3A3A3A)
+  error: '#D98E77',          // Soft but visible error
+  border: '#30343A',         // Subtle border (was light blue-grey)
+  card: '#26292D',           // Chip/button background
+  gradient: ['#23282D', '#101214'] // Near-monochrome deep header gradient
 };
 
 interface ThemeContextType {

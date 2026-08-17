@@ -39,7 +39,7 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
       </View>
       
       <View style={styles.mainInfo}>
-        <Text style={styles.temperature}>{formatTemperature(current.temperature, settings.temperatureUnit)}</Text>
+        <Text style={[styles.temperature, { color: colors.primary }]}>{formatTemperature(current.temperature, settings.temperatureUnit)}</Text>
         <View style={styles.conditionContainer}>
           <Image 
             source={{ uri: current.icon.startsWith('http') ? current.icon : `https:${current.icon}` }}
@@ -178,7 +178,6 @@ const styles = StyleSheet.create({
   temperature: {
     fontSize: 56,
     fontWeight: 'bold',
-    color: '#0984e3',
     marginBottom: 8,
   },
   conditionContainer: {

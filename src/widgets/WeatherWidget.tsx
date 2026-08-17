@@ -53,9 +53,9 @@ export function WeatherWidget({
   // Convert opacity to hex alpha in CSS #RRGGBBAA format
   const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0').toUpperCase();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bgColor = `#1A1A1A${alphaHex}` as any;
+  const bgColor = `#121417${alphaHex}` as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const surfaceColor = `#2A2A2A${alphaHex}` as any;
+  const surfaceColor = `#1F2226${alphaHex}` as any;
 
   // Scale by both width and height — height budget divided by rows to show
   const wScale = widgetWidth / 250;

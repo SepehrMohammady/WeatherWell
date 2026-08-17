@@ -108,8 +108,8 @@ export class OpenWeatherMapService implements WeatherService {
         hourly: hourlyForecast
       },
       astronomy: {
-        sunrise: new Date(data.city.sunrise * 1000).toLocaleTimeString(),
-        sunset: new Date(data.city.sunset * 1000).toLocaleTimeString(),
+        sunrise: new Date(data.city.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sunset: new Date(data.city.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         moonPhase: '', // OpenWeatherMap doesn't provide moon data
         moonIllumination: -1 // -1 indicates data not available
       }

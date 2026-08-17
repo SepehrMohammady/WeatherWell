@@ -15,7 +15,8 @@ interface FeatureIconSpec {
  */
 function parseTimeToMinutes(time?: string): number | null {
   if (!time) return null;
-  const match = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  // Accepts "6:43 AM", "06:43", "18:43" and "6:43:12 AM" (seconds are ignored)
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
   if (!match) return null;
 
   let hours = parseInt(match[1], 10);
@@ -78,20 +79,19 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   };
 
   const getUmbrellaRecommendation = () => {
-    // Check worst case: max precipitation chance from current hour until end of day
-    const remainingHours = getRemainingHourlyData();
-    const dailyPrecip = weatherData.forecast.daily[0]?.precipitationChance || 0;
-    const hourlyMaxPrecip = remainingHours.length > 0 
-      ? Math.max(...remainingHours.map(h => h.precipitationChance || 0))
-      : dailyPrecip;
-    const precipChance = Math.max(dailyPrecip, hourlyMaxPrecip);
-    
+    // Use the SAME series the detail modal lists (next 24 hourly entries),
+    // so the card's percentage always matches what tapping it reveals.
+    const next24 = weatherData.forecast.hourly.slice(0, 24);
+    const precipChance = next24.length > 0
+      ? Math.max(...next24.map(h => h.precipitationChance || 0))
+      : weatherData.forecast.daily[0]?.precipitationChance || 0;
+
     if (precipChance > 70) {
-      return { text: "Definitely bring an umbrella!", icon: "umbrella", lib: "ion" as IconLib, color: "#e17055" };
+      return { text: "Definitely bring an umbrella!", icon: "umbrella", lib: "ion" as IconLib, color: "#e17055", chance: precipChance };
     } else if (precipChance > 30) {
-      return { text: "Consider bringing an umbrella", icon: "umbrella-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
+      return { text: "Consider bringing an umbrella", icon: "umbrella-outline", lib: "ion" as IconLib, color: "#fdcb6e", chance: precipChance };
     } else {
-      return { text: "No umbrella needed today", icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894" };
+      return { text: "No umbrella needed today", icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894", chance: precipChance };
     }
   };
 
@@ -427,7 +427,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <Text style={[styles.featureTitle, { color: colors.text }]}>Umbrella Alert</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{umbrella.text}</Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              {weatherData.forecast.daily[0]?.precipitationChance || 0}% chance of rain
+              Up to {umbrella.chance}% chance of rain in the next 24 hours
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
