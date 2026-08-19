@@ -4,9 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'openmeteo' | 'qweather' | 'meteostat';
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 
+export interface HomeLocation {
+  name: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface AppSettings {
   weatherProvider: WeatherProvider;
   temperatureUnit: TemperatureUnit;
+  /** Pinned main location; null means "follow the device's current location" */
+  homeLocation: HomeLocation | null;
   enableNotifications: boolean;
   enableSevereWeatherAlerts: boolean;
   enableDailyForecast: boolean;
@@ -50,6 +59,7 @@ export interface AppSettings {
 const defaultSettings: AppSettings = {
   weatherProvider: 'weatherapi',
   temperatureUnit: 'celsius',
+  homeLocation: null,
   enableNotifications: true,
   enableSevereWeatherAlerts: true,
   enableDailyForecast: true,
@@ -92,6 +102,8 @@ const defaultSettings: AppSettings = {
 
 interface SettingsContextType {
   settings: AppSettings;
+  /** True once persisted settings have been read from storage */
+  isLoaded: boolean;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => Promise<void>;
   resetSettings: () => Promise<void>;
   exportSettings: () => string;
@@ -114,6 +126,7 @@ interface SettingsProviderProps {
 
 export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -128,6 +141,8 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       }
     } catch (error) {
       console.error('Error loading settings:', error);
+    } finally {
+      setIsLoaded(true);
     }
   };
 
@@ -173,6 +188,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     <SettingsContext.Provider
       value={{
         settings,
+        isLoaded,
         updateSetting,
         resetSettings,
         exportSettings,

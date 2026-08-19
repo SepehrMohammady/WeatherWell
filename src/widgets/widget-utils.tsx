@@ -80,11 +80,13 @@ export async function fetchAndCacheWidgetData(): Promise<Record<string, unknown>
 
   let latitude: number | undefined;
   let longitude: number | undefined;
+  let chosenName: string | undefined;
   const locationStr = await AsyncStorage.getItem('weatherwell_last_location');
   if (locationStr) {
     const loc = JSON.parse(locationStr);
     latitude = loc.latitude;
     longitude = loc.longitude;
+    chosenName = loc.name;
   } else {
     // Fall back to the location of the last fetched weather
     const cachedWeatherStr = await AsyncStorage.getItem('weatherwell_last_weather');
@@ -111,6 +113,10 @@ export async function fetchAndCacheWidgetData(): Promise<Record<string, unknown>
   );
 
   const weatherData: WeatherData = result.data;
+  // Show the name the user chose, not the provider's nearest-station district
+  if (chosenName) {
+    weatherData.location.name = chosenName;
+  }
   await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(weatherData)).catch(() => {});
 
   const widgetData = await buildWidgetData(weatherData);

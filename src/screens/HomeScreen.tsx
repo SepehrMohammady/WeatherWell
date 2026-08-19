@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -42,7 +42,7 @@ export const HomeScreen: React.FC = () => {
   const [apiSource, setApiSource] = useState<string>('');
 
   const { colors } = useTheme();
-  const { settings } = useSettings();
+  const { settings, isLoaded: settingsLoaded, updateSetting } = useSettings();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { checkWeatherAlerts, isInitialized } = useNotifications();
   const locationService = LocationService.getInstance();
@@ -82,8 +82,17 @@ export const HomeScreen: React.FC = () => {
         longitude = location.longitude;
       }
       
-      // Save location for background task
-      await backgroundTaskService.saveLocationForBackground(latitude, longitude);
+      // Save location for the background task and widget refresh. A pinned
+      // location keeps its name and never expires; device locations do.
+      const isHome = !!customLocation && !!settings.homeLocation &&
+        settings.homeLocation.latitude === customLocation.latitude &&
+        settings.homeLocation.longitude === customLocation.longitude;
+      await backgroundTaskService.saveLocationForBackground(
+        latitude,
+        longitude,
+        customLocation?.name,
+        isHome
+      );
       
       // Fetch weather data using preferred provider from settings
       const result = await WeatherServiceFactory.getWeatherWithFallback(
@@ -136,9 +145,25 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  // Initial load waits for persisted settings so a pinned home location wins
+  // over the device's current location.
+  const initialLoadDone = useRef(false);
   useEffect(() => {
-    loadWeatherData();
-  }, []);
+    if (!settingsLoaded || initialLoadDone.current) return;
+    initialLoadDone.current = true;
+
+    if (settings.homeLocation) {
+      const home: Location = {
+        id: `${settings.homeLocation.name}-${settings.homeLocation.country}-${settings.homeLocation.latitude}-${settings.homeLocation.longitude}`,
+        region: '',
+        ...settings.homeLocation,
+      };
+      setSelectedLocation(home);
+      loadWeatherData(home);
+    } else {
+      loadWeatherData();
+    }
+  }, [settingsLoaded]);
 
   // Auto-refresh when weather provider changes
   useEffect(() => {
@@ -158,10 +183,36 @@ export const HomeScreen: React.FC = () => {
     loadWeatherData(location);
   };
 
-  const handleBackToCurrentLocation = () => {
+  const handleBackToCurrentLocation = async () => {
+    // Returning to the device location also clears any pinned home location
+    if (settings.homeLocation) {
+      await updateSetting('homeLocation', null);
+    }
     setSelectedLocation(null);
     setLoading(true);
     loadWeatherData();
+  };
+
+  const isPinned = !!settings.homeLocation && !!selectedLocation &&
+    settings.homeLocation.latitude === selectedLocation.latitude &&
+    settings.homeLocation.longitude === selectedLocation.longitude;
+
+  const handleTogglePin = async () => {
+    if (!selectedLocation) return;
+    if (isPinned) {
+      await updateSetting('homeLocation', null);
+      await backgroundTaskService.saveLocationForBackground(
+        selectedLocation.latitude, selectedLocation.longitude, selectedLocation.name, false);
+    } else {
+      await updateSetting('homeLocation', {
+        name: selectedLocation.name,
+        country: selectedLocation.country,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+      });
+      await backgroundTaskService.saveLocationForBackground(
+        selectedLocation.latitude, selectedLocation.longitude, selectedLocation.name, true);
+    }
   };
 
   const handleToggleFavorite = async () => {
@@ -266,10 +317,21 @@ export const HomeScreen: React.FC = () => {
                     </TouchableOpacity>
                   )}
                   <Text style={styles.locationText}>{locationName}</Text>
+                  {selectedLocation && (
+                    <TouchableOpacity onPress={handleTogglePin} style={styles.favoriteButton}>
+                      <Ionicons
+                        name={isPinned ? "pin" : "pin-outline"}
+                        size={16}
+                        color={isPinned ? "#FFFFFF" : "rgba(255, 255, 255, 0.55)"}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 {selectedLocation && (
                   <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
-                    <Text style={styles.currentLocationText}>Use Current Location</Text>
+                    <Text style={styles.currentLocationText}>
+                      {isPinned ? 'Pinned as main location — tap for current location' : 'Use Current Location'}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>

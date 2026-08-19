@@ -31,6 +31,7 @@ interface SettingsScreenProps {
 }
 
 const TESTERS = [
+  'Alireza Asadi Jozani',
   'Benyamin Izadpanah',
 ];
 

@@ -22,6 +22,10 @@ interface StoredLocation {
   latitude: number;
   longitude: number;
   timestamp: number;
+  /** Display name of a user-chosen location (providers may resolve coords to a nearby district) */
+  name?: string;
+  /** True when this is the user's pinned home location — it never goes stale */
+  pinned?: boolean;
 }
 
 /**
@@ -69,10 +73,11 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
     }
 
     const location: StoredLocation = JSON.parse(locationData);
-    
-    // Check if location is not too old (max 24 hours)
+
+    // Device locations go stale after 24h (the user moves around); a pinned
+    // home location is an explicit choice and stays valid indefinitely.
     const locationAge = Date.now() - location.timestamp;
-    if (locationAge > 24 * 60 * 60 * 1000) {
+    if (!location.pinned && locationAge > 24 * 60 * 60 * 1000) {
       console.log('⚠️ Stored location is too old, skipping background fetch');
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
@@ -103,6 +108,11 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
 
     const weatherData = result.data;
     console.log(`✅ Background weather data fetched from ${result.source}`);
+
+    // Show the name the user chose, not the provider's nearest-station district
+    if (location.name) {
+      weatherData.location.name = location.name;
+    }
 
     // Cache weather data for notifications and widget
     await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(weatherData)).catch(() => {});
@@ -646,13 +656,20 @@ class BackgroundTaskService {
   }
 
   /**
-   * Save the current location for background task to use
+   * Save the current location for background task and widget refresh to use
    */
-  async saveLocationForBackground(latitude: number, longitude: number): Promise<void> {
+  async saveLocationForBackground(
+    latitude: number,
+    longitude: number,
+    name?: string,
+    pinned: boolean = false
+  ): Promise<void> {
     const locationData: StoredLocation = {
       latitude,
       longitude,
       timestamp: Date.now(),
+      name,
+      pinned,
     };
     await AsyncStorage.setItem(LAST_LOCATION_KEY, JSON.stringify(locationData));
     console.log('📍 Location saved for background task');
