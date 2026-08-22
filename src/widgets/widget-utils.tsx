@@ -4,6 +4,7 @@ import { requestWidgetUpdate } from 'react-native-android-widget';
 import { WeatherData } from '../services/types';
 import { WeatherServiceFactory } from '../services/WeatherServiceFactory';
 import { WeatherWidget } from './WeatherWidget';
+import { t, ln, loadActiveLanguage } from '../i18n';
 
 export const WIDGET_DATA_KEY = 'weatherwell_widget_data';
 
@@ -27,6 +28,7 @@ async function getWidgetSettings() {
  * Build the widget display payload from weather data + current widget settings
  */
 export async function buildWidgetData(weatherData: WeatherData) {
+  await loadActiveLanguage();
   const current = weatherData.current;
   const today = weatherData.forecast.daily[0];
   const tomorrow = weatherData.forecast.daily[1];
@@ -34,16 +36,18 @@ export async function buildWidgetData(weatherData: WeatherData) {
   const widgetSettings = await getWidgetSettings();
 
   return {
-    temperature: `${Math.round(current.temperature)}°`,
+    temperature: `${ln(Math.round(current.temperature))}°`,
     location: weatherData.location.name,
-    conditions: current.condition,
-    high: `${Math.round(today?.maxTemp || current.temperature)}°`,
-    low: `${Math.round(today?.minTemp || current.temperature)}°`,
-    rainChance: rainChance > 0 ? `${rainChance}%` : undefined,
-    feelsLike: current.feelsLike !== undefined ? `${Math.round(current.feelsLike)}°` : undefined,
-    tomorrowHigh: tomorrow ? `${Math.round(tomorrow.maxTemp)}°` : undefined,
-    tomorrowLow: tomorrow ? `${Math.round(tomorrow.minTemp)}°` : undefined,
-    tomorrowCondition: tomorrow?.condition,
+    conditions: t('conditions.' + current.conditionCode),
+    conditionCode: current.conditionCode,
+    isNight: current.isNight,
+    high: `${ln(Math.round(today?.maxTemp || current.temperature))}°`,
+    low: `${ln(Math.round(today?.minTemp || current.temperature))}°`,
+    rainChance: rainChance > 0 ? `${ln(rainChance)}%` : undefined,
+    feelsLike: current.feelsLike !== undefined ? `${ln(Math.round(current.feelsLike))}°` : undefined,
+    tomorrowHigh: tomorrow ? `${ln(Math.round(tomorrow.maxTemp))}°` : undefined,
+    tomorrowLow: tomorrow ? `${ln(Math.round(tomorrow.minTemp))}°` : undefined,
+    tomorrowCondition: tomorrow ? t('conditions.' + tomorrow.conditionCode) : undefined,
     ...widgetSettings,
   };
 }
@@ -109,7 +113,8 @@ export async function fetchAndCacheWidgetData(): Promise<Record<string, unknown>
     settings.openWeatherMapApiKey,
     settings.visualCrossingApiKey,
     settings.qweatherApiKey,
-    settings.meteostatApiKey
+    settings.meteostatApiKey,
+    settings.customSources
   );
 
   const weatherData: WeatherData = result.data;

@@ -10,20 +10,24 @@ import {
   Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CurrentWeatherCard } from '../components/CurrentWeatherCard';
 import { HourlyForecastList } from '../components/HourlyForecastList';
 import { DailyForecastList } from '../components/DailyForecastList';
 import { SmartFeaturesCard } from '../components/SmartFeaturesCard';
+import { WeatherAnimation } from '../components/WeatherAnimation';
+import { TutorialModal } from '../components/TutorialModal';
 import { ShareComponent } from '../components/ShareComponent';
 import { SettingsScreen } from './SettingsScreen';
 import { SearchScreen } from './SearchScreen';
+import { ProviderComparisonScreen } from './ProviderComparisonScreen';
 import { WeatherServiceFactory } from '../services/WeatherServiceFactory';
 import { LocationService } from '../services/LocationService';
 import { Location } from '../services/LocationSearchService';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -38,10 +42,27 @@ export const HomeScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [apiSource, setApiSource] = useState<string>('');
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // First-run tutorial: show once, then only on demand from Settings
+  useEffect(() => {
+    AsyncStorage.getItem('tutorial_seen')
+      .then((seen) => {
+        if (!seen) setShowTutorial(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    AsyncStorage.setItem('tutorial_seen', '1').catch(() => {});
+  };
 
   const { colors } = useTheme();
+  const { t, ln } = useLanguage();
   const { settings, isLoaded: settingsLoaded, updateSetting } = useSettings();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { checkWeatherAlerts, isInitialized } = useNotifications();
@@ -71,7 +92,7 @@ export const HomeScreen: React.FC = () => {
         // Request location permission
         const hasPermission = await locationService.requestPermission();
         if (!hasPermission) {
-          setError('Location permission is required to get weather data');
+          setError(t('home.locationPermissionRequired'));
           setLoading(false);
           return;
         }
@@ -82,17 +103,19 @@ export const HomeScreen: React.FC = () => {
         longitude = location.longitude;
       }
       
-      // Save location for the background task and widget refresh. A pinned
-      // location keeps its name and never expires; device locations do.
+      // The widget and background alerts follow the device location or the
+      // PINNED location only — browsing another city must not hijack them.
       const isHome = !!customLocation && !!settings.homeLocation &&
         settings.homeLocation.latitude === customLocation.latitude &&
         settings.homeLocation.longitude === customLocation.longitude;
-      await backgroundTaskService.saveLocationForBackground(
-        latitude,
-        longitude,
-        customLocation?.name,
-        isHome
-      );
+      if (!customLocation || isHome) {
+        await backgroundTaskService.saveLocationForBackground(
+          latitude,
+          longitude,
+          customLocation?.name,
+          isHome
+        );
+      }
       
       // Fetch weather data using preferred provider from settings
       const result = await WeatherServiceFactory.getWeatherWithFallback(
@@ -103,7 +126,8 @@ export const HomeScreen: React.FC = () => {
         settings.openWeatherMapApiKey || undefined,
         settings.visualCrossingApiKey || undefined,
         settings.qweatherApiKey || undefined,
-        settings.meteostatApiKey || undefined
+        settings.meteostatApiKey || undefined,
+        settings.customSources
       );
       
       // Show the name the user actually picked — providers often return the
@@ -138,7 +162,7 @@ export const HomeScreen: React.FC = () => {
       }
     } catch (err) {
       console.error('Error loading weather data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load weather data');
+      setError(err instanceof Error ? err.message : t('home.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -201,8 +225,13 @@ export const HomeScreen: React.FC = () => {
     if (!selectedLocation) return;
     if (isPinned) {
       await updateSetting('homeLocation', null);
-      await backgroundTaskService.saveLocationForBackground(
-        selectedLocation.latitude, selectedLocation.longitude, selectedLocation.name, false);
+      // Hand the widget and background alerts back to the device location
+      try {
+        const gps = await locationService.getCurrentLocation();
+        await backgroundTaskService.saveLocationForBackground(gps.latitude, gps.longitude);
+      } catch {
+        // No fix available right now; the next current-location fetch will save it
+      }
     } else {
       await updateSetting('homeLocation', {
         name: selectedLocation.name,
@@ -236,8 +265,8 @@ export const HomeScreen: React.FC = () => {
             style={styles.logoImage}
             resizeMode="contain"
           />
-          <Text style={styles.loadingText}>Loading WeatherWell...</Text>
-          <Text style={styles.loadingSubtext}>Getting your location and weather data</Text>
+          <Text style={styles.loadingText}>{t('home.loadingTitle')}</Text>
+          <Text style={styles.loadingSubtext}>{t('home.loadingSubtext')}</Text>
         </View>
       </LinearGradient>
     );
@@ -248,7 +277,7 @@ export const HomeScreen: React.FC = () => {
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <StatusBar barStyle="light-content" />
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>⚠️ Error</Text>
+          <Text style={styles.errorText}>{t('home.errorTitle')}</Text>
           <Text style={styles.errorSubtext}>{error}</Text>
           <TouchableOpacity 
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
@@ -257,7 +286,7 @@ export const HomeScreen: React.FC = () => {
               loadWeatherData(selectedLocation || undefined);
             }}
           >
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={styles.retryButtonText}>{t('home.tryAgain')}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -269,7 +298,7 @@ export const HomeScreen: React.FC = () => {
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <StatusBar barStyle="light-content" />
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>No weather data available</Text>
+          <Text style={styles.errorText}>{t('home.noWeatherData')}</Text>
           <TouchableOpacity 
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
             onPress={() => {
@@ -277,22 +306,28 @@ export const HomeScreen: React.FC = () => {
               loadWeatherData(selectedLocation || undefined);
             }}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('home.retry')}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
     );
   }
 
-  const locationName = selectedLocation 
-    ? `${selectedLocation.name}, ${selectedLocation.country}`
-    : weatherData?.location.name || 'Current Location';
+  const locationName = selectedLocation
+    ? t('home.locationFormat', { name: selectedLocation.name, country: selectedLocation.country })
+    : weatherData?.location.name || t('home.currentLocation');
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
         <StatusBar barStyle="light-content" />
-        
+        {weatherData && (
+          <WeatherAnimation
+            code={weatherData.current.conditionCode}
+            enabled={settings.enableWeatherAnimations}
+          />
+        )}
+
         {/* Header with buttons */}
         <View style={styles.headerContainer}>
           <View style={styles.headerButtons}>
@@ -317,32 +352,46 @@ export const HomeScreen: React.FC = () => {
                     </TouchableOpacity>
                   )}
                   <Text style={styles.locationText}>{locationName}</Text>
-                  {selectedLocation && (
-                    <TouchableOpacity onPress={handleTogglePin} style={styles.favoriteButton}>
-                      <Ionicons
-                        name={isPinned ? "pin" : "pin-outline"}
-                        size={16}
-                        color={isPinned ? "#FFFFFF" : "rgba(255, 255, 255, 0.55)"}
-                      />
-                    </TouchableOpacity>
-                  )}
                 </View>
                 {selectedLocation && (
-                  <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
-                    <Text style={styles.currentLocationText}>
-                      {isPinned ? 'Pinned as main location — tap for current location' : 'Use Current Location'}
+                  <TouchableOpacity
+                    onPress={handleTogglePin}
+                    style={[styles.pinChip, isPinned && styles.pinChipActive]}
+                  >
+                    <Ionicons
+                      name={isPinned ? "pin" : "pin-outline"}
+                      size={15}
+                      color={isPinned ? "#3D2E22" : "#FFFFFF"}
+                    />
+                    <Text style={[styles.pinChipText, isPinned && styles.pinChipTextActive]}>
+                      {isPinned ? t('home.pinned') : t('home.pinAsMain')}
                     </Text>
+                  </TouchableOpacity>
+                )}
+                {selectedLocation && (
+                  <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
+                    <Text style={styles.currentLocationText}>{t('home.useCurrentLocation')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
             
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => setShowSettings(true)}
-            >
-              <Ionicons name="settings-outline" size={24} color="white" />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              {weatherData && (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={() => setShowCompare(true)}
+                >
+                  <MaterialCommunityIcons name="compare-horizontal" size={24} color="white" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => setShowSettings(true)}
+              >
+                <Ionicons name="settings-outline" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -385,12 +434,26 @@ export const HomeScreen: React.FC = () => {
       {/* Search Screen - Full Screen */}
       {showSearch && (
         <View style={StyleSheet.absoluteFillObject}>
-          <SearchScreen 
+          <SearchScreen
             onClose={() => setShowSearch(false)}
             onLocationSelect={handleLocationSelect}
           />
         </View>
       )}
+
+      {/* Provider Comparison - Full Screen */}
+      {showCompare && weatherData && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <ProviderComparisonScreen
+            latitude={weatherData.location.lat}
+            longitude={weatherData.location.lon}
+            locationName={locationName}
+            onClose={() => setShowCompare(false)}
+          />
+        </View>
+      )}
+
+      <TutorialModal visible={showTutorial} onClose={closeTutorial} />
     </View>
   );
 };
@@ -420,6 +483,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
@@ -444,6 +511,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
+  },
+  pinChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  pinChipActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+  },
+  pinChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  pinChipTextActive: {
+    color: '#3D2E22',
   },
   favoriteButton: {
     marginRight: 6,

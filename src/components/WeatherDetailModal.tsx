@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { WeatherData } from '../services/types';
-import { RealCompass } from './RealCompass';
+import { RealCompass, localizeWindDirection } from './RealCompass';
 
 interface WeatherDetailModalProps {
   visible: boolean;
@@ -26,44 +27,45 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
   metricType,
 }) => {
   const { colors } = useTheme();
+  const { t, ln } = useLanguage();
 
   const getModalTitle = (): string => {
     switch (metricType) {
       case 'humidity':
-        return 'Humidity Trends';
+        return t('detail.title.humidity');
       case 'wind':
-        return 'Wind Speed Trends';
+        return t('detail.title.wind');
       case 'uv':
-        return 'UV Index Trends';
+        return t('detail.title.uv');
       case 'pressure':
-        return 'Atmospheric Pressure';
+        return t('detail.title.pressure');
       case 'windDir':
-        return 'Wind Direction';
+        return t('detail.title.windDir');
       case 'visibility':
-        return 'Visibility Trends';
+        return t('detail.title.visibility');
       case 'airquality':
-        return 'Air Quality Index';
+        return t('detail.title.airquality');
       default:
-        return 'Weather Details';
+        return t('detail.title.default');
     }
   };
 
   const getModalDescription = (): string => {
     switch (metricType) {
       case 'humidity':
-        return 'Relative humidity levels over the next 12 hours. Higher values indicate more moisture in the air.';
+        return t('detail.desc.humidity');
       case 'wind':
-        return 'Wind speed variations throughout the day. Helps plan outdoor activities.';
+        return t('detail.desc.wind');
       case 'uv':
-        return 'UV Index forecast showing sun intensity. Use sun protection when values are above 3.';
+        return t('detail.desc.uv');
       case 'pressure':
-        return 'Atmospheric pressure changes can indicate weather pattern shifts.';
+        return t('detail.desc.pressure');
       case 'windDir':
-        return 'Current wind direction and speed with compass visualization.';
+        return t('detail.desc.windDir');
       case 'visibility':
-        return 'Visibility conditions affect driving, outdoor activities, and flight safety. Clear visibility indicates good weather conditions.';
+        return t('detail.desc.visibility');
       case 'airquality':
-        return 'Air Quality Index measures air pollution levels. Lower values indicate better air quality.';
+        return t('detail.desc.airquality');
       default:
         return '';
     }
@@ -73,19 +75,22 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
     const current = weatherData.current;
     switch (metricType) {
       case 'humidity':
-        return `${current.humidity}%`;
+        return t('weather.percentValue', { value: current.humidity });
       case 'wind':
-        return `${Math.round(current.windSpeed)} km/h`;
+        return t('weather.kmhValue', { value: Math.round(current.windSpeed) });
       case 'uv':
-        return `${current.uvIndex}`;
+        return ln(current.uvIndex);
       case 'pressure':
-        return `${current.pressure} hPa`;
+        return t('weather.hpaValue', { value: current.pressure });
       case 'windDir':
-        return `${current.windDirection} at ${Math.round(current.windSpeed)} km/h`;
+        return t('detail.windDirAt', {
+          direction: localizeWindDirection(current.windDirection),
+          speed: Math.round(current.windSpeed),
+        });
       case 'visibility':
-        return `${current.visibility} km`;
+        return t('weather.kmValue', { value: current.visibility });
       case 'airquality':
-        return `AQI ${weatherData.airQuality?.aqi || 'N/A'}`;
+        return t('weather.aqiValue', { value: weatherData.airQuality?.aqi || t('detail.na') });
       default:
         return '';
     }
@@ -95,36 +100,36 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
     const current = weatherData.current;
     switch (metricType) {
       case 'humidity':
-        if (current.humidity > 70) return 'High humidity - stay hydrated and cool';
-        if (current.humidity < 30) return 'Low humidity - use moisturizer and drink water';
-        return 'Comfortable humidity level';
+        if (current.humidity > 70) return t('detail.tip.humidityHigh');
+        if (current.humidity < 30) return t('detail.tip.humidityLow');
+        return t('detail.tip.humidityComfort');
       case 'wind':
-        if (current.windSpeed > 30) return 'Strong winds - secure loose items';
-        if (current.windSpeed > 15) return 'Moderate winds - good for outdoor activities';
-        return 'Light winds - perfect for any outdoor plans';
+        if (current.windSpeed > 30) return t('detail.tip.windStrong');
+        if (current.windSpeed > 15) return t('detail.tip.windModerate');
+        return t('detail.tip.windLight');
       case 'uv':
-        if (current.uvIndex >= 8) return 'Very high UV - wear sunscreen SPF 30+';
-        if (current.uvIndex >= 6) return 'High UV - consider sun protection';
-        if (current.uvIndex >= 3) return 'Moderate UV - light protection recommended';
-        return 'Low UV - minimal protection needed';
+        if (current.uvIndex >= 8) return t('detail.tip.uvVeryHigh');
+        if (current.uvIndex >= 6) return t('detail.tip.uvHigh');
+        if (current.uvIndex >= 3) return t('detail.tip.uvModerate');
+        return t('detail.tip.uvLow');
       case 'pressure':
-        if (current.pressure > 1020) return 'High pressure - stable weather expected';
-        if (current.pressure < 1000) return 'Low pressure - weather changes possible';
-        return 'Normal pressure - stable conditions';
+        if (current.pressure > 1020) return t('detail.tip.pressureHigh');
+        if (current.pressure < 1000) return t('detail.tip.pressureLow');
+        return t('detail.tip.pressureNormal');
       case 'windDir':
-        return `Wind coming from the ${current.windDirection} direction`;
+        return t('detail.tip.windDir', { direction: localizeWindDirection(current.windDirection) });
       case 'visibility':
-        if (current.visibility >= 10) return 'Excellent visibility - perfect for all activities';
-        if (current.visibility >= 5) return 'Good visibility - safe for driving and outdoor activities';
-        if (current.visibility >= 2) return 'Reduced visibility - drive carefully, use headlights';
-        return 'Poor visibility - avoid unnecessary travel, use extreme caution';
+        if (current.visibility >= 10) return t('detail.tip.visibilityExcellent');
+        if (current.visibility >= 5) return t('detail.tip.visibilityGood');
+        if (current.visibility >= 2) return t('detail.tip.visibilityReduced');
+        return t('detail.tip.visibilityPoor');
       case 'airquality':
         const aqi = weatherData.airQuality?.aqi || 0;
-        if (aqi <= 50) return 'Good air quality - safe for outdoor activities';
-        if (aqi <= 100) return 'Moderate - acceptable for most people';
-        if (aqi <= 150) return 'Unhealthy for sensitive groups - limit prolonged outdoor activities';
-        if (aqi <= 200) return 'Unhealthy - everyone should limit outdoor activities';
-        return 'Very unhealthy - avoid outdoor activities';
+        if (aqi <= 50) return t('detail.tip.aqiGood');
+        if (aqi <= 100) return t('detail.tip.aqiModerate');
+        if (aqi <= 150) return t('detail.tip.aqiSensitive');
+        if (aqi <= 200) return t('detail.tip.aqiUnhealthy');
+        return t('detail.tip.aqiVeryUnhealthy');
       default:
         return '';
     }
@@ -169,7 +174,7 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
 
           <View style={[styles.tipCard, { backgroundColor: colors.surface }]}>
             <Text style={[styles.tipTitle, { color: colors.text }]}>
-              <Ionicons name="bulb-outline" size={16} color={colors.text} /> Tip
+              <Ionicons name="bulb-outline" size={16} color={colors.text} /> {t('detail.tipTitle')}
             </Text>
             <Text style={[styles.tip, { color: colors.text + 'CC' }]}>
               {getHealthTip()}
@@ -188,14 +193,10 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'humidity' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                🌡️ Humidity Comfort Guide
+                {t('detail.insight.humidityTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • Below 30%: Too dry - may cause skin/throat irritation{'\n'}
-                • 30-50%: Ideal comfort zone - perfect conditions{'\n'}
-                • 50-65%: Comfortable for most people{'\n'}
-                • 65-75%: Slightly humid - may feel warm{'\n'}
-                • Above 75%: Very humid - feels muggy and sticky
+                {t('detail.insight.humidityBody')}
               </Text>
             </View>
           )}
@@ -203,17 +204,10 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'wind' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                Wind Speed Guide
+                {t('detail.insight.windTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • 0-5 km/h: Calm - smoke rises vertically{'\n'}
-                • 6-11 km/h: Light air - leaves rustle gently{'\n'}
-                • 12-19 km/h: Light breeze - perfect for outdoor activities{'\n'}
-                • 20-28 km/h: Gentle breeze - branches move, flags flutter{'\n'}
-                • 29-38 km/h: Moderate breeze - small trees sway{'\n'}
-                • 39-49 km/h: Fresh breeze - large branches move{'\n'}
-                • 50-61 km/h: Strong breeze - difficult to use umbrellas{'\n'}
-                • 62+ km/h: High wind - avoid outdoor activities
+                {t('detail.insight.windBody')}
               </Text>
             </View>
           )}
@@ -221,14 +215,10 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'uv' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                ☀️ UV Index Guide
+                {t('detail.insight.uvTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • 0-2: Low - No protection needed{'\n'}
-                • 3-5: Moderate - Seek shade during midday{'\n'}
-                • 6-7: High - Protection required{'\n'}
-                • 8-10: Very High - Extra protection needed{'\n'}
-                • 11+: Extreme - Avoid sun exposure
+                {t('detail.insight.uvBody')}
               </Text>
             </View>
           )}
@@ -236,13 +226,10 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'pressure' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                Pressure Trends
+                {t('detail.insight.pressureTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • Rising pressure: Fair weather ahead{'\n'}
-                • Falling pressure: Storms possible{'\n'}
-                • Stable pressure: Consistent conditions{'\n'}
-                • Normal range: 1000-1020 hPa
+                {t('detail.insight.pressureBody')}
               </Text>
             </View>
           )}
@@ -250,14 +237,10 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'visibility' && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                👁️ Visibility Guide
+                {t('detail.insight.visibilityTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                • 10+ km: Excellent - perfect for all activities{'\n'}
-                • 5-10 km: Good - safe driving conditions{'\n'}
-                • 2-5 km: Moderate - use caution, headlights on{'\n'}
-                • 1-2 km: Poor - hazardous driving conditions{'\n'}
-                • {'<'}1 km: Very poor - avoid travel if possible
+                {t('detail.insight.visibilityBody')}
               </Text>
             </View>
           )}
@@ -265,24 +248,19 @@ export const WeatherDetailModal: React.FC<WeatherDetailModalProps> = ({
           {metricType === 'airquality' && weatherData.airQuality && (
             <View style={[styles.insightCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.insightTitle, { color: colors.text }]}>
-                🌫️ Air Quality Details
+                {t('detail.insight.airTitle')}
               </Text>
               <Text style={[styles.insightText, { color: colors.text + 'CC' }]}>
-                <Text style={{ fontWeight: 'bold' }}>Current AQI: {weatherData.airQuality.aqi}</Text>{'\n\n'}
-                PM2.5: {Math.round(weatherData.airQuality.pm2_5)} μg/m³{'\n'}
-                PM10: {Math.round(weatherData.airQuality.pm10)} μg/m³{'\n'}
-                {weatherData.airQuality.o3 && `O₃: ${Math.round(weatherData.airQuality.o3)} μg/m³${'\n'}`}
-                {weatherData.airQuality.no2 && `NO₂: ${Math.round(weatherData.airQuality.no2)} μg/m³${'\n'}`}
-                {weatherData.airQuality.so2 && `SO₂: ${Math.round(weatherData.airQuality.so2)} μg/m³${'\n'}`}
-                {weatherData.airQuality.co && `CO: ${Math.round(weatherData.airQuality.co)} μg/m³${'\n'}`}
+                <Text style={{ fontWeight: 'bold' }}>{t('detail.air.currentAqi', { value: weatherData.airQuality.aqi })}</Text>{'\n\n'}
+                {t('detail.air.pollutantValue', { name: 'PM2.5', value: Math.round(weatherData.airQuality.pm2_5) })}{'\n'}
+                {t('detail.air.pollutantValue', { name: 'PM10', value: Math.round(weatherData.airQuality.pm10) })}{'\n'}
+                {weatherData.airQuality.o3 && t('detail.air.pollutantValue', { name: 'O₃', value: Math.round(weatherData.airQuality.o3) }) + '\n'}
+                {weatherData.airQuality.no2 && t('detail.air.pollutantValue', { name: 'NO₂', value: Math.round(weatherData.airQuality.no2) }) + '\n'}
+                {weatherData.airQuality.so2 && t('detail.air.pollutantValue', { name: 'SO₂', value: Math.round(weatherData.airQuality.so2) }) + '\n'}
+                {weatherData.airQuality.co && t('detail.air.pollutantValue', { name: 'CO', value: Math.round(weatherData.airQuality.co) }) + '\n'}
                 {'\n'}
-                <Text style={{ fontWeight: 'bold' }}>AQI Scale:</Text>{'\n'}
-                • 0-50: Good - Air quality is satisfactory{'\n'}
-                • 51-100: Moderate - Acceptable for most{'\n'}
-                • 101-150: Unhealthy for sensitive groups{'\n'}
-                • 151-200: Unhealthy - Everyone may experience effects{'\n'}
-                • 201-300: Very unhealthy - Health alert{'\n'}
-                • 301+: Hazardous - Emergency conditions
+                <Text style={{ fontWeight: 'bold' }}>{t('detail.air.scaleTitle')}</Text>{'\n'}
+                {t('detail.air.scaleBody')}
               </Text>
             </View>
           )}

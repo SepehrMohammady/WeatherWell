@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapQWeatherIcon, qweatherIconIsNight } from './conditions';
 
 export class QWeatherService implements WeatherService {
   private apiKey: string;
@@ -102,7 +103,8 @@ export class QWeatherService implements WeatherService {
       time: hour.fxTime,
       temperature: parseFloat(hour.temp) || 0,
       condition: hour.text || 'Unknown',
-      icon: this.mapIconCode(hour.icon),
+      conditionCode: mapQWeatherIcon(hour.icon),
+      isNight: qweatherIconIsNight(hour.icon),
       humidity: parseFloat(hour.humidity) || 0,
       windSpeed: parseFloat(hour.windSpeed) || 0,
       precipitationChance: parseFloat(hour.pop) || 0,
@@ -118,7 +120,7 @@ export class QWeatherService implements WeatherService {
       maxTemp: parseFloat(day.tempMax) || 0,
       minTemp: parseFloat(day.tempMin) || 0,
       condition: day.textDay || 'Unknown',
-      icon: this.mapIconCode(day.iconDay),
+      conditionCode: mapQWeatherIcon(day.iconDay),
       precipitationChance: parseFloat(day.precip) || 0,
       precipitationMm: parseFloat(day.precip) || 0,
       windSpeed: parseFloat(day.windSpeedDay) || 0,
@@ -135,7 +137,8 @@ export class QWeatherService implements WeatherService {
       current: {
         temperature: parseFloat(now.temp) || 0,
         condition: now.text || 'Unknown',
-        icon: this.mapIconCode(now.icon),
+        conditionCode: mapQWeatherIcon(now.icon),
+        isNight: qweatherIconIsNight(now.icon),
         humidity: parseFloat(now.humidity) || 0,
         windSpeed: parseFloat(now.windSpeed) || 0,
         windDirection: now.windDir || this.getWindDirection(parseFloat(now.wind360) || 0),
@@ -164,75 +167,6 @@ export class QWeatherService implements WeatherService {
         co: parseFloat(airQuality.co) || 0
       } : undefined
     };
-  }
-
-  private mapIconCode(iconCode: string): string {
-    // QWeather icon codes to WeatherAPI.com icon URLs
-    // QWeather uses 3-digit codes (100-999)
-    const code = iconCode || '100';
-    
-    // Map QWeather codes to similar WeatherAPI.com codes
-    const iconMap: { [key: string]: string } = {
-      '100': '113', // Sunny -> Clear
-      '101': '116', // Cloudy -> Partly cloudy
-      '102': '119', // Few Clouds -> Cloudy
-      '103': '122', // Partly Cloudy -> Overcast
-      '104': '122', // Overcast -> Overcast
-      '150': '113', // Clear night -> Clear
-      '151': '116', // Partly cloudy night -> Partly cloudy
-      '300': '176', // Shower rain -> Patchy rain possible
-      '301': '266', // Heavy shower rain -> Moderate rain
-      '302': '356', // Thundershower -> Moderate or heavy rain with thunder
-      '303': '389', // Heavy thunderstorm -> Moderate or heavy snow with thunder
-      '304': '353', // Thundershower with hail -> Light rain shower
-      '305': '176', // Light rain -> Patchy rain possible
-      '306': '296', // Moderate rain -> Light rain
-      '307': '302', // Heavy rain -> Moderate rain
-      '308': '305', // Extreme rain -> Heavy rain
-      '309': '293', // Drizzle -> Patchy light drizzle
-      '310': '359', // Storm -> Torrential rain shower
-      '311': '359', // Heavy storm -> Torrential rain shower
-      '312': '359', // Severe storm -> Torrential rain shower
-      '313': '263', // Freezing rain -> Patchy light rain
-      '314': '263', // Light to moderate rain -> Patchy light rain
-      '315': '305', // Moderate to heavy rain -> Heavy rain
-      '316': '308', // Heavy rain to storm -> Heavy rain
-      '317': '359', // Storm to heavy storm -> Torrential rain shower
-      '318': '359', // Heavy to severe storm -> Torrential rain shower
-      '399': '185', // Rain -> Patchy freezing drizzle possible
-      '400': '227', // Light snow -> Blowing snow
-      '401': '338', // Moderate snow -> Heavy snow
-      '402': '335', // Heavy snow -> Patchy heavy snow
-      '403': '395', // Snowstorm -> Moderate or heavy snow in area with thunder
-      '404': '317', // Sleet -> Light sleet
-      '405': '365', // Rain and snow -> Moderate or heavy sleet showers
-      '406': '374', // Light to moderate rain and snow -> Light showers of ice pellets
-      '407': '365', // Moderate to heavy rain and snow -> Moderate or heavy sleet showers
-      '408': '335', // Heavy rain and snow -> Patchy heavy snow
-      '409': '227', // Snowflake -> Blowing snow
-      '410': '335', // Light to moderate snow -> Patchy heavy snow
-      '499': '338', // Snow -> Heavy snow
-      '500': '260', // Mist -> Freezing fog
-      '501': '248', // Foggy -> Fog
-      '502': '260', // Haze -> Freezing fog
-      '503': '185', // Sand -> Patchy freezing drizzle possible
-      '504': '185', // Dust -> Patchy freezing drizzle possible
-      '507': '185', // Duststorm -> Patchy freezing drizzle possible
-      '508': '185', // Sandstorm -> Patchy freezing drizzle possible
-      '509': '248', // Dense fog -> Fog
-      '510': '260', // Strong fog -> Freezing fog
-      '511': '248', // Moderate fog -> Fog
-      '512': '248', // Heavy fog -> Fog
-      '513': '248', // Severe fog -> Fog
-      '514': '248', // Extra heavy fog -> Fog
-      '515': '248', // Extra severe fog -> Fog
-      '900': '113', // Hot -> Clear
-      '901': '230', // Cold -> Blizzard
-      '999': '119', // Unknown -> Cloudy
-    };
-
-    const mappedCode = iconMap[code] || '113';
-    return `//cdn.weatherapi.com/weather/64x64/day/${mappedCode}.png`;
   }
 
   private getWindDirection(degrees: number): string {

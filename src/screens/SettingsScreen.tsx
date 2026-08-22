@@ -11,7 +11,8 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Linking
+  Linking,
+  BackHandler
 } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -20,9 +21,12 @@ import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../contexts/ThemeContext';
-import { useSettings, WeatherProvider, TemperatureUnit } from '../contexts/SettingsContext';
+import { useTheme, THEME_COLOR_SWATCHES, ThemeColorName } from '../contexts/ThemeContext';
+import { useSettings, WeatherProvider, WeatherSource, TemperatureUnit, CustomSourceConfig } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { AppLanguage } from '../i18n';
+import { TutorialModal } from '../components/TutorialModal';
 import { APP_VERSION } from '../config/version';
 import { refreshWidgetSettings } from '../widgets/widget-utils';
 
@@ -32,13 +36,58 @@ interface SettingsScreenProps {
 
 const TESTERS = [
   'Alireza Asadi Jozani',
+  'Amirhossein Yaghoubnezhad',
   'Benyamin Izadpanah',
+  'Hamed Zanganeh',
+];
+
+const CUSTOM_METRICS: { key: keyof CustomSourceConfig; labelKey: string }[] = [
+  { key: 'forecast', labelKey: 'settings.metricForecast' },
+  { key: 'temperature', labelKey: 'settings.metricTemperature' },
+  { key: 'condition', labelKey: 'settings.metricCondition' },
+  { key: 'humidity', labelKey: 'settings.metricHumidity' },
+  { key: 'wind', labelKey: 'settings.metricWind' },
+  { key: 'pressure', labelKey: 'settings.metricPressure' },
+  { key: 'uvIndex', labelKey: 'settings.metricUvIndex' },
+  { key: 'visibility', labelKey: 'settings.metricVisibility' },
+  { key: 'airQuality', labelKey: 'settings.metricAirQuality' },
+  { key: 'astronomy', labelKey: 'settings.metricAstronomy' },
+];
+
+const LANGUAGE_OPTIONS: { key: AppLanguage; labelKey: string }[] = [
+  { key: 'system', labelKey: 'language.system' },
+  { key: 'en', labelKey: 'language.en' },
+  { key: 'zh', labelKey: 'language.zh' },
+  { key: 'es', labelKey: 'language.es' },
+  { key: 'hi', labelKey: 'language.hi' },
+  { key: 'ar', labelKey: 'language.ar' },
+  { key: 'fa', labelKey: 'language.fa' },
+  { key: 'it', labelKey: 'language.it' },
+];
+
+const PROVIDER_OPTIONS: { key: WeatherProvider; short: string }[] = [
+  { key: 'weatherapi', short: 'WA' },
+  { key: 'openweathermap', short: 'OWM' },
+  { key: 'visualcrossing', short: 'VC' },
+  { key: 'openmeteo', short: 'OM' },
+  { key: 'qweather', short: 'QW' },
+  { key: 'meteostat', short: 'MS' },
 ];
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
-  const { theme, toggleTheme, colors } = useTheme();
+  // The device back gesture should return to the main screen, not exit the app
+  React.useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onClose]);
+
+  const { theme, themeMode, themeColor, colors, setThemeMode, setThemeColor } = useTheme();
   const { settings, updateSetting, resetSettings, exportSettings, importSettings } = useSettings();
   const { favorites, addToFavorites, clearFavorites } = useFavorites();
+  const { t, ln, language, setLanguage } = useLanguage();
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'weatherapi' | 'openweathermap' | 'visualcrossing' | 'qweather' | 'meteostat'>('weatherapi');
@@ -47,6 +96,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const [pickerHour, setPickerHour] = useState(0);
   const [pickerMinute, setPickerMinute] = useState(0);
   const [showThresholdModal, setShowThresholdModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [thresholdType, setThresholdType] = useState<'rain' | 'wind' | 'uv' | 'tempHigh' | 'tempLow' | 'aqi'>('rain');
   const [tempThresholdValue, setTempThresholdValue] = useState('');
 
@@ -107,7 +157,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const handleThresholdSave = () => {
     const value = parseFloat(tempThresholdValue);
     if (isNaN(value)) {
-      showAlert('Invalid Value', 'Please enter a valid number');
+      showAlert(t('settings.invalidValueTitle'), t('settings.invalidValueMessage'));
       return;
     }
     switch (thresholdType) {
@@ -123,17 +173,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const getThresholdTitle = () => {
     switch (thresholdType) {
-      case 'rain': return 'Rain Threshold (%)';
-      case 'wind': return 'Wind Speed Threshold (km/h)';
-      case 'uv': return 'UV Index Threshold';
-      case 'tempHigh': return 'High Temperature Threshold (°C)';
-      case 'tempLow': return 'Low Temperature Threshold (°C)';
-      case 'aqi': return 'AQI Threshold';
+      case 'rain': return t('settings.thresholdRain');
+      case 'wind': return t('settings.thresholdWind');
+      case 'uv': return t('settings.thresholdUv');
+      case 'tempHigh': return t('settings.thresholdTempHigh');
+      case 'tempLow': return t('settings.thresholdTempLow');
+      case 'aqi': return t('settings.thresholdAqi');
     }
   };
 
-  const handleProviderChange = (provider: WeatherProvider) => {
+  const handleProviderChange = (provider: WeatherSource) => {
     updateSetting('weatherProvider', provider);
+  };
+
+  const handleCustomSourceChange = (metric: keyof CustomSourceConfig, provider: WeatherProvider) => {
+    updateSetting('customSources', { ...settings.customSources, [metric]: provider });
   };
 
   const handleUnitChange = (unit: TemperatureUnit) => {
@@ -152,21 +206,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     updateSetting(key as any, tempApiKey || null);
     setTempApiKey('');
     setShowApiKeyInput(false);
-    showAlert('Success', 'API key updated successfully');
+    showAlert(t('settings.successTitle'), t('settings.apiKeyUpdated'));
   };
 
   const handleReset = () => {
     showAlert(
-      'Reset Settings',
-      'Are you sure you want to reset all settings to default?',
+      t('settings.resetTitle'),
+      t('settings.resetConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Reset',
+          text: t('common.reset'),
           style: 'destructive',
           onPress: () => {
             resetSettings();
-            showAlert('Success', 'Settings reset to default');
+            showAlert(t('settings.successTitle'), t('settings.resetDone'));
           }
         }
       ]
@@ -192,15 +246,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       if (isAvailable) {
         await Sharing.shareAsync(file.uri, {
           mimeType: 'application/octet-stream',
-          dialogTitle: 'Export WeatherWell Backup',
+          dialogTitle: t('settings.exportDialogTitle'),
         });
-        showAlert('Success', 'Backup exported successfully');
+        showAlert(t('settings.successTitle'), t('settings.backupExported'));
       } else {
-        showAlert('Error', 'Sharing is not available on this device');
+        showAlert(t('common.error'), t('settings.sharingUnavailable'));
       }
     } catch (error) {
       console.error('Export error:', error);
-      showAlert('Error', 'Failed to export backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showAlert(t('common.error'), t('settings.exportFailed', { error: error instanceof Error ? error.message : t('settings.unknownError') }));
     }
   };
 
@@ -233,22 +287,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         }
         
         if (settingsSuccess) {
-          showAlert('Success', 'Backup restored (settings and favorites)');
+          showAlert(t('settings.successTitle'), t('settings.backupRestored'));
         } else {
-          showAlert('Error', 'Failed to restore settings from backup');
+          showAlert(t('common.error'), t('settings.restoreFailed'));
         }
       } else {
         // Legacy format: plain settings JSON
         const success = await importSettings(fileContent);
         if (success) {
-          showAlert('Success', 'Settings imported successfully');
+          showAlert(t('settings.successTitle'), t('settings.settingsImported'));
         } else {
-          showAlert('Error', 'Invalid backup file');
+          showAlert(t('common.error'), t('settings.invalidBackupFile'));
         }
       }
     } catch (error) {
       console.error('Import error:', error);
-      showAlert('Error', 'Failed to import backup. Make sure you selected a valid .weatherwell file.');
+      showAlert(t('common.error'), t('settings.importFailed'));
     }
   };
 
@@ -280,10 +334,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       if (WidgetPinModule) {
         await WidgetPinModule.requestPinWidget();
       } else {
-        showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+        showAlert(t('settings.widgetAlertTitle'), t('settings.widgetPinHint'));
       }
     } catch {
-      showAlert('Widget', 'To add the widget, long-press your home screen → Widgets → WeatherWell');
+      showAlert(t('settings.widgetAlertTitle'), t('settings.widgetPinHint'));
     }
   };
 
@@ -331,7 +385,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerTitle}>{t('settings.title')}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -343,44 +397,117 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Theme Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Appearance
+            {t('settings.appearance')}
           </Text>
+          <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+            <View style={styles.appearanceModeRow}>
+              {([
+                { mode: 'system' as const, label: t('settings.modeSystem'), icon: 'contrast-outline' as const },
+                { mode: 'light' as const, label: t('settings.modeLight'), icon: 'sunny-outline' as const },
+                { mode: 'dark' as const, label: t('settings.modeDark'), icon: 'moon-outline' as const },
+              ]).map(({ mode, label, icon }) => (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.modeChip,
+                    { backgroundColor: themeMode === mode ? colors.primary : colors.card },
+                  ]}
+                  onPress={() => setThemeMode(mode)}
+                >
+                  <Ionicons
+                    name={icon}
+                    size={15}
+                    color={themeMode === mode ? '#FFFFFF' : colors.text}
+                  />
+                  <Text
+                    style={[
+                      styles.modeChipText,
+                      { color: themeMode === mode ? '#FFFFFF' : colors.text },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
           <SettingItem
-            title="Dark Mode"
-            subtitle={`Currently using ${theme} theme`}
+            title={t('settings.weatherAnimations')}
+            subtitle={t('settings.weatherAnimationsSubtitle')}
             rightElement={
               <Switch
-                value={theme === 'dark'}
-                onValueChange={toggleTheme}
+                value={settings.enableWeatherAnimations}
+                onValueChange={(value) => updateSetting('enableWeatherAnimations', value)}
                 trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={theme === 'dark' ? colors.accent : '#f4f3f4'}
+                thumbColor={settings.enableWeatherAnimations ? colors.accent : '#f4f3f4'}
               />
             }
           />
+          <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('settings.themeColor')}</Text>
+              <View style={styles.colorDotRow}>
+                {(Object.keys(THEME_COLOR_SWATCHES) as ThemeColorName[]).map((name) => (
+                  <TouchableOpacity
+                    key={name}
+                    onPress={() => setThemeColor(name)}
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: THEME_COLOR_SWATCHES[name] },
+                      themeColor === name && [styles.colorDotSelected, { borderColor: colors.text }],
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+          <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('language.title')}</Text>
+              <View style={styles.languageChipRow}>
+                {LANGUAGE_OPTIONS.map(({ key, labelKey }) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.languageChip,
+                      { backgroundColor: language === key ? colors.primary : colors.card },
+                    ]}
+                    onPress={() => setLanguage(key)}
+                  >
+                    <Text style={[styles.languageChipText, { color: language === key ? '#FFFFFF' : colors.text }]}>
+                      {t(labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Weather Provider Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Weather Data
+            {t('settings.weatherData')}
           </Text>
           <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, { color: colors.text }]}>
-                Weather Provider
+                {t('settings.weatherProvider')}
               </Text>
               <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
-                {settings.weatherProvider === 'weatherapi' 
-                  ? 'WeatherAPI - Most accurate with full astronomy data' 
+                {settings.weatherProvider === 'weatherapi'
+                  ? t('settings.providerWeatherApiDesc')
                   : settings.weatherProvider === 'openweathermap'
-                    ? 'OpenWeatherMap - Reliable forecasts, limited astronomy'
+                    ? t('settings.providerOpenWeatherMapDesc')
                     : settings.weatherProvider === 'visualcrossing'
-                    ? 'Visual Crossing - Good data, no astronomy'
+                    ? t('settings.providerVisualCrossingDesc')
                     : settings.weatherProvider === 'openmeteo'
-                    ? 'Open-Meteo - Free, no moon phase data'
+                    ? t('settings.providerOpenMeteoDesc')
                     : settings.weatherProvider === 'qweather'
-                    ? '⚠ QWeather - May require paid plan'
-                    : '⚠ Meteostat - Historical data only, not for forecasts'
+                    ? t('settings.providerQWeatherDesc')
+                    : settings.weatherProvider === 'meteostat'
+                    ? t('settings.providerMeteostatDesc')
+                    : t('settings.providerCustomDesc')
                 }
               </Text>
               <View style={styles.providerButtons}>
@@ -455,11 +582,57 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   </Text>
                 </TouchableOpacity>
               </View>
+              <View style={styles.providerButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.providerButton,
+                    { backgroundColor: settings.weatherProvider === 'custom' ? colors.primary : colors.border }
+                  ]}
+                  onPress={() => handleProviderChange('custom')}
+                >
+                  <Text style={[styles.providerText, { color: settings.weatherProvider === 'custom' ? 'white' : colors.text }]}>
+                    {t('settings.providerCustom')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {settings.weatherProvider === 'custom' && (
+                <View style={styles.customSourceList}>
+                  {CUSTOM_METRICS.map(({ key, labelKey }) => (
+                    <View key={key} style={styles.customMetricRow}>
+                      <Text style={[styles.customMetricLabel, { color: colors.text }]}>
+                        {t(labelKey)}
+                      </Text>
+                      <View style={styles.customMetricChips}>
+                        {PROVIDER_OPTIONS.map(({ key: provider, short }) => {
+                          const selected = settings.customSources[key] === provider;
+                          return (
+                            <TouchableOpacity
+                              key={provider}
+                              style={[
+                                styles.customMetricChip,
+                                { backgroundColor: selected ? colors.primary : colors.border }
+                              ]}
+                              onPress={() => handleCustomSourceChange(key, provider)}
+                            >
+                              <Text style={[styles.customMetricChipText, { color: selected ? 'white' : colors.text }]}>
+                                {short}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  ))}
+                  <Text style={[styles.customSourceHint, { color: colors.textSecondary }]}>
+                    {t('settings.providerHint')}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
 
           <SettingItem
-            title="Temperature Unit"
+            title={t('settings.temperatureUnit')}
             rightElement={
               <View style={styles.unitButtons}>
                 <TouchableOpacity
@@ -489,8 +662,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
 
           <SettingItem
-            title="Refresh Interval"
-            subtitle={`Update every ${settings.refreshInterval} minutes`}
+            title={t('settings.refreshInterval')}
+            subtitle={t('settings.refreshIntervalSubtitle', { minutes: settings.refreshInterval })}
             rightElement={
               <View style={styles.intervalButtons}>
                 {[15, 30, 60].map(interval => (
@@ -503,7 +676,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                     onPress={() => updateSetting('refreshInterval', interval)}
                   >
                     <Text style={[styles.intervalText, { color: settings.refreshInterval === interval ? 'white' : colors.text }]}>
-                      {interval}m
+                      {t('settings.minutesShort', { minutes: interval })}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -513,8 +686,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           {/* API Keys Configuration */}
           <SettingItem
-            title="WeatherAPI Key"
-            subtitle={settings.weatherApiKey ? 'Custom key configured' : 'Using default key'}
+            title={t('settings.weatherApiKey')}
+            subtitle={settings.weatherApiKey ? t('settings.customKeyConfigured') : t('settings.usingDefaultKey')}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -529,8 +702,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
 
           <SettingItem
-            title="OpenWeatherMap Key"
-            subtitle={settings.openWeatherMapApiKey ? 'Custom key configured' : 'Using default key'}
+            title={t('settings.openWeatherMapKey')}
+            subtitle={settings.openWeatherMapApiKey ? t('settings.customKeyConfigured') : t('settings.usingDefaultKey')}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -545,8 +718,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
 
           <SettingItem
-            title="Visual Crossing Key"
-            subtitle={settings.visualCrossingApiKey ? 'Custom key configured' : 'Using default key'}
+            title={t('settings.visualCrossingKey')}
+            subtitle={settings.visualCrossingApiKey ? t('settings.customKeyConfigured') : t('settings.usingDefaultKey')}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -561,8 +734,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
 
           <SettingItem
-            title="QWeather Key"
-            subtitle={settings.qweatherApiKey && settings.qweatherApiKey !== 'b196010778a24af19765ed70af849801' ? 'Custom key configured' : 'Using default key'}
+            title={t('settings.qweatherKey')}
+            subtitle={settings.qweatherApiKey && settings.qweatherApiKey !== 'b196010778a24af19765ed70af849801' ? t('settings.customKeyConfigured') : t('settings.usingDefaultKey')}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -577,8 +750,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           />
 
           <SettingItem
-            title="Meteostat Key (RapidAPI)"
-            subtitle={settings.meteostatApiKey && settings.meteostatApiKey !== '93d3a5f1d3msh36569bf37d01a27p1c06ecjsna9f86b114ae8' ? 'Custom key configured' : 'Using default key'}
+            title={t('settings.meteostatKey')}
+            subtitle={settings.meteostatApiKey && settings.meteostatApiKey !== '93d3a5f1d3msh36569bf37d01a27p1c06ecjsna9f86b114ae8' ? t('settings.customKeyConfigured') : t('settings.usingDefaultKey')}
             rightElement={
               <TouchableOpacity
                 onPress={() => {
@@ -596,10 +769,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Display Options */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Display Options
+            {t('settings.displayOptions')}
           </Text>
           <SettingItem
-            title="Show Feels Like Temperature"
+            title={t('settings.showFeelsLike')}
             rightElement={
               <Switch
                 value={settings.showFeelsLike}
@@ -610,7 +783,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Humidity"
+            title={t('settings.showHumidity')}
             rightElement={
               <Switch
                 value={settings.showHumidity}
@@ -621,7 +794,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Pressure"
+            title={t('settings.showPressure')}
             rightElement={
               <Switch
                 value={settings.showPressure}
@@ -632,7 +805,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Visibility"
+            title={t('settings.showVisibility')}
             rightElement={
               <Switch
                 value={settings.showVisibility}
@@ -643,7 +816,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show UV Index"
+            title={t('settings.showUvIndex')}
             rightElement={
               <Switch
                 value={settings.showUVIndex}
@@ -654,7 +827,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Wind Speed"
+            title={t('settings.showWindSpeed')}
             rightElement={
               <Switch
                 value={settings.showWindSpeed}
@@ -665,7 +838,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Wind Direction"
+            title={t('settings.showWindDirection')}
             rightElement={
               <Switch
                 value={settings.showWindDirection}
@@ -676,7 +849,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Air Quality"
+            title={t('settings.showAirQuality')}
             rightElement={
               <Switch
                 value={settings.showAirQuality}
@@ -691,14 +864,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Notifications */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Notifications
+            {t('settings.notifications')}
           </Text>
           <Text style={[styles.notificationNote, { color: colors.textSecondary }]}>
-            Scheduled alerts (Daily/Hourly) fire at your chosen time.{'\n'}Dynamic alerts check based on your refresh interval ({settings.refreshInterval} min) and warn before hazardous conditions.
+            {t('settings.notificationNote', { minutes: settings.refreshInterval })}
           </Text>
           <SettingItem
-            title="Enable Notifications"
-            subtitle="Turn on/off all scheduled and dynamic weather alerts"
+            title={t('settings.enableNotifications')}
+            subtitle={t('settings.enableNotificationsSubtitle')}
             rightElement={
               <Switch
                 value={settings.enableNotifications}
@@ -712,8 +885,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           {settings.enableNotifications && (
             <>
               <SettingItem
-                title="Severe Weather Alerts"
-                subtitle="Warns about thunderstorms, heavy rain, snow, and hail"
+                title={t('settings.severeWeatherAlerts')}
+                subtitle={t('settings.severeWeatherAlertsSubtitle')}
                 rightElement={
                   <Switch
                     value={settings.enableSevereWeatherAlerts}
@@ -725,15 +898,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Daily Forecast"
-                subtitle={`Scheduled daily summary at ${settings.dailyForecastTime} with conditions and tips`}
+                title={t('settings.dailyForecast')}
+                subtitle={t('settings.dailyForecastSubtitle', { time: settings.dailyForecastTime })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.timeButton, { backgroundColor: colors.card }]}
                       onPress={() => openTimePicker('daily')}
                     >
-                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{settings.dailyForecastTime}</Text>
+                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{ln(settings.dailyForecastTime)}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableDailyForecast}
@@ -746,15 +919,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Hourly Forecast"
-                subtitle={`Scheduled 6-hour outlook at ${settings.hourlyForecastTime || '08:00'} with rain and temp info`}
+                title={t('settings.hourlyForecast')}
+                subtitle={t('settings.hourlyForecastSubtitle', { time: settings.hourlyForecastTime || '08:00' })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.timeButton, { backgroundColor: colors.card }]}
                       onPress={() => openTimePicker('hourly')}
                     >
-                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{settings.hourlyForecastTime || '08:00'}</Text>
+                      <Text style={[styles.timeButtonText, { color: colors.primary }]}>{ln(settings.hourlyForecastTime || '08:00')}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableHourlyForecast}
@@ -767,21 +940,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Temperature Alerts"
-                subtitle={`Alerts when temp drops below ${settings.temperatureThresholdLow}°C or exceeds ${settings.temperatureThresholdHigh}°C`}
+                title={t('settings.temperatureAlerts')}
+                subtitle={t('settings.temperatureAlertsSubtitle', { low: settings.temperatureThresholdLow, high: settings.temperatureThresholdHigh })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('tempLow')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>L:{settings.temperatureThresholdLow}°</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{t('settings.tempLowShort', { value: settings.temperatureThresholdLow })}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('tempHigh')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>H:{settings.temperatureThresholdHigh}°</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{t('settings.tempHighShort', { value: settings.temperatureThresholdHigh })}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableTemperatureAlerts}
@@ -794,15 +967,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="UV Index Alerts"
-                subtitle={`Warns when UV index reaches ${settings.uvThreshold}+ to protect your skin`}
+                title={t('settings.uvAlerts')}
+                subtitle={t('settings.uvAlertsSubtitle', { value: settings.uvThreshold })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('uv')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.uvThreshold}</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{ln(settings.uvThreshold)}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableUVAlerts}
@@ -815,15 +988,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Umbrella Alerts"
-                subtitle={`Reminds you to bring an umbrella when rain chance hits ${settings.rainThreshold || 70}%+`}
+                title={t('settings.umbrellaAlerts')}
+                subtitle={t('settings.umbrellaAlertsSubtitle', { value: settings.rainThreshold || 70 })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('rain')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.rainThreshold}%</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{t('settings.percentValue', { value: settings.rainThreshold })}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableUmbrellaAlerts}
@@ -836,15 +1009,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Wind Alerts"
-                subtitle={`Warns when wind speed exceeds ${settings.windSpeedThreshold || 50} km/h`}
+                title={t('settings.windAlerts')}
+                subtitle={t('settings.windAlertsSubtitle', { value: settings.windSpeedThreshold || 50 })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('wind')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.windSpeedThreshold}</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{ln(settings.windSpeedThreshold)}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableWindAlerts}
@@ -857,15 +1030,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               />
               
               <SettingItem
-                title="Air Quality Alerts"
-                subtitle={`Alerts when AQI reaches ${settings.aqiThreshold}+ (unhealthy levels)`}
+                title={t('settings.aqiAlerts')}
+                subtitle={t('settings.aqiAlertsSubtitle', { value: settings.aqiThreshold })}
                 rightElement={
                   <View style={styles.rowRight}>
                     <TouchableOpacity 
                       style={[styles.thresholdButton, { backgroundColor: colors.card }]}
                       onPress={() => openThresholdEditor('aqi')}
                     >
-                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{settings.aqiThreshold}</Text>
+                      <Text style={[styles.thresholdButtonText, { color: colors.primary }]}>{ln(settings.aqiThreshold)}</Text>
                     </TouchableOpacity>
                     <Switch
                       value={settings.enableAQIAlerts}
@@ -883,19 +1056,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Widget */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Home Screen Widget
+            {t('settings.homeScreenWidget')}
           </Text>
           <SettingItem
-            title="Add Widget to Home Screen"
-            subtitle="Tap to add the weather widget directly"
+            title={t('settings.addWidget')}
+            subtitle={t('settings.addWidgetSubtitle')}
             onPress={handleAddWidgetToHomeScreen}
             rightElement={
               <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
             }
           />
           <SettingItem
-            title="Widget Opacity"
-            subtitle={`${Math.round((settings.widgetOpacity ?? 0.85) * 100)}%`}
+            title={t('settings.widgetOpacity')}
+            subtitle={t('settings.percentValue', { value: Math.round((settings.widgetOpacity ?? 0.85) * 100) })}
             rightElement={
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <TouchableOpacity onPress={() => {
@@ -905,7 +1078,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
                 </TouchableOpacity>
                 <Text style={{ color: colors.text, fontSize: 16, minWidth: 40, textAlign: 'center' }}>
-                  {Math.round((settings.widgetOpacity ?? 0.85) * 100)}%
+                  {t('settings.percentValue', { value: Math.round((settings.widgetOpacity ?? 0.85) * 100) })}
                 </Text>
                 <TouchableOpacity onPress={() => {
                   const current = settings.widgetOpacity ?? 0.85;
@@ -917,8 +1090,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Feels Like"
-            subtitle="Display feels-like temperature"
+            title={t('settings.widgetShowFeelsLike')}
+            subtitle={t('settings.widgetShowFeelsLikeSubtitle')}
             rightElement={
               <Switch
                 value={settings.widgetShowFeelsLike ?? true}
@@ -929,8 +1102,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show High/Low"
-            subtitle="Display daily high and low temperatures"
+            title={t('settings.widgetShowHighLow')}
+            subtitle={t('settings.widgetShowHighLowSubtitle')}
             rightElement={
               <Switch
                 value={settings.widgetShowHighLow ?? true}
@@ -941,8 +1114,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Rain Chance"
-            subtitle="Display precipitation probability"
+            title={t('settings.widgetShowRainChance')}
+            subtitle={t('settings.widgetShowRainChanceSubtitle')}
             rightElement={
               <Switch
                 value={settings.widgetShowRainChance ?? true}
@@ -953,8 +1126,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Conditions"
-            subtitle="Display weather condition text"
+            title={t('settings.widgetShowConditions')}
+            subtitle={t('settings.widgetShowConditionsSubtitle')}
             rightElement={
               <Switch
                 value={settings.widgetShowConditions ?? true}
@@ -965,8 +1138,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             }
           />
           <SettingItem
-            title="Show Tomorrow"
-            subtitle="Display tomorrow's high/low forecast"
+            title={t('settings.widgetShowTomorrow')}
+            subtitle={t('settings.widgetShowTomorrowSubtitle')}
             rightElement={
               <Switch
                 value={settings.widgetShowTomorrow ?? false}
@@ -981,11 +1154,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Privacy */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Privacy
+            {t('settings.privacy')}
           </Text>
           <SettingItem
-            title="Share Location in Weather Data"
-            subtitle="Include location when sharing weather"
+            title={t('settings.shareLocation')}
+            subtitle={t('settings.shareLocationSubtitle')}
             rightElement={
               <Switch
                 value={settings.enableShareLocation}
@@ -1000,11 +1173,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Advanced */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Advanced
+            {t('settings.advanced')}
           </Text>
           <SettingItem
-            title="Export Backup"
-            subtitle="Save all settings and favorites"
+            title={t('settings.exportBackup')}
+            subtitle={t('settings.exportBackupSubtitle')}
             rightElement={
               <TouchableOpacity onPress={handleExport}>
                 <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
@@ -1013,8 +1186,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             onPress={handleExport}
           />
           <SettingItem
-            title="Import Backup"
-            subtitle="Restore settings and favorites"
+            title={t('settings.importBackup')}
+            subtitle={t('settings.importBackupSubtitle')}
             rightElement={
               <TouchableOpacity onPress={handleImport}>
                 <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
@@ -1023,8 +1196,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             onPress={handleImport}
           />
           <SettingItem
-            title="Reset to Defaults"
-            subtitle="Reset all settings to original values"
+            title={t('settings.resetToDefaults')}
+            subtitle={t('settings.resetToDefaultsSubtitle')}
             rightElement={
               <TouchableOpacity onPress={handleReset}>
                 <Ionicons name="refresh-outline" size={24} color={colors.error} />
@@ -1037,11 +1210,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* Testers */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Testers
+            {t('settings.testers')}
           </Text>
           <View style={[styles.testersCard, { backgroundColor: colors.surface }]}>
             <Text style={[styles.testersThanks, { color: colors.text }]}>
-              Thank you for your valuable feedback!
+              {t('settings.testersThanks')}
             </Text>
             {TESTERS.map((name) => (
               <Text key={name} style={[styles.testerName, { color: colors.textSecondary }]}>
@@ -1054,27 +1227,33 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* About Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            About
+            {t('settings.about')}
           </Text>
           <SettingItem
             title="WeatherWell"
-            description="Ad-free weather forecasts"
+            description={t('settings.appTagline')}
             rightElement={null}
           />
           <SettingItem
-            title="Version"
-            description={APP_VERSION}
+            title={t('tutorial.settingsRow')}
+            subtitle={t('tutorial.settingsRowSubtitle')}
+            onPress={() => setShowTutorial(true)}
+            rightElement={<Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
+          />
+          <SettingItem
+            title={t('settings.version')}
+            description={ln(APP_VERSION)}
             rightElement={null}
           />
           <SettingItem
-            title="Developer"
+            title={t('settings.developer')}
             description="SeMo Lab"
             onPress={handleOpenWebsite}
             rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
           />
           <SettingItem
-            title="Privacy Policy"
-            description="No personal data is collected or shared"
+            title={t('settings.privacyPolicy')}
+            description={t('settings.privacyPolicySubtitle')}
             onPress={handleOpenPrivacyPolicy}
             isLast={true}
             rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
@@ -1084,23 +1263,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         {/* More from SeMo Lab */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            More from SeMo Lab
+            {t('settings.moreFromSemoLab')}
           </Text>
           <SettingItem
             title="FeedWell"
-            description="Ad-free RSS reader. Clean reading, no distractions."
+            description={t('settings.feedwellDesc')}
             onPress={() => handleOpenPlayListing('com.feedwell.app')}
             rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
           />
           <SettingItem
             title="LedgerWell"
-            description="Track personal debts and credits, multi-currency."
+            description={t('settings.ledgerwellDesc')}
             onPress={() => handleOpenPlayListing('com.ledgerwell.app')}
             rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
           />
           <SettingItem
-            title="All SeMo Lab apps"
-            description="See everything we make on Google Play"
+            title={t('settings.allSemoLabApps')}
+            description={t('settings.allSemoLabAppsSubtitle')}
             onPress={handleOpenDeveloperPage}
             isLast={true}
             rightElement={<Ionicons name="open-outline" size={20} color={colors.primary} />}
@@ -1109,10 +1288,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            WeatherWell provides accurate weather forecasts with privacy-first approach. No personal data is collected or shared.
+            {t('settings.footerText')}
           </Text>
           <Text style={[styles.copyrightText, { color: colors.textSecondary }]}>
-            © 2026 SeMo Lab
+            {t('settings.copyright')}
           </Text>
         </View>
 
@@ -1130,18 +1309,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {selectedProvider === 'weatherapi' ? 'WeatherAPI Key' 
-                : selectedProvider === 'openweathermap' ? 'OpenWeatherMap Key'
-                : selectedProvider === 'visualcrossing' ? 'Visual Crossing Key'
-                : selectedProvider === 'qweather' ? 'QWeather Key'
-                : 'Meteostat Key (RapidAPI)'}
+              {selectedProvider === 'weatherapi' ? t('settings.weatherApiKey')
+                : selectedProvider === 'openweathermap' ? t('settings.openWeatherMapKey')
+                : selectedProvider === 'visualcrossing' ? t('settings.visualCrossingKey')
+                : selectedProvider === 'qweather' ? t('settings.qweatherKey')
+                : t('settings.meteostatKey')}
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Enter your API key or leave blank to use demo key
+              {t('settings.apiKeyModalSubtitle')}
             </Text>
             <TextInput
               style={[styles.importInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="Enter API key..."
+              placeholder={t('settings.apiKeyPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={tempApiKey}
               onChangeText={setTempApiKey}
@@ -1153,7 +1332,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 onPress={() => setShowApiKeyInput(false)}
               >
                 <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1161,7 +1340,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 onPress={() => handleApiKeyUpdate(selectedProvider)}
               >
                 <Text style={[styles.modalButtonText, { color: 'white' }]}>
-                  Save
+                  {t('common.save')}
                 </Text>
               </Pressable>
             </View>
@@ -1179,7 +1358,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface, maxWidth: 320 }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {timePickerType === 'daily' ? 'Daily Forecast Time' : 'Hourly Forecast Time'}
+              {timePickerType === 'daily' ? t('settings.dailyForecastTimeTitle') : t('settings.hourlyForecastTimeTitle')}
             </Text>
             <View style={styles.timePickerRow}>
               <View style={styles.timePickerColumn}>
@@ -1187,7 +1366,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Ionicons name="chevron-up" size={28} color={colors.primary} />
                 </TouchableOpacity>
                 <Text style={[styles.timePickerValue, { color: colors.text }]}>
-                  {pickerHour.toString().padStart(2, '0')}
+                  {ln(pickerHour.toString().padStart(2, '0'))}
                 </Text>
                 <TouchableOpacity onPress={() => setPickerHour((pickerHour + 23) % 24)}>
                   <Ionicons name="chevron-down" size={28} color={colors.primary} />
@@ -1199,7 +1378,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Ionicons name="chevron-up" size={28} color={colors.primary} />
                 </TouchableOpacity>
                 <Text style={[styles.timePickerValue, { color: colors.text }]}>
-                  {pickerMinute.toString().padStart(2, '0')}
+                  {ln(pickerMinute.toString().padStart(2, '0'))}
                 </Text>
                 <TouchableOpacity onPress={() => setPickerMinute((pickerMinute + 55) % 60)}>
                   <Ionicons name="chevron-down" size={28} color={colors.primary} />
@@ -1211,13 +1390,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 style={[styles.modalButton, { backgroundColor: colors.border }]}
                 onPress={() => setShowTimePicker(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>{t('common.cancel')}</Text>
               </Pressable>
               <Pressable
                 style={[styles.modalButton, { backgroundColor: colors.primary }]}
                 onPress={handleTimeSave}
               >
-                <Text style={[styles.modalButtonText, { color: 'white' }]}>Save</Text>
+                <Text style={[styles.modalButtonText, { color: 'white' }]}>{t('common.save')}</Text>
               </Pressable>
             </View>
           </View>
@@ -1237,11 +1416,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               {getThresholdTitle()}
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Enter the threshold value for alerts
+              {t('settings.thresholdModalSubtitle')}
             </Text>
             <TextInput
               style={[styles.thresholdInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-              placeholder="Enter value..."
+              placeholder={t('settings.thresholdPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={tempThresholdValue}
               onChangeText={setTempThresholdValue}
@@ -1253,7 +1432,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 onPress={() => setShowThresholdModal(false)}
               >
                 <Text style={[styles.modalButtonText, { color: colors.text }]}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1261,7 +1440,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 onPress={handleThresholdSave}
               >
                 <Text style={[styles.modalButtonText, { color: 'white' }]}>
-                  Save
+                  {t('common.save')}
                 </Text>
               </Pressable>
             </View>
@@ -1309,7 +1488,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   onPress={dismissAlert}
                 >
                   <Text style={[styles.modalButtonText, { color: 'white' }]}>
-                    OK
+                    {t('common.ok')}
                   </Text>
                 </Pressable>
               )}
@@ -1318,12 +1497,60 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         </View>
       </Modal>
 
+      <TutorialModal visible={showTutorial} onClose={() => setShowTutorial(false)} />
+
       </LinearGradient>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  languageChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  languageChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+  },
+  languageChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  appearanceModeRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modeChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  modeChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  colorDotRow: {
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 10,
+  },
+  colorDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  colorDotSelected: {
+    borderWidth: 2.5,
+  },
   testersCard: {
     borderRadius: 12,
     padding: 16,
@@ -1426,6 +1653,35 @@ const styles = StyleSheet.create({
   providerText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  customSourceList: {
+    marginTop: 12,
+    gap: 10,
+  },
+  customMetricRow: {
+    gap: 6,
+  },
+  customMetricLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  customMetricChips: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  customMetricChip: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  customMetricChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  customSourceHint: {
+    fontSize: 11,
+    marginTop: 2,
   },
   unitButtons: {
     flexDirection: 'row',

@@ -9,12 +9,14 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { LocationSearchService, Location } from '../services/LocationSearchService';
 
@@ -25,6 +27,7 @@ interface SearchScreenProps {
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationSelect }) => {
   const { colors } = useTheme();
+  const { t, ln } = useLanguage();
   const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Location[]>([]);
@@ -38,6 +41,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
     // Load recent searches on component mount
     setRecentSearches(searchService.getRecentSearches());
   }, []);
+
+  // The device back gesture should return to the main screen, not exit the app
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onClose]);
 
   useEffect(() => {
     // Clear previous timeout
@@ -93,12 +105,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
 
   const clearRecentSearches = () => {
     Alert.alert(
-      'Clear Recent Searches',
-      'Are you sure you want to clear all recent searches?',
+      t('search.clearRecentTitle'),
+      t('search.clearRecentMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Clear',
+          text: t('search.clear'),
           style: 'destructive',
           onPress: () => {
             searchService.clearRecentSearches();
@@ -146,7 +158,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
               {item.name}
             </Text>
             <Text style={[styles.locationSubtext, { color: colors.textSecondary }]}>
-              {item.region ? `${item.region}, ${item.country}` : item.country}
+              {item.region ? t('search.regionCountry', { region: item.region, country: item.country }) : item.country}
             </Text>
           </View>
         </View>
@@ -173,7 +185,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
         <View style={styles.emptyState}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Searching locations...
+            {t('search.searching')}
           </Text>
         </View>
       );
@@ -184,10 +196,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
         <View style={styles.emptyState}>
           <Ionicons name="search-outline" size={48} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            No locations found for "{searchQuery}"
+            {t('search.noResults', { query: searchQuery })}
           </Text>
           <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            Try a different search term
+            {t('search.tryDifferent')}
           </Text>
         </View>
       );
@@ -205,7 +217,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Search Location</Text>
+          <Text style={styles.headerTitle}>{t('search.title')}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -219,7 +231,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
           <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search for a city or location..."
+            placeholder={t('search.placeholder')}
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -248,7 +260,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Favorite Places
+                {t('search.favoritePlaces')}
               </Text>
             </View>
             <FlatList
@@ -265,11 +277,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Recent Searches
+                {t('search.recentSearches')}
               </Text>
               <TouchableOpacity onPress={clearRecentSearches}>
                 <Text style={[styles.clearText, { color: colors.primary }]}>
-                  Clear All
+                  {t('search.clearAll')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -286,14 +298,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
         {searchQuery.trim().length >= 2 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Search Results
+              {t('search.searchResults')}
             </Text>
             {displayData.length > 0 ? (
               <>
                 {/* Show notice if we might be using fallback data */}
                 {displayData.length <= 10 && (
                   <Text style={[styles.fallbackNotice, { color: colors.textSecondary }]}>
-                    Popular cities matching your search
+                    {t('search.popularCities')}
                   </Text>
                 )}
                 <FlatList
@@ -314,10 +326,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
           <View style={styles.emptyState}>
             <Ionicons name="earth-outline" size={64} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Search for any location
+              {t('search.searchAnyLocation')}
             </Text>
             <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-              Start typing to find cities worldwide
+              {t('search.startTyping')}
             </Text>
           </View>
         )}

@@ -1,0 +1,35 @@
+/** English strings extracted from the home UI (HomeScreen + SearchScreen). */
+export const homeStrings: Record<string, string> = {
+  // HomeScreen
+  'home.loadingTitle': 'Loading WeatherWell...',
+  'home.loadingSubtext': 'Getting your location and weather data',
+  'home.errorTitle': '⚠️ Error',
+  'home.tryAgain': 'Try Again',
+  'home.retry': 'Retry',
+  'home.noWeatherData': 'No weather data available',
+  'home.locationPermissionRequired': 'Location permission is required to get weather data',
+  'home.failedToLoad': 'Failed to load weather data',
+  'home.currentLocation': 'Current Location',
+  'home.locationFormat': '{name}, {country}',
+  'home.pinned': 'Pinned',
+  'home.pinAsMain': 'Pin as main',
+  'home.useCurrentLocation': 'Use Current Location',
+
+  // SearchScreen
+  'search.title': 'Search Location',
+  'search.placeholder': 'Search for a city or location...',
+  'search.searching': 'Searching locations...',
+  'search.noResults': 'No locations found for "{query}"',
+  'search.tryDifferent': 'Try a different search term',
+  'search.favoritePlaces': 'Favorite Places',
+  'search.recentSearches': 'Recent Searches',
+  'search.clearAll': 'Clear All',
+  'search.searchResults': 'Search Results',
+  'search.popularCities': 'Popular cities matching your search',
+  'search.searchAnyLocation': 'Search for any location',
+  'search.startTyping': 'Start typing to find cities worldwide',
+  'search.regionCountry': '{region}, {country}',
+  'search.clearRecentTitle': 'Clear Recent Searches',
+  'search.clearRecentMessage': 'Are you sure you want to clear all recent searches?',
+  'search.clear': 'Clear',
+};

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Share } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { WeatherData } from '../services/types';
 
 interface ShareOptions {
@@ -33,12 +34,14 @@ interface ShareComponentProps {
   locationName?: string;
 }
 
-export const ShareComponent: React.FC<ShareComponentProps> = ({ 
-  weatherData, 
-  locationName = 'Current Location' 
+export const ShareComponent: React.FC<ShareComponentProps> = ({
+  weatherData,
+  locationName
 }) => {
   const { colors } = useTheme();
   const { settings } = useSettings();
+  const { t, ln } = useLanguage();
+  const displayLocationName = locationName ?? t('share.currentLocation');
   const [showModal, setShowModal] = useState(false);
   const [shareOptions, setShareOptions] = useState<ShareOptions>({
     includeLocation: settings.enableShareLocation,
@@ -55,10 +58,9 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
   });
 
   const formatTemperature = (temp: number) => {
-    const rounded = Math.round(temp);
-    return settings.temperatureUnit === 'fahrenheit' 
-      ? `${Math.round(temp * 9/5 + 32)}°F`
-      : `${rounded}°C`;
+    return settings.temperatureUnit === 'fahrenheit'
+      ? t('share.text.tempF', { temp: Math.round(temp * 9/5 + 32) })
+      : t('share.text.tempC', { temp: Math.round(temp) });
   };
 
   const generateShareText = (): string => {
@@ -66,46 +68,46 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
     let shareText = '';
 
     // Header
-    shareText += '🌤️ Weather Report\n';
+    shareText += `🌤️ ${t('share.text.header')}\n`;
     shareText += '━━━━━━━━━━━━━━━━\n\n';
 
     // Location
     if (shareOptions.includeLocation) {
-      shareText += `📍 Location: ${locationName}\n\n`;
+      shareText += `📍 ${t('share.text.location', { location: displayLocationName })}\n\n`;
     }
 
     // Current Weather
     if (shareOptions.includeCurrent) {
-      shareText += '🌡️ Current Weather:\n';
-      shareText += `Temperature: ${formatTemperature(current.temperature)}`;
-      
+      shareText += `🌡️ ${t('share.text.currentWeather')}\n`;
+      shareText += t('share.text.temperature', { temp: formatTemperature(current.temperature) });
+
       if (shareOptions.includeFeelsLike) {
-        shareText += ` (feels like ${formatTemperature(current.feelsLike)})`;
+        shareText += ` ${t('share.text.feelsLike', { temp: formatTemperature(current.feelsLike) })}`;
       }
       shareText += '\n';
-      
-      shareText += `Condition: ${current.condition}\n`;
-      
+
+      shareText += `${t('share.text.condition', { condition: current.condition })}\n`;
+
       if (shareOptions.includeHumidity) {
-        shareText += `Humidity: ${current.humidity}%\n`;
+        shareText += `${t('share.text.humidity', { humidity: current.humidity })}\n`;
       }
-      
+
       if (shareOptions.includePressure) {
-        shareText += `Pressure: ${current.pressure} hPa\n`;
+        shareText += `${t('share.text.pressure', { pressure: current.pressure })}\n`;
       }
-      
+
       if (shareOptions.includeVisibility) {
-        shareText += `Visibility: ${current.visibility} km\n`;
+        shareText += `${t('share.text.visibility', { visibility: current.visibility })}\n`;
       }
-      
+
       if (shareOptions.includeUV) {
-        shareText += `UV Index: ${current.uvIndex}\n`;
+        shareText += `${t('share.text.uvIndex', { uvIndex: current.uvIndex })}\n`;
       }
-      
+
       if (shareOptions.includeWind) {
-        shareText += `Wind: ${current.windSpeed} km/h ${current.windDirection}\n`;
+        shareText += `${t('share.text.wind', { speed: current.windSpeed, direction: current.windDirection })}\n`;
       }
-      
+
       shareText += '\n';
     }
 
@@ -118,13 +120,13 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
         .filter(hour => new Date(hour.time) >= nextHourStart)
         .slice(0, 12);
       if (upcomingHours.length > 0) {
-        shareText += upcomingHours.length >= 12 ? '⏰ Next 12 Hours:\n' : '⏰ Next Hours:\n';
+        shareText += upcomingHours.length >= 12 ? `⏰ ${t('share.text.next12Hours')}\n` : `⏰ ${t('share.text.nextHours')}\n`;
         upcomingHours.forEach(hour => {
           const time = new Date(hour.time).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
           });
-          shareText += `${time}: ${formatTemperature(hour.temperature)} - ${hour.condition}\n`;
+          shareText += `${t('share.text.hourLine', { time, temp: formatTemperature(hour.temperature), condition: hour.condition })}\n`;
         });
         shareText += '\n';
       }
@@ -132,12 +134,17 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
 
     // Daily Forecast
     if (shareOptions.includeDaily && forecast.daily.length > 0) {
-      shareText += '📅 Future Forecast:\n';
+      shareText += `📅 ${t('share.text.dailyForecast')}\n`;
       forecast.daily.slice(0, 7).forEach((day) => {
         const dayName = new Date(day.date).toLocaleDateString([], { weekday: 'short' });
-        shareText += `${dayName}: ${formatTemperature(day.maxTemp)}/${formatTemperature(day.minTemp)} - ${day.condition}`;
+        shareText += t('share.text.dayLine', {
+          day: dayName,
+          max: formatTemperature(day.maxTemp),
+          min: formatTemperature(day.minTemp),
+          condition: day.condition,
+        });
         if (day.precipitationChance > 0) {
-          shareText += ` (${day.precipitationChance}% rain)`;
+          shareText += ` ${t('share.text.rainChance', { chance: day.precipitationChance })}`;
         }
         shareText += '\n';
       });
@@ -147,17 +154,17 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
     // Astronomy
     const astronomy = weatherData.astronomy;
     if (shareOptions.includeAstronomy && astronomy && (astronomy.sunrise || astronomy.sunset || astronomy.moonPhase)) {
-      shareText += '🌅 Astronomy:\n';
+      shareText += `🌅 ${t('share.text.astronomy')}\n`;
       if (astronomy.sunrise) {
-        shareText += `Sunrise: ${astronomy.sunrise}\n`;
+        shareText += `${t('share.text.sunrise', { time: astronomy.sunrise })}\n`;
       }
       if (astronomy.sunset) {
-        shareText += `Sunset: ${astronomy.sunset}\n`;
+        shareText += `${t('share.text.sunset', { time: astronomy.sunset })}\n`;
       }
       if (astronomy.moonPhase) {
-        shareText += `Moon: ${astronomy.moonPhase}`;
+        shareText += t('share.text.moon', { phase: astronomy.moonPhase });
         if (astronomy.moonIllumination > 0) {
-          shareText += ` (${Math.round(astronomy.moonIllumination * 100)}% illuminated)`;
+          shareText += ` ${t('share.text.moonIllumination', { percent: Math.round(astronomy.moonIllumination * 100) })}`;
         }
         shareText += '\n';
       }
@@ -166,7 +173,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
 
     // Footer
     shareText += '━━━━━━━━━━━━━━━━\n';
-    shareText += '📱 Shared from WeatherWell';
+    shareText += `📱 ${t('share.text.footer')}`;
 
     return shareText;
   };
@@ -175,7 +182,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
     const shareText = generateShareText();
     const shareOptions = {
       message: shareText,
-      title: `Weather Report - ${locationName}`,
+      title: t('share.shareTitle', { location: displayLocationName }),
     };
 
     try {
@@ -183,7 +190,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       setShowModal(false);
     } catch (error: any) {
       if (error?.message !== 'User did not share') {
-        Alert.alert('Share Error', 'Failed to share weather data');
+        Alert.alert(t('share.errorTitle'), t('share.errorMessage'));
       }
     }
   };
@@ -223,7 +230,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
           onPress={() => handleShare()}
         >
           <Ionicons name="share-outline" size={20} color="white" />
-          <Text style={styles.quickShareText}>Quick Share</Text>
+          <Text style={styles.quickShareText}>{t('share.quickShare')}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity
@@ -232,7 +239,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
         >
           <Ionicons name="options-outline" size={20} color={colors.primary} />
           <Text style={[styles.customShareText, { color: colors.primary }]}>
-            Customize Share
+            {t('share.customizeShare')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -248,7 +255,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                Share Options
+                {t('share.optionsTitle')}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowModal(false)}
@@ -261,12 +268,12 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
             <ScrollView style={styles.optionsContainer} showsVerticalScrollIndicator={false}>
               {/* Content Options */}
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Content to Include
+                {t('share.contentSection')}
               </Text>
               
               <ShareOption
-                title="Location"
-                subtitle="Include location name in shared weather"
+                title={t('share.option.location')}
+                subtitle={t('share.option.locationSubtitle')}
                 value={shareOptions.includeLocation}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeLocation: value }))
@@ -274,8 +281,8 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Current Weather"
-                subtitle="Temperature and current conditions"
+                title={t('share.option.current')}
+                subtitle={t('share.option.currentSubtitle')}
                 value={shareOptions.includeCurrent}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeCurrent: value }))
@@ -283,8 +290,8 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Hourly Forecast"
-                subtitle="Next 12 hours forecast"
+                title={t('share.option.hourly')}
+                subtitle={t('share.option.hourlySubtitle')}
                 value={shareOptions.includeHourly}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeHourly: value }))
@@ -292,8 +299,8 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Daily Forecast"
-                subtitle="7-day weather forecast"
+                title={t('share.option.daily')}
+                subtitle={t('share.option.dailySubtitle')}
                 value={shareOptions.includeDaily}
                 onValueChange={(value) =>
                   setShareOptions(prev => ({ ...prev, includeDaily: value }))
@@ -301,8 +308,8 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
 
               <ShareOption
-                title="Astronomy"
-                subtitle="Sunrise, sunset and moon phase"
+                title={t('share.option.astronomy')}
+                subtitle={t('share.option.astronomySubtitle')}
                 value={shareOptions.includeAstronomy}
                 onValueChange={(value) =>
                   setShareOptions(prev => ({ ...prev, includeAstronomy: value }))
@@ -311,11 +318,11 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
 
               {/* Detail Options */}
               <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 20 }]}>
-                Weather Details
+                {t('share.detailsSection')}
               </Text>
               
               <ShareOption
-                title="Feels Like Temperature"
+                title={t('share.option.feelsLike')}
                 value={shareOptions.includeFeelsLike}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeFeelsLike: value }))
@@ -323,7 +330,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Humidity"
+                title={t('share.option.humidity')}
                 value={shareOptions.includeHumidity}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeHumidity: value }))
@@ -331,7 +338,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Atmospheric Pressure"
+                title={t('share.option.pressure')}
                 value={shareOptions.includePressure}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includePressure: value }))
@@ -339,7 +346,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Visibility"
+                title={t('share.option.visibility')}
                 value={shareOptions.includeVisibility}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeVisibility: value }))
@@ -347,7 +354,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="UV Index"
+                title={t('share.option.uv')}
                 value={shareOptions.includeUV}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeUV: value }))
@@ -355,7 +362,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
               />
               
               <ShareOption
-                title="Wind Information"
+                title={t('share.option.wind')}
                 value={shareOptions.includeWind}
                 onValueChange={(value) => 
                   setShareOptions(prev => ({ ...prev, includeWind: value }))
@@ -370,7 +377,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
                 onPress={() => handleShare()}
               >
                 <Ionicons name="share-outline" size={24} color="white" />
-                <Text style={styles.shareActionText}>Share Weather Report</Text>
+                <Text style={styles.shareActionText}>{t('share.shareButton')}</Text>
               </TouchableOpacity>
             </View>
           </View>

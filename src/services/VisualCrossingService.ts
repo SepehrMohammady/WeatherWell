@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapVisualCrossingIcon, visualCrossingIconIsNight, isNightAtHour } from './conditions';
 
 export class VisualCrossingService implements WeatherService {
   private apiKey: string;
@@ -62,7 +63,8 @@ export class VisualCrossingService implements WeatherService {
         temperature: current.temp || 0,
         feelsLike: current.feelslike || current.temp || 0,
         condition: current.conditions || 'Unknown',
-        icon: this.mapIconToUrl(current.icon),
+        conditionCode: mapVisualCrossingIcon(current.icon),
+        isNight: visualCrossingIconIsNight(current.icon),
         humidity: current.humidity || 0,
         windSpeed: current.windspeed || 0,
         windDirection: this.getWindDirection(current.winddir || 0),
@@ -90,7 +92,7 @@ export class VisualCrossingService implements WeatherService {
       maxTemp: day.tempmax || 0,
       minTemp: day.tempmin || 0,
       condition: day.conditions || 'Unknown',
-      icon: this.mapIconToUrl(day.icon),
+      conditionCode: mapVisualCrossingIcon(day.icon),
       precipitationChance: day.precipprob || 0,
       precipitationMm: day.precip || 0,
       windSpeed: day.windspeed || 0,
@@ -132,7 +134,10 @@ export class VisualCrossingService implements WeatherService {
             time: `${day.datetime}T${hour.datetime}`,
             temperature: hour.temp || 0,
             condition: hour.conditions || 'Unknown',
-            icon: this.mapIconToUrl(hour.icon),
+            conditionCode: mapVisualCrossingIcon(hour.icon),
+            isNight: /-(day|night)$/.test(hour.icon || '')
+              ? visualCrossingIconIsNight(hour.icon)
+              : isNightAtHour(`${day.datetime}T${hour.datetime}`),
             precipitationChance: hour.precipprob || 0,
             precipitationMm: hour.precip || 0,
             windSpeed: hour.windspeed || 0,
@@ -146,23 +151,6 @@ export class VisualCrossingService implements WeatherService {
     });
 
     return hourly.slice(0, 24);
-  }
-
-  private mapIconToUrl(icon: string): string {
-    // Visual Crossing icon mapping to weather icon URLs
-    const iconMap: { [key: string]: string } = {
-      'clear-day': 'https://cdn.weatherapi.com/weather/64x64/day/113.png',
-      'clear-night': 'https://cdn.weatherapi.com/weather/64x64/night/113.png',
-      'partly-cloudy-day': 'https://cdn.weatherapi.com/weather/64x64/day/116.png',
-      'partly-cloudy-night': 'https://cdn.weatherapi.com/weather/64x64/night/116.png',
-      'cloudy': 'https://cdn.weatherapi.com/weather/64x64/day/119.png',
-      'rain': 'https://cdn.weatherapi.com/weather/64x64/day/296.png',
-      'snow': 'https://cdn.weatherapi.com/weather/64x64/day/332.png',
-      'wind': 'https://cdn.weatherapi.com/weather/64x64/day/264.png',
-      'fog': 'https://cdn.weatherapi.com/weather/64x64/day/248.png'
-    };
-
-    return iconMap[icon] || 'https://cdn.weatherapi.com/weather/64x64/day/113.png';
   }
 
   private getWindDirection(degrees: number): string {

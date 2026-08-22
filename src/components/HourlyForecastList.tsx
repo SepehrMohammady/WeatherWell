@@ -1,9 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { WeatherIcon } from './WeatherIcon';
 import { HourlyForecast } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { formatTemperature } from '../utils/temperatureUtils';
 
 interface HourlyForecastListProps {
@@ -13,6 +15,7 @@ interface HourlyForecastListProps {
 export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyData }) => {
   const { colors } = useTheme();
   const { settings } = useSettings();
+  const { t, ln, resolved } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
   
   // Find the current hour index
@@ -52,9 +55,9 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
   
   const formatHour = (timeString: string) => {
     const date = new Date(timeString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      hour12: true 
+    return date.toLocaleTimeString(resolved, {
+      hour: 'numeric',
+      hour12: true
     });
   };
   
@@ -73,7 +76,7 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.titleRow}>
         <Ionicons name="time-outline" size={20} color={colors.text} />
-        <Text style={[styles.title, { color: colors.text }]}>Hourly Forecast</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('weather.hourlyForecast')}</Text>
       </View>
       <ScrollView 
         ref={scrollViewRef}
@@ -98,22 +101,19 @@ export const HourlyForecastList: React.FC<HourlyForecastListProps> = ({ hourlyDa
                 { color: isCurrent ? colors.primary : colors.text + '80' },
                 isCurrent && styles.currentHourText
               ]}>
-                {isCurrent ? 'Now' : formatHour(hour.time)}
+                {isCurrent ? t('weather.now') : ln(formatHour(hour.time))}
               </Text>
-              <Image 
-                source={{ 
-                  uri: hour.icon.startsWith('http') ? hour.icon : `https:${hour.icon}` 
-                }}
-                style={styles.icon}
-              />
-              <Text style={[styles.temperature, { color: colors.primary }]}>{formatTemperature(hour.temperature, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
+              <View style={styles.icon}>
+                <WeatherIcon code={hour.conditionCode} isNight={hour.isNight} size={26} />
+              </View>
+              <Text style={[styles.temperature, { color: colors.primary }]}>{ln(formatTemperature(hour.temperature, settings.temperatureUnit).replace('°C', '°').replace('°F', '°'))}</Text>
               <View style={styles.precipitation}>
                 <Text style={[styles.precipText, { color: colors.text + '80' }]}>
-                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '80'} /> {hour.precipitationChance}%
+                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '80'} /> {t('weather.percentValue', { value: hour.precipitationChance })}
                 </Text>
               </View>
               <Text style={[styles.wind, { color: colors.text + '60' }]}>
-                <MaterialCommunityIcons name="weather-windy" size={11} color={colors.text + '60'} /> {Math.round(hour.windSpeed)}
+                <MaterialCommunityIcons name="weather-windy" size={11} color={colors.text + '60'} /> {ln(Math.round(hour.windSpeed))}
               </Text>
             </View>
           );

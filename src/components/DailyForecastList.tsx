@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { WeatherIcon } from './WeatherIcon';
 import { DailyForecast } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { formatTemperature } from '../utils/temperatureUtils';
 
 interface DailyForecastListProps {
@@ -13,7 +15,8 @@ interface DailyForecastListProps {
 export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData }) => {
   const { colors } = useTheme();
   const { settings } = useSettings();
-  
+  const { t, ln, resolved } = useLanguage();
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -21,11 +24,11 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('weather.today');
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow';
+      return t('weather.tomorrow');
     } else {
-      return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+      return ln(date.toLocaleDateString(resolved, { weekday: 'short', day: 'numeric' }));
     }
   };
 
@@ -33,43 +36,40 @@ export const DailyForecastList: React.FC<DailyForecastListProps> = ({ dailyData 
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.titleRow}>
         <Ionicons name="calendar-outline" size={20} color={colors.text} />
-        <Text style={[styles.title, { color: colors.text }]}>Future Forecast</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('weather.dailyForecast')}</Text>
       </View>
       {dailyData.slice(0, 7).map((day, index) => (
         <View key={index} style={styles.dayItem}>
           <View style={styles.leftSection}>
             <Text style={[styles.dayName, { color: colors.text }]}>{formatDate(day.date)}</Text>
             <View style={styles.conditionContainer}>
-              <Image 
-                source={{ 
-                  uri: day.icon.startsWith('http') ? day.icon : `https:${day.icon}` 
-                }}
-                style={styles.icon}
-              />
-              <Text style={[styles.condition, { color: colors.text + '80' }]}>{day.condition}</Text>
+              <View style={styles.icon}>
+                <WeatherIcon code={day.conditionCode} size={24} />
+              </View>
+              <Text style={[styles.condition, { color: colors.text + '80' }]}>{t('conditions.' + day.conditionCode)}</Text>
             </View>
           </View>
           
           <View style={styles.rightSection}>
             <View style={styles.temperatureContainer}>
-              <Text style={[styles.maxTemp, { color: colors.primary }]}>{formatTemperature(day.maxTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
-              <Text style={[styles.minTemp, { color: colors.text + '60' }]}>{formatTemperature(day.minTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°')}</Text>
+              <Text style={[styles.maxTemp, { color: colors.primary }]}>{ln(formatTemperature(day.maxTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°'))}</Text>
+              <Text style={[styles.minTemp, { color: colors.text + '60' }]}>{ln(formatTemperature(day.minTemp, settings.temperatureUnit).replace('°C', '°').replace('°F', '°'))}</Text>
             </View>
             
             <View style={styles.detailsContainer}>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailText, { color: colors.text + '60' }]}>
-                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '60'} /> {day.precipitationChance}%
+                  <MaterialCommunityIcons name="water-outline" size={12} color={colors.text + '60'} /> {t('weather.percentValue', { value: day.precipitationChance })}
                 </Text>
               </View>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailText, { color: colors.text + '60' }]}>
-                  <MaterialCommunityIcons name="weather-windy" size={12} color={colors.text + '60'} /> {Math.round(day.windSpeed)} km/h
+                  <MaterialCommunityIcons name="weather-windy" size={12} color={colors.text + '60'} /> {t('weather.kmhValue', { value: Math.round(day.windSpeed) })}
                 </Text>
               </View>
               <View style={styles.detailItem}>
                 <Text style={[styles.detailText, { color: colors.text + '60' }]}>
-                  <MaterialCommunityIcons name="water-percent" size={13} color={colors.text + '60'} /> {day.humidity}%
+                  <MaterialCommunityIcons name="water-percent" size={13} color={colors.text + '60'} /> {t('weather.percentValue', { value: day.humidity })}
                 </Text>
               </View>
             </View>

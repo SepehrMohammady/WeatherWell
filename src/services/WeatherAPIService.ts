@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapWeatherApiCode } from './conditions';
 
 export class WeatherAPIService implements WeatherService {
   private apiKey: string;
@@ -48,7 +49,8 @@ export class WeatherAPIService implements WeatherService {
       current: {
         temperature: data.current.temp_c,
         condition: data.current.condition.text,
-        icon: data.current.condition.icon,
+        conditionCode: mapWeatherApiCode(data.current.condition.code),
+        isNight: data.current.is_day !== 1,
         humidity: data.current.humidity,
         windSpeed: data.current.wind_kph,
         windDirection: data.current.wind_dir,
@@ -117,7 +119,7 @@ export class WeatherAPIService implements WeatherService {
       maxTemp: day.day.maxtemp_c,
       minTemp: day.day.mintemp_c,
       condition: day.day.condition.text,
-      icon: day.day.condition.icon,
+      conditionCode: mapWeatherApiCode(day.day.condition.code),
       humidity: day.day.avghumidity,
       windSpeed: day.day.maxwind_kph,
       precipitationChance: day.day.daily_chance_of_rain,
@@ -141,7 +143,8 @@ export class WeatherAPIService implements WeatherService {
         time: hour.time,
         temperature: hour.temp_c,
         condition: hour.condition.text,
-        icon: hour.condition.icon,
+        conditionCode: mapWeatherApiCode(hour.condition.code),
+        isNight: hour.is_day !== 1,
         humidity: hour.humidity,
         windSpeed: hour.wind_kph,
         precipitationChance: hour.chance_of_rain,

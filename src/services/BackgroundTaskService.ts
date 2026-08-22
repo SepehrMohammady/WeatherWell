@@ -3,9 +3,10 @@ import * as BackgroundFetch from 'expo-background-fetch';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherServiceFactory } from './WeatherServiceFactory';
-import { defaultNotificationSettings, NotificationSettings } from './NotificationService';
+import { defaultNotificationSettings, NotificationSettings, SEVERE_TYPE_LABEL_KEYS } from './NotificationService';
 import { WeatherData } from './types';
 import { WIDGET_DATA_KEY, buildWidgetData } from '../widgets/widget-utils';
+import { t, ln, loadActiveLanguage } from '../i18n';
 
 // Task names
 const BACKGROUND_WEATHER_TASK = 'BACKGROUND_WEATHER_ALERT_TASK';
@@ -62,6 +63,9 @@ function notificationSettingsFromAppSettings(appSettings: Record<string, any>): 
  * This task fetches weather data and sends alerts if conditions meet thresholds
  */
 TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
+  // Headless entry point: sync the persisted language so notifications
+  // fire in the user's language.
+  await loadActiveLanguage();
   try {
     console.log('🔄 Background weather task started');
     
@@ -103,7 +107,8 @@ TaskManager.defineTask(BACKGROUND_WEATHER_TASK, async () => {
       settings.openWeatherMapApiKey,
       settings.visualCrossingApiKey,
       settings.qweatherApiKey,
-      settings.meteostatApiKey
+      settings.meteostatApiKey,
+      settings.customSources
     );
 
     const weatherData = result.data;
@@ -152,8 +157,8 @@ async function checkAndSendAlerts(
     if (windSpeed >= settings.windSpeedThreshold) {
       if (await shouldSendAlert('current-wind')) {
         await sendBackgroundNotification(
-          '💨 Strong Wind Alert',
-          `Wind speed is ${Math.round(windSpeed)} km/h. Take precautions when outdoors.`,
+          t('notif.wind.title'),
+          t('notif.wind.body', { speed: Math.round(windSpeed) }),
           { type: 'wind-alert', windSpeed }
         );
         await markAlertSent('current-wind');
@@ -167,10 +172,10 @@ async function checkAndSendAlerts(
     const uvIndex = current.uvIndex;
     if (uvIndex >= settings.uvThreshold) {
       if (await shouldSendAlert('current-uv')) {
-        const uvLevel = uvIndex >= 11 ? 'Extreme' : uvIndex >= 8 ? 'Very High' : 'High';
+        const uvLevel = uvIndex >= 11 ? t('notif.uvLevel.extreme') : uvIndex >= 8 ? t('notif.uvLevel.veryHigh') : t('notif.uvLevel.high');
         await sendBackgroundNotification(
-          '☀️ UV Index Alert',
-          `UV Index is ${uvIndex} (${uvLevel}). Wear sunscreen and protective clothing!`,
+          t('notif.uv.indexTitle'),
+          t('notif.uv.indexBody', { uv: uvIndex, level: uvLevel }),
           { type: 'uv-alert', uvIndex }
         );
         await markAlertSent('current-uv');
@@ -185,8 +190,8 @@ async function checkAndSendAlerts(
     if (temp >= settings.temperatureThreshold.high) {
       if (await shouldSendAlert('current-temp-high')) {
         await sendBackgroundNotification(
-          '🔥 High Temperature Alert',
-          `Temperature is ${Math.round(temp)}°C. Stay hydrated and avoid prolonged sun exposure.`,
+          t('notif.temp.highAlertTitle'),
+          t('notif.temp.highAlertBody', { temp: Math.round(temp) }),
           { type: 'temp-high-alert', temperature: temp }
         );
         await markAlertSent('current-temp-high');
@@ -195,8 +200,8 @@ async function checkAndSendAlerts(
     } else if (temp <= settings.temperatureThreshold.low) {
       if (await shouldSendAlert('current-temp-low')) {
         await sendBackgroundNotification(
-          '❄️ Low Temperature Alert',
-          `Temperature is ${Math.round(temp)}°C. Bundle up and stay warm!`,
+          t('notif.temp.lowAlertTitle'),
+          t('notif.temp.lowAlertBody', { temp: Math.round(temp) }),
           { type: 'temp-low-alert', temperature: temp }
         );
         await markAlertSent('current-temp-low');
@@ -211,12 +216,12 @@ async function checkAndSendAlerts(
     const aqiThreshold = (settings as any).aqiThreshold || 101;
     if (aqi >= aqiThreshold) {
       if (await shouldSendAlert('current-aqi')) {
-        const aqiLevel = aqi >= 301 ? 'Hazardous' : 
-                         aqi >= 201 ? 'Very Unhealthy' : 
-                         aqi >= 151 ? 'Unhealthy' : 'Unhealthy for Sensitive Groups';
+        const aqiLevel = aqi >= 301 ? t('notif.aqiLevel.hazardous') :
+                         aqi >= 201 ? t('notif.aqiLevel.veryUnhealthy') :
+                         aqi >= 151 ? t('notif.aqiLevel.unhealthy') : t('notif.aqiLevel.sensitive');
         await sendBackgroundNotification(
-          '🌫️ Air Quality Alert',
-          `AQI is ${aqi} (${aqiLevel}). Consider limiting outdoor activities.`,
+          t('notif.aqi.title'),
+          t('notif.aqi.body', { aqi, level: aqiLevel }),
           { type: 'aqi-alert', aqi }
         );
         await markAlertSent('current-aqi');
@@ -238,9 +243,10 @@ async function checkAndSendAlerts(
     for (const severe of severeConditions) {
       if (severe.keywords.some(keyword => condition.includes(keyword))) {
         if (await shouldSendAlert(`current-severe-${severe.type}`)) {
+          const typeLabel = t(SEVERE_TYPE_LABEL_KEYS[severe.type] || severe.type);
           await sendBackgroundNotification(
-            `${severe.emoji} Severe Weather: ${severe.type}`,
-            `${severe.type} detected in your area. Take necessary precautions.`,
+            t('notif.severe.bgTitle', { emoji: severe.emoji, type: typeLabel }),
+            t('notif.severe.bgBody', { type: typeLabel }),
             { type: 'severe-weather', condition: severe.type }
           );
           await markAlertSent(`current-severe-${severe.type}`);
@@ -311,8 +317,8 @@ async function checkUpcomingConditions(
     if (settings.enableUmbrellaAlerts && hour.precipitationChance >= settings.rainThreshold) {
       if (await shouldSendAlert('upcoming-rain')) {
         await sendBackgroundNotification(
-          '☂️ Umbrella Alert',
-          `${hour.precipitationChance}% chance of rain around ${timeStr}. Don't forget your umbrella!`,
+          t('notif.umbrella.title'),
+          t('notif.umbrella.upcomingBody', { chance: hour.precipitationChance, time: timeStr }),
           { type: 'upcoming-rain', time: timeStr }
         );
         await markAlertSent('upcoming-rain');
@@ -325,8 +331,8 @@ async function checkUpcomingConditions(
       if (hour.temperature >= settings.temperatureThreshold.high) {
         if (await shouldSendAlert('upcoming-temp-high')) {
           await sendBackgroundNotification(
-            '🔥 High Temperature Ahead',
-            `Expected ${Math.round(hour.temperature)}°C around ${timeStr}. Stay hydrated!`,
+            t('notif.temp.aheadHighTitle'),
+            t('notif.temp.aheadHighBody', { temp: Math.round(hour.temperature), time: timeStr }),
             { type: 'upcoming-temp-high', time: timeStr }
           );
           await markAlertSent('upcoming-temp-high');
@@ -334,8 +340,8 @@ async function checkUpcomingConditions(
       } else if (hour.temperature <= settings.temperatureThreshold.low) {
         if (await shouldSendAlert('upcoming-temp-low')) {
           await sendBackgroundNotification(
-            '❄️ Cold Temperature Ahead',
-            `Expected ${Math.round(hour.temperature)}°C around ${timeStr}. Dress warmly!`,
+            t('notif.temp.aheadLowTitle'),
+            t('notif.temp.aheadLowBody', { temp: Math.round(hour.temperature), time: timeStr }),
             { type: 'upcoming-temp-low', time: timeStr }
           );
           await markAlertSent('upcoming-temp-low');
@@ -347,8 +353,8 @@ async function checkUpcomingConditions(
     if (settings.enableWindAlerts && hour.windSpeed >= settings.windSpeedThreshold) {
       if (await shouldSendAlert('upcoming-wind')) {
         await sendBackgroundNotification(
-          '💨 Strong Wind Expected',
-          `Wind speeds up to ${Math.round(hour.windSpeed)} km/h expected around ${timeStr}.`,
+          t('notif.wind.expectedTitle'),
+          t('notif.wind.expectedBody', { speed: Math.round(hour.windSpeed), time: timeStr }),
           { type: 'upcoming-wind', time: timeStr }
         );
         await markAlertSent('upcoming-wind');
@@ -360,8 +366,8 @@ async function checkUpcomingConditions(
     if (settings.enableUVAlerts && hour.uvIndex && hour.uvIndex >= settings.uvThreshold) {
       if (await shouldSendAlert('upcoming-uv')) {
         await sendBackgroundNotification(
-          '☀️ High UV Expected',
-          `UV index of ${hour.uvIndex} expected around ${timeStr}. Apply sunscreen!`,
+          t('notif.uv.expectedTitle'),
+          t('notif.uv.expectedBody', { uv: hour.uvIndex, time: timeStr }),
           { type: 'upcoming-uv', time: timeStr }
         );
         await markAlertSent('upcoming-uv');
@@ -380,9 +386,10 @@ async function checkUpcomingConditions(
       for (const severe of severeConditions) {
         if (severe.keywords.some(kw => condition.includes(kw))) {
           if (await shouldSendAlert(`upcoming-severe-${severe.type}`)) {
+            const typeLabel = t(SEVERE_TYPE_LABEL_KEYS[severe.type] || severe.type);
             await sendBackgroundNotification(
-              `${severe.emoji} ${severe.type} Expected Soon`,
-              `${severe.type} forecast around ${timeStr}. Take precautions.`,
+              t('notif.severe.expectedTitle', { emoji: severe.emoji, type: typeLabel }),
+              t('notif.severe.expectedBody', { type: typeLabel, time: timeStr }),
               { type: 'upcoming-severe', condition: severe.type, time: timeStr }
             );
             await markAlertSent(`upcoming-severe-${severe.type}`);
@@ -453,20 +460,20 @@ async function sendRichDailyForecast(weatherData: WeatherData): Promise<void> {
   const lowTemp = Math.round(today?.minTemp || current.temperature);
   const rainChance = today?.precipitationChance || 0;
 
-  let body = `📍 ${location}\nToday: ${highTemp}°/${lowTemp}°, ${today?.condition || current.condition}`;
-  if (rainChance > 30) body += ` | 🌧️ ${rainChance}% rain`;
+  let body = `📍 ${location}\n${t('notif.daily.today', { high: highTemp, low: lowTemp, condition: today?.condition || current.condition })}`;
+  if (rainChance > 30) body += ` | ${t('notif.daily.rainChance', { chance: rainChance })}`;
   if (tomorrow) {
-    body += `\nTomorrow: ${Math.round(tomorrow.maxTemp)}°/${Math.round(tomorrow.minTemp)}°, ${tomorrow.condition}`;
-    if ((tomorrow.precipitationChance || 0) > 30) body += ` | 🌧️ ${tomorrow.precipitationChance}% rain`;
+    body += `\n${t('notif.daily.tomorrow', { high: Math.round(tomorrow.maxTemp), low: Math.round(tomorrow.minTemp), condition: tomorrow.condition })}`;
+    if ((tomorrow.precipitationChance || 0) > 30) body += ` | ${t('notif.daily.rainChance', { chance: tomorrow.precipitationChance })}`;
   }
   const warnings: string[] = [];
-  if (current.uvIndex >= 8) warnings.push(`☀️ High UV (${current.uvIndex})`);
-  if ((today?.windSpeed || 0) >= 40) warnings.push(`💨 Strong wind ${Math.round(today!.windSpeed)} km/h`);
-  if ((today?.precipitationMm || 0) >= 10) warnings.push(`🌊 Heavy rain ${Math.round(today!.precipitationMm)}mm`);
+  if (current.uvIndex >= 8) warnings.push(t('notif.daily.highUv', { uv: current.uvIndex }));
+  if ((today?.windSpeed || 0) >= 40) warnings.push(t('notif.daily.strongWind', { speed: Math.round(today!.windSpeed) }));
+  if ((today?.precipitationMm || 0) >= 10) warnings.push(t('notif.daily.heavyRain', { mm: Math.round(today!.precipitationMm) }));
   if (warnings.length > 0) body += `\n⚠️ ${warnings.join(' | ')}`;
 
   await sendBackgroundNotification(
-    '📅 Daily Weather Forecast',
+    t('notif.daily.title'),
     body,
     { type: 'daily-forecast', location }
   );
@@ -486,9 +493,9 @@ async function sendRichHourlyForecast(weatherData: WeatherData): Promise<void> {
   // Hour-by-hour temperature trend
   const tempTrend = hourlyData.map(h => {
     const hour = new Date(h.time).getHours();
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? t('notif.time.pm') : t('notif.time.am');
     const h12 = hour % 12 || 12;
-    return `${h12}${ampm} ${Math.round(h.temperature)}°`;
+    return `${ln(h12)}${ampm} ${ln(Math.round(h.temperature))}°`;
   }).join(' → ');
   body += `\n${tempTrend}`;
 
@@ -497,18 +504,18 @@ async function sendRichHourlyForecast(weatherData: WeatherData): Promise<void> {
   if (rainHours.length > 0) {
     const rainTimes = rainHours.map(h => {
       const hour = new Date(h.time).getHours();
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      return `${hour % 12 || 12}${ampm}`;
+      const ampm = hour >= 12 ? t('notif.time.pm') : t('notif.time.am');
+      return `${ln(hour % 12 || 12)}${ampm}`;
     }).join(', ');
-    body += `\n🌧️ Rain at ${rainTimes}`;
+    body += `\n${t('notif.hourly.rainAt', { times: rainTimes })}`;
   }
 
   // Wind if notable
   const maxWind = Math.max(...hourlyData.map(h => h.windSpeed));
-  if (maxWind >= 25) body += ` | 💨 Wind up to ${Math.round(maxWind)} km/h`;
+  if (maxWind >= 25) body += ` | ${t('notif.hourly.windUpTo', { speed: Math.round(maxWind) })}`;
 
   await sendBackgroundNotification(
-    '⏰ Hourly Weather Update',
+    t('notif.hourly.updateTitle'),
     body,
     { type: 'hourly-forecast', location }
   );
@@ -534,16 +541,16 @@ async function rescheduleWithData(
     const lowTemp = Math.round(today?.minTemp || current.temperature);
     const rainChance = today?.precipitationChance || 0;
 
-    let title = '📅 Daily Weather Forecast';
-    let body = `📍 ${location}\nToday: ${highTemp}°/${lowTemp}°, ${today?.condition || current.condition}`;
-    if (rainChance > 30) body += ` | 🌧️ ${rainChance}% rain`;
+    let title = t('notif.daily.title');
+    let body = `📍 ${location}\n${t('notif.daily.today', { high: highTemp, low: lowTemp, condition: today?.condition || current.condition })}`;
+    if (rainChance > 30) body += ` | ${t('notif.daily.rainChance', { chance: rainChance })}`;
     if (tomorrow) {
-      body += `\nTomorrow: ${Math.round(tomorrow.maxTemp)}°/${Math.round(tomorrow.minTemp)}°, ${tomorrow.condition}`;
-      if ((tomorrow.precipitationChance || 0) > 30) body += ` | 🌧️ ${tomorrow.precipitationChance}% rain`;
+      body += `\n${t('notif.daily.tomorrow', { high: Math.round(tomorrow.maxTemp), low: Math.round(tomorrow.minTemp), condition: tomorrow.condition })}`;
+      if ((tomorrow.precipitationChance || 0) > 30) body += ` | ${t('notif.daily.rainChance', { chance: tomorrow.precipitationChance })}`;
     }
 
     if (identifier === 'hourly-forecast') {
-      title = '⏰ Hourly Weather Update';
+      title = t('notif.hourly.updateTitle');
       // Filter by fire time, not current time
       const fireTime = new Date();
       fireTime.setHours(hour, minute, 0, 0);
@@ -554,17 +561,17 @@ async function rescheduleWithData(
       if (hourlyData.length > 0) {
         const tempTrend = hourlyData.map(h => {
           const hr = new Date(h.time).getHours();
-          const ampm = hr >= 12 ? 'PM' : 'AM';
-          return `${hr % 12 || 12}${ampm} ${Math.round(h.temperature)}°`;
+          const ampm = hr >= 12 ? t('notif.time.pm') : t('notif.time.am');
+          return `${ln(hr % 12 || 12)}${ampm} ${ln(Math.round(h.temperature))}°`;
         }).join(' → ');
         body = `📍 ${location}\n${tempTrend}`;
         const rainHrs = hourlyData.filter(h => h.precipitationChance > 30);
         if (rainHrs.length > 0) {
           const rainTimes = rainHrs.map(h => {
             const hr = new Date(h.time).getHours();
-            return `${hr % 12 || 12}${hr >= 12 ? 'PM' : 'AM'}`;
+            return `${ln(hr % 12 || 12)}${hr >= 12 ? t('notif.time.pm') : t('notif.time.am')}`;
           }).join(', ');
-          body += `\n🌧️ Rain at ${rainTimes}`;
+          body += `\n${t('notif.hourly.rainAt', { times: rainTimes })}`;
         }
       }
     }

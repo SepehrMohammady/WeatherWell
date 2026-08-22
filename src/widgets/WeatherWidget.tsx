@@ -1,5 +1,8 @@
 import React from 'react';
 import { FlexWidget, TextWidget, SvgWidget } from 'react-native-android-widget';
+import { ConditionCode, getConditionVisual } from '../services/conditions';
+import { WEATHER_ICON_PATHS } from './weather-icon-paths';
+import { t } from '../i18n';
 
 // Material Design glyph path (24dp viewBox); the refresh button itself is a
 // native overlay in rn_widget.xml — see WeatherWidget.java
@@ -13,6 +16,8 @@ interface WeatherWidgetProps {
   temperature?: string;
   location?: string;
   conditions?: string;
+  conditionCode?: string;
+  isNight?: boolean;
   high?: string;
   low?: string;
   rainChance?: string;
@@ -32,8 +37,10 @@ interface WeatherWidgetProps {
 
 export function WeatherWidget({
   temperature = '--°',
-  location = 'Open app to load weather',
+  location = t('widget.openAppToLoad'),
   conditions = '',
+  conditionCode,
+  isNight = false,
   high = '--°',
   low = '--°',
   rainChance,
@@ -75,6 +82,15 @@ export function WeatherWidget({
   const panelPadding = Math.max(4, Math.min(16, Math.round(10 * scale)));
   const gap = Math.max(2, Math.min(12, Math.round(5 * scale)));
   const dropSize = Math.max(10, Math.min(18, Math.round(12 * scale)));
+  const conditionIconSize = Math.max(22, Math.min(52, Math.round(34 * scale)));
+
+  // Consistent Material weather glyph, matching the in-app icon family
+  const weatherVisual = conditionCode
+    ? getConditionVisual(conditionCode as ConditionCode, isNight)
+    : null;
+  const weatherIconSvg = weatherVisual
+    ? iconSvg(WEATHER_ICON_PATHS[weatherVisual.pathKey], weatherVisual.color)
+    : null;
 
   // Hide only when truly too small to render anything useful
   const autoHideConditions = widgetHeight < 70;
@@ -121,17 +137,27 @@ export function WeatherWidget({
             flexDirection: 'column',
           }}
         >
-          <TextWidget
-            text={temperature}
-            style={{
-              fontSize: tempSize,
-              fontWeight: 'bold',
-              color: '#FFFFFF',
-            }}
-          />
+          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {weatherIconSvg ? (
+              <SvgWidget
+                svg={weatherIconSvg}
+                style={{ width: conditionIconSize, height: conditionIconSize, marginRight: 6 }}
+              />
+            ) : (
+              <TextWidget text="" style={{ fontSize: 1, color: '#00000000' }} />
+            )}
+            <TextWidget
+              text={temperature}
+              style={{
+                fontSize: tempSize,
+                fontWeight: 'bold',
+                color: '#FFFFFF',
+              }}
+            />
+          </FlexWidget>
           {showFeelsLike && feelsLike ? (
             <TextWidget
-              text={`Feels ${feelsLike}`}
+              text={t('widget.feels', { value: feelsLike })}
               style={{
                 fontSize: smallSize,
                 color: '#8A9299',
@@ -156,11 +182,11 @@ export function WeatherWidget({
             }}
           >
             <TextWidget
-              text={`H: ${high}`}
+              text={t('widget.high', { value: high })}
               style={{ fontSize: detailSize, color: '#CB936A' }}
             />
             <TextWidget
-              text={`L: ${low}`}
+              text={t('widget.low', { value: low })}
               style={{ fontSize: detailSize, color: '#5F758E' }}
             />
             {showRainChance && rainChance ? (
@@ -211,7 +237,7 @@ export function WeatherWidget({
       {/* Conditions — right below today temp, before tomorrow */}
       {showConditions && !autoHideConditions ? (
         <TextWidget
-          text={conditions || 'Tap to open WeatherWell'}
+          text={conditions || t('widget.tapToOpen')}
           style={{
             fontSize: conditionSize,
             color: '#CFAE95',
@@ -239,7 +265,11 @@ export function WeatherWidget({
           }}
         >
           <TextWidget
-            text={`Tomorrow${tomorrowCondition ? `: ${tomorrowCondition}` : ''}`}
+            text={
+              tomorrowCondition
+                ? t('widget.tomorrowCondition', { condition: tomorrowCondition })
+                : t('widget.tomorrow')
+            }
             style={{ fontSize: smallSize, color: '#CFAE95' }}
             maxLines={1}
           />

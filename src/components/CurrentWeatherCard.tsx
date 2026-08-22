@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { WeatherIcon } from './WeatherIcon';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { formatTemperature } from '../utils/temperatureUtils';
 import { WeatherDetailModal } from './WeatherDetailModal';
 
@@ -16,6 +18,7 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
   const { location, current } = weatherData;
   const { colors } = useTheme();
   const { settings } = useSettings();
+  const { t, ln } = useLanguage();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<'humidity' | 'wind' | 'uv' | 'pressure' | 'windDir' | 'visibility' | 'airquality' | null>(null);
 
@@ -39,18 +42,17 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
       </View>
       
       <View style={styles.mainInfo}>
-        <Text style={[styles.temperature, { color: colors.primary }]}>{formatTemperature(current.temperature, settings.temperatureUnit)}</Text>
+        <Text style={[styles.temperature, { color: colors.primary }]}>{ln(formatTemperature(current.temperature, settings.temperatureUnit))}</Text>
         <View style={styles.conditionContainer}>
-          <Image 
-            source={{ uri: current.icon.startsWith('http') ? current.icon : `https:${current.icon}` }}
-            style={styles.conditionIcon}
-          />
-          <Text style={[styles.condition, { color: colors.text + '80' }]}>{current.condition}</Text>
+          <View style={styles.conditionIcon}>
+            <WeatherIcon code={current.conditionCode} isNight={current.isNight} size={36} />
+          </View>
+          <Text style={[styles.condition, { color: colors.text + '80' }]}>{t('conditions.' + current.conditionCode)}</Text>
         </View>
       </View>
 
       {settings.showFeelsLike && (
-        <Text style={[styles.feelsLike, { color: colors.text + '80' }]}>Feels like {formatTemperature(current.feelsLike, settings.temperatureUnit)}</Text>
+        <Text style={[styles.feelsLike, { color: colors.text + '80' }]}>{t('weather.feelsLike', { temp: formatTemperature(current.feelsLike, settings.temperatureUnit) })}</Text>
       )}
       
       <View style={styles.detailsGrid}>
@@ -60,8 +62,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('humidity')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Humidity</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{current.humidity}%</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.humidity')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{t('weather.percentValue', { value: current.humidity })}</Text>
           </TouchableOpacity>
         )}
         {settings.showWindSpeed && (
@@ -70,8 +72,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('wind')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{Math.round(current.windSpeed)} km/h</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.wind')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{t('weather.kmhValue', { value: Math.round(current.windSpeed) })}</Text>
           </TouchableOpacity>
         )}
         {settings.showUVIndex && (
@@ -80,8 +82,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('uv')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>UV Index</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{current.uvIndex}</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.uvIndex')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{ln(current.uvIndex)}</Text>
           </TouchableOpacity>
         )}
         {settings.showPressure && (
@@ -90,8 +92,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('pressure')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Pressure</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{current.pressure} hPa</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.pressure')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{t('weather.hpaValue', { value: current.pressure })}</Text>
           </TouchableOpacity>
         )}
         {settings.showWindDirection && (
@@ -100,7 +102,7 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('windDir')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Wind Dir</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.windDir')}</Text>
             <Text style={[styles.detailValue, { color: colors.text }]}>{current.windDirection}</Text>
           </TouchableOpacity>
         )}
@@ -110,8 +112,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('visibility')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Visibility</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{current.visibility} km</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.visibility')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{t('weather.kmValue', { value: current.visibility })}</Text>
           </TouchableOpacity>
         )}
         {settings.showAirQuality && weatherData.airQuality && (
@@ -120,8 +122,8 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
             onPress={() => handleMetricPress('airquality')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>Air Quality</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>AQI {weatherData.airQuality.aqi}</Text>
+            <Text style={[styles.detailLabel, { color: colors.text + '60' }]}>{t('weather.airQuality')}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{t('weather.aqiValue', { value: weatherData.airQuality.aqi })}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -185,8 +187,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   conditionIcon: {
-    width: 40,
-    height: 40,
     marginRight: 8,
   },
   condition: {

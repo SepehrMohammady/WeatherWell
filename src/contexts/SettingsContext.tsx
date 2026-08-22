@@ -2,7 +2,36 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type WeatherProvider = 'weatherapi' | 'openweathermap' | 'visualcrossing' | 'openmeteo' | 'qweather' | 'meteostat';
+/** A selectable weather source: one provider, or the per-metric custom blend */
+export type WeatherSource = WeatherProvider | 'custom';
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
+
+/** Which provider feeds each part of the weather in Custom mode */
+export interface CustomSourceConfig {
+  forecast: WeatherProvider;
+  temperature: WeatherProvider;
+  condition: WeatherProvider;
+  humidity: WeatherProvider;
+  wind: WeatherProvider;
+  pressure: WeatherProvider;
+  uvIndex: WeatherProvider;
+  visibility: WeatherProvider;
+  airQuality: WeatherProvider;
+  astronomy: WeatherProvider;
+}
+
+export const defaultCustomSources: CustomSourceConfig = {
+  forecast: 'weatherapi',
+  temperature: 'weatherapi',
+  condition: 'weatherapi',
+  humidity: 'weatherapi',
+  wind: 'weatherapi',
+  pressure: 'weatherapi',
+  uvIndex: 'weatherapi',
+  visibility: 'weatherapi',
+  airQuality: 'weatherapi',
+  astronomy: 'weatherapi',
+};
 
 export interface HomeLocation {
   name: string;
@@ -12,7 +41,8 @@ export interface HomeLocation {
 }
 
 export interface AppSettings {
-  weatherProvider: WeatherProvider;
+  weatherProvider: WeatherSource;
+  customSources: CustomSourceConfig;
   temperatureUnit: TemperatureUnit;
   /** Pinned main location; null means "follow the device's current location" */
   homeLocation: HomeLocation | null;
@@ -48,6 +78,7 @@ export interface AppSettings {
   showWindDirection: boolean;
   showAirQuality: boolean;
   enableShareLocation: boolean;
+  enableWeatherAnimations: boolean;
   widgetOpacity: number;
   widgetShowFeelsLike: boolean;
   widgetShowHighLow: boolean;
@@ -58,6 +89,7 @@ export interface AppSettings {
 
 const defaultSettings: AppSettings = {
   weatherProvider: 'weatherapi',
+  customSources: defaultCustomSources,
   temperatureUnit: 'celsius',
   homeLocation: null,
   enableNotifications: true,
@@ -92,6 +124,7 @@ const defaultSettings: AppSettings = {
   showWindDirection: true,
   showAirQuality: true,
   enableShareLocation: true,
+  enableWeatherAnimations: true,
   widgetOpacity: 0.85,
   widgetShowFeelsLike: true,
   widgetShowHighLow: true,

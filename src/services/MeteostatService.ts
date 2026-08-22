@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapMeteostatCoco, isNightAtHour } from './conditions';
 
 /**
  * MeteostatService - Historical Weather Data Provider
@@ -105,7 +106,7 @@ export class MeteostatService implements WeatherService {
       maxTemp: day.tmax || 0,
       minTemp: day.tmin || 0,
       condition: 'Partly Cloudy', // Meteostat doesn't provide detailed conditions for daily
-      icon: '//cdn.weatherapi.com/weather/64x64/day/116.png',
+      conditionCode: 'partly',
       precipitationChance: day.prcp > 0 ? 70 : 20,
       precipitationMm: day.prcp || 0,
       windSpeed: day.wspd || 0,
@@ -117,7 +118,8 @@ export class MeteostatService implements WeatherService {
       time: hour.time,
       temperature: hour.temp || 0,
       condition: this.getWeatherCondition(hour.coco),
-      icon: this.getWeatherIcon(hour.coco),
+      conditionCode: mapMeteostatCoco(hour.coco),
+      isNight: isNightAtHour(hour.time),
       humidity: hour.rhum || 0,
       windSpeed: hour.wspd || 0,
       precipitationChance: hour.prcp > 0 ? 70 : 20,
@@ -137,7 +139,8 @@ export class MeteostatService implements WeatherService {
       current: {
         temperature: latest.temp || latest.tavg || 0,
         condition: this.getWeatherCondition(latest.coco),
-        icon: this.getWeatherIcon(latest.coco),
+        conditionCode: mapMeteostatCoco(latest.coco),
+        isNight: latest.time ? isNightAtHour(latest.time) : false,
         humidity: latest.rhum || 0,
         windSpeed: latest.wspd || 0,
         windDirection: this.getWindDirection(latest.wdir || 0),
@@ -191,42 +194,6 @@ export class MeteostatService implements WeatherService {
       27: 'Storm'
     };
     return conditions[code] || 'Unknown';
-  }
-
-  private getWeatherIcon(code: number): string {
-    // Map Meteostat codes to WeatherAPI.com icons
-    const iconMap: { [key: number]: string } = {
-      1: '113',  // Clear
-      2: '116',  // Fair -> Partly cloudy
-      3: '119',  // Cloudy
-      4: '122',  // Overcast
-      5: '248',  // Fog
-      6: '260',  // Freezing Fog
-      7: '293',  // Light Rain -> Patchy light drizzle
-      8: '296',  // Rain -> Light rain
-      9: '302',  // Heavy Rain -> Moderate rain
-      10: '311', // Freezing Rain
-      11: '314', // Heavy Freezing Rain
-      12: '317', // Sleet
-      13: '320', // Heavy Sleet
-      14: '326', // Light Snowfall -> Light snow
-      15: '332', // Snowfall -> Moderate snow
-      16: '338', // Heavy Snowfall -> Heavy snow
-      17: '353', // Rain Shower -> Light rain shower
-      18: '359', // Heavy Rain Shower -> Torrential rain shower
-      19: '362', // Sleet Shower -> Light sleet showers
-      20: '365', // Heavy Sleet Shower -> Moderate or heavy sleet showers
-      21: '368', // Snow Shower -> Light snow showers
-      22: '371', // Heavy Snow Shower -> Moderate or heavy snow showers
-      23: '386', // Lightning -> Patchy light rain with thunder
-      24: '374', // Hail -> Light showers of ice pellets
-      25: '389', // Thunderstorm -> Moderate or heavy rain with thunder
-      26: '392', // Heavy Thunderstorm -> Patchy light snow with thunder
-      27: '395'  // Storm -> Moderate or heavy snow with thunder
-    };
-
-    const iconCode = iconMap[code] || '113';
-    return `//cdn.weatherapi.com/weather/64x64/day/${iconCode}.png`;
   }
 
   private getWindDirection(degrees: number): string {

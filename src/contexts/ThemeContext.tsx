@@ -3,6 +3,8 @@ import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Theme = 'light' | 'dark';
+export type ThemeMode = 'system' | 'light' | 'dark';
+export type ThemeColorName = 'beige' | 'sage' | 'sky' | 'lavender' | 'rose';
 
 export interface ThemeColors {
   primary: string;
@@ -17,39 +19,78 @@ export interface ThemeColors {
   gradient: string[];
 }
 
-// Neutral Paradise palette — modern minimal pass:
-// light theme gets real text contrast, dark theme gets a true dark ground,
-// both keep the warm sand/copper brand accents.
-const lightTheme: ThemeColors = {
-  primary: '#9C7355',        // Warm brown, deepened for contrast on white
-  background: '#F6F5F3',     // Soft warm off-white
-  surface: '#FFFFFF',        // Clean white surface
-  text: '#22272C',           // Near-black (was grey-blue, hard to read)
-  textSecondary: '#6B7378',  // Legible mid-grey for secondary text
-  accent: '#CB936A',         // Warm terracotta accent
-  error: '#C0604E',          // Clear but muted error red
-  border: '#E9E7E4',         // Hairline warm border
-  card: '#F1EFEC',           // Subtle chip/button background
-  gradient: ['#D9B99F', '#C29873'] // Warm header gradient, deep enough for white text
+// Neutral base — shared by every color theme
+const lightBase = {
+  background: '#F6F5F3',
+  surface: '#FFFFFF',
+  text: '#22272C',
+  textSecondary: '#6B7378',
+  error: '#C0604E',
+  border: '#E9E7E4',
+  card: '#F1EFEC',
 };
 
-const darkTheme: ThemeColors = {
-  primary: '#CB936A',        // Warm terracotta
-  background: '#101214',     // True dark ground (was #1A1A1A)
-  surface: '#1B1E21',        // Elevated surface
-  text: '#ECEDEE',           // High-contrast light text
-  textSecondary: '#A6ADB3',  // Muted grey for secondary
-  accent: '#CFAE95',         // Light neutral accent
-  error: '#D98E77',          // Soft but visible error
-  border: '#30343A',         // Subtle border (was light blue-grey)
-  card: '#26292D',           // Chip/button background
-  gradient: ['#23282D', '#101214'] // Near-monochrome deep header gradient
+const darkBase = {
+  background: '#101214',
+  surface: '#1B1E21',
+  text: '#ECEDEE',
+  textSecondary: '#A6ADB3',
+  error: '#D98E77',
+  border: '#30343A',
+  card: '#26292D',
 };
+
+interface AccentSet {
+  primary: string;
+  accent: string;
+  gradient: string[];
+}
+
+// Accent palettes — same family as ThinkWell / FeedWell theme colors
+const ACCENTS: Record<ThemeColorName, { light: AccentSet; dark: AccentSet }> = {
+  beige: {
+    light: { primary: '#9C7355', accent: '#CB936A', gradient: ['#D9B99F', '#C29873'] },
+    dark: { primary: '#CB936A', accent: '#CFAE95', gradient: ['#23282D', '#101214'] },
+  },
+  sage: {
+    light: { primary: '#5E7A5B', accent: '#84A67E', gradient: ['#BCD0B4', '#94B28A'] },
+    dark: { primary: '#94BA8C', accent: '#AFCCA6', gradient: ['#1F2823', '#101412'] },
+  },
+  sky: {
+    light: { primary: '#47749B', accent: '#6E9EC4', gradient: ['#AFCBDF', '#7FA9C9'] },
+    dark: { primary: '#82AFD3', accent: '#A3C6E0', gradient: ['#1D262E', '#0F1316'] },
+  },
+  lavender: {
+    light: { primary: '#71619B', accent: '#9787C0', gradient: ['#C8BEDF', '#A594CB'] },
+    dark: { primary: '#A797D0', accent: '#C2B4E0', gradient: ['#242030', '#121016'] },
+  },
+  rose: {
+    light: { primary: '#9B5C70', accent: '#C0839A', gradient: ['#DFBCC9', '#C795A8'] },
+    dark: { primary: '#CF93A8', accent: '#DFB2C2', gradient: ['#2C2026', '#151013'] },
+  },
+};
+
+export const THEME_COLOR_SWATCHES: Record<ThemeColorName, string> = {
+  beige: '#C6A184',
+  sage: '#94B28A',
+  sky: '#7FA9C9',
+  lavender: '#A594CB',
+  rose: '#C795A8',
+};
+
+function buildColors(theme: Theme, colorName: ThemeColorName): ThemeColors {
+  const base = theme === 'light' ? lightBase : darkBase;
+  const accent = ACCENTS[colorName]?.[theme] || ACCENTS.beige[theme];
+  return { ...base, ...accent };
+}
 
 interface ThemeContextType {
   theme: Theme;
+  themeMode: ThemeMode;
+  themeColor: ThemeColorName;
   colors: ThemeColors;
-  toggleTheme: () => void;
+  setThemeMode: (mode: ThemeMode) => void;
+  setThemeColor: (color: ThemeColorName) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -67,57 +108,56 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Initialize with device system theme
-  const systemTheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
-  const [theme, setThemeState] = useState<Theme>(systemTheme);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
+  const [themeColor, setThemeColorState] = useState<ThemeColorName>('beige');
+  const [systemScheme, setSystemScheme] = useState(Appearance.getColorScheme());
 
   useEffect(() => {
-    loadTheme();
-    
-    // Listen for system theme changes
+    loadPreferences();
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      // Only auto-switch if user hasn't explicitly set a theme
-      AsyncStorage.getItem('theme').then(savedTheme => {
-        if (!savedTheme) {
-          setThemeState(colorScheme === 'dark' ? 'dark' : 'light');
-        }
-      });
+      setSystemScheme(colorScheme);
     });
-    
     return () => subscription.remove();
   }, []);
 
-  const loadTheme = async () => {
+  const loadPreferences = async () => {
     try {
-      const savedTheme = await AsyncStorage.getItem('theme');
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        setThemeState(savedTheme);
-      } else {
-        // No saved preference - use system theme
-        setThemeState(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light');
+      const [savedMode, savedColor, legacyTheme] = await Promise.all([
+        AsyncStorage.getItem('themeMode'),
+        AsyncStorage.getItem('themeColor'),
+        AsyncStorage.getItem('theme'), // pre-1.1 releases stored 'light'/'dark' here
+      ]);
+      if (savedMode === 'system' || savedMode === 'light' || savedMode === 'dark') {
+        setThemeModeState(savedMode);
+      } else if (legacyTheme === 'light' || legacyTheme === 'dark') {
+        setThemeModeState(legacyTheme);
+      }
+      if (savedColor && savedColor in ACCENTS) {
+        setThemeColorState(savedColor as ThemeColorName);
       }
     } catch (error) {
-      console.error('Error loading theme:', error);
+      console.error('Error loading theme preferences:', error);
     }
   };
 
-  const setTheme = async (newTheme: Theme) => {
-    try {
-      await AsyncStorage.setItem('theme', newTheme);
-      setThemeState(newTheme);
-    } catch (error) {
-      console.error('Error saving theme:', error);
-    }
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    AsyncStorage.setItem('themeMode', mode).catch(() => {});
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+  const setThemeColor = (color: ThemeColorName) => {
+    setThemeColorState(color);
+    AsyncStorage.setItem('themeColor', color).catch(() => {});
   };
 
-  const colors = theme === 'light' ? lightTheme : darkTheme;
+  const theme: Theme =
+    themeMode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : themeMode;
+  const colors = buildColors(theme, themeColor);
 
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, themeMode, themeColor, colors, setThemeMode, setThemeColor }}
+    >
       {children}
     </ThemeContext.Provider>
   );

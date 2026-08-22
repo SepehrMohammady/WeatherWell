@@ -1,3 +1,5 @@
+import { ConditionCode } from './conditions';
+
 export interface WeatherData {
   location: {
     name: string;
@@ -8,7 +10,8 @@ export interface WeatherData {
   current: {
     temperature: number;
     condition: string;
-    icon: string;
+    conditionCode: ConditionCode;
+    isNight: boolean;
     humidity: number;
     windSpeed: number;
     windDirection: string;
@@ -43,7 +46,7 @@ export interface DailyForecast {
   maxTemp: number;
   minTemp: number;
   condition: string;
-  icon: string;
+  conditionCode: ConditionCode;
   humidity: number;
   windSpeed: number;
   precipitationChance: number;
@@ -60,7 +63,8 @@ export interface HourlyForecast {
   time: string;
   temperature: number;
   condition: string;
-  icon: string;
+  conditionCode: ConditionCode;
+  isNight: boolean;
   humidity: number;
   windSpeed: number;
   precipitationChance: number;

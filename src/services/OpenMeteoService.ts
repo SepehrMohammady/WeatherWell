@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapOpenMeteoWmo, isNightAtHour } from './conditions';
 
 export class OpenMeteoService implements WeatherService {
   private readonly baseUrl = 'https://api.open-meteo.com/v1';
@@ -14,8 +15,8 @@ export class OpenMeteoService implements WeatherService {
         params: {
           latitude: lat,
           longitude: lon,
-          current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m',
-          hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,uv_index,visibility',
+          current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,is_day',
+          hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,uv_index,visibility,is_day',
           daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,precipitation_probability_max,wind_speed_10m_max',
           timezone: 'auto',
           forecast_days: Math.min(days, 16)
@@ -59,7 +60,8 @@ export class OpenMeteoService implements WeatherService {
           time: hourly.time[i],
           temperature: hourly.temperature_2m?.[i] || 0,
           condition: this.getWeatherCondition(hourly.weather_code?.[i] || 0),
-          icon: this.getWeatherIcon(hourly.weather_code?.[i] || 0),
+          conditionCode: mapOpenMeteoWmo(hourly.weather_code?.[i] || 0),
+          isNight: hourly.is_day ? hourly.is_day[i] === 0 : isNightAtHour(hourly.time[i]),
           humidity: hourly.relative_humidity_2m?.[i] || 0,
           windSpeed: hourly.wind_speed_10m?.[i] || 0,
           precipitationChance: hourly.precipitation_probability?.[i] || 0,
@@ -80,7 +82,7 @@ export class OpenMeteoService implements WeatherService {
           maxTemp: daily.temperature_2m_max?.[i] || 0,
           minTemp: daily.temperature_2m_min?.[i] || 0,
           condition: this.getWeatherCondition(daily.weather_code?.[i] || 0),
-          icon: this.getWeatherIcon(daily.weather_code?.[i] || 0),
+          conditionCode: mapOpenMeteoWmo(daily.weather_code?.[i] || 0),
           precipitationChance: daily.precipitation_probability_max?.[i] || 0,
           precipitationMm: daily.precipitation_sum?.[i] || 0,
           windSpeed: daily.wind_speed_10m_max?.[i] || 0,
@@ -105,7 +107,8 @@ export class OpenMeteoService implements WeatherService {
       current: {
         temperature: current.temperature_2m || 0,
         condition: this.getWeatherCondition(current.weather_code || 0),
-        icon: this.getWeatherIcon(current.weather_code || 0),
+        conditionCode: mapOpenMeteoWmo(current.weather_code || 0),
+        isNight: current.is_day === 0,
         humidity: current.relative_humidity_2m || 0,
         windSpeed: current.wind_speed_10m || 0,
         windDirection: this.getWindDirection(current.wind_direction_10m || 0),
@@ -155,36 +158,6 @@ export class OpenMeteoService implements WeatherService {
       99: 'Thunderstorm with heavy hail'
     };
     return conditions[code] || 'Unknown';
-  }
-
-  private getWeatherIcon(code: number): string {
-    const iconMap: { [key: number]: string } = {
-      0: 'https://cdn.weatherapi.com/weather/64x64/day/113.png', // Clear
-      1: 'https://cdn.weatherapi.com/weather/64x64/day/116.png', // Mainly clear
-      2: 'https://cdn.weatherapi.com/weather/64x64/day/116.png', // Partly cloudy
-      3: 'https://cdn.weatherapi.com/weather/64x64/day/119.png', // Overcast
-      45: 'https://cdn.weatherapi.com/weather/64x64/day/248.png', // Fog
-      48: 'https://cdn.weatherapi.com/weather/64x64/day/248.png', // Rime fog
-      51: 'https://cdn.weatherapi.com/weather/64x64/day/263.png', // Light drizzle
-      53: 'https://cdn.weatherapi.com/weather/64x64/day/266.png', // Moderate drizzle
-      55: 'https://cdn.weatherapi.com/weather/64x64/day/266.png', // Dense drizzle
-      61: 'https://cdn.weatherapi.com/weather/64x64/day/293.png', // Slight rain
-      63: 'https://cdn.weatherapi.com/weather/64x64/day/296.png', // Moderate rain
-      65: 'https://cdn.weatherapi.com/weather/64x64/day/308.png', // Heavy rain
-      71: 'https://cdn.weatherapi.com/weather/64x64/day/326.png', // Slight snow
-      73: 'https://cdn.weatherapi.com/weather/64x64/day/332.png', // Moderate snow
-      75: 'https://cdn.weatherapi.com/weather/64x64/day/338.png', // Heavy snow
-      77: 'https://cdn.weatherapi.com/weather/64x64/day/332.png', // Snow grains
-      80: 'https://cdn.weatherapi.com/weather/64x64/day/353.png', // Rain showers
-      81: 'https://cdn.weatherapi.com/weather/64x64/day/356.png', // Moderate rain showers
-      82: 'https://cdn.weatherapi.com/weather/64x64/day/359.png', // Violent rain showers
-      85: 'https://cdn.weatherapi.com/weather/64x64/day/368.png', // Slight snow showers
-      86: 'https://cdn.weatherapi.com/weather/64x64/day/371.png', // Heavy snow showers
-      95: 'https://cdn.weatherapi.com/weather/64x64/day/386.png', // Thunderstorm
-      96: 'https://cdn.weatherapi.com/weather/64x64/day/389.png', // Thunderstorm with hail
-      99: 'https://cdn.weatherapi.com/weather/64x64/day/392.png'  // Thunderstorm with heavy hail
-    };
-    return iconMap[code] || 'https://cdn.weatherapi.com/weather/64x64/day/113.png';
   }
 
   private getWindDirection(degrees: number): string {

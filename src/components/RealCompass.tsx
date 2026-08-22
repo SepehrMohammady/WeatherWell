@@ -3,6 +3,20 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Magnetometer, DeviceMotion } from 'expo-sensors';
 import Svg, { Circle, Line, Text as SvgText, Polygon } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { t as translate } from '../i18n';
+
+/** Known 16-wind cardinal abbreviations (as returned by providers). */
+const WIND_DIRECTIONS = [
+  'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+  'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW',
+];
+
+/** Localize a provider wind direction abbreviation; unknown values pass through unchanged. */
+export function localizeWindDirection(direction: string): string {
+  const dir = direction.trim().toUpperCase();
+  return WIND_DIRECTIONS.includes(dir) ? translate('compass.dir.' + dir.toLowerCase()) : direction;
+}
 
 interface RealCompassProps {
   windSpeed: number;
@@ -16,12 +30,14 @@ export const RealCompass: React.FC<RealCompassProps> = ({
   size = 280 
 }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [deviceHeading, setDeviceHeading] = useState(0);
   const [subscription, setSubscription] = useState<any>(null);
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [headingAccuracy, setHeadingAccuracy] = useState(0);
   const [, setHeadingHistory] = useState<number[]>([]);
-  const [calibrationStatus, setCalibrationStatus] = useState<string>('Initializing...');
+  // Holds an i18n key so the text follows language changes at render time
+  const [calibrationStatus, setCalibrationStatus] = useState<string>('compass.status.initializing');
 
   const center = size / 2;
   const radius = size * 0.35;
@@ -32,7 +48,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
     // Set a timeout for calibration - if not calibrated in 10 seconds, show fallback
     const calibrationTimeout = setTimeout(() => {
       if (!isCalibrated) {
-        setCalibrationStatus('Sensors not available - showing static compass');
+        setCalibrationStatus('compass.status.noSensorsStatic');
         setIsCalibrated(true); // Allow static compass to show
         setHeadingAccuracy(0);
       }
@@ -49,7 +65,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
     DeviceMotion.isAvailableAsync().then((available) => {
       if (available && Platform.OS === 'ios') {
         // Use DeviceMotion for iOS (provides better rotation data)
-        setCalibrationStatus('Calibrating device sensors...');
+        setCalibrationStatus('compass.status.calibratingDevice');
         setSubscription(
           DeviceMotion.addListener((result) => {
             if (result.rotation && result.rotation.gamma !== undefined) {
@@ -66,7 +82,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
               });
               
               setIsCalibrated(true);
-              setCalibrationStatus('✓ Calibrated - Real compass active');
+              setCalibrationStatus('compass.status.calibratedDevice');
               setHeadingAccuracy(0.9); // DeviceMotion is generally accurate
             }
           })
@@ -74,7 +90,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
         DeviceMotion.setUpdateInterval(100);
       } else {
         // Use magnetometer for Android or if DeviceMotion not available
-        setCalibrationStatus('Calibrating magnetometer...');
+        setCalibrationStatus('compass.status.calibratingMagnetometer');
         Magnetometer.isAvailableAsync().then((magnetAvailable) => {
           if (magnetAvailable) {
             setSubscription(
@@ -92,7 +108,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
                 });
                 
                 setIsCalibrated(true);
-                setCalibrationStatus('✓ Calibrated - Magnetometer active');
+                setCalibrationStatus('compass.status.calibratedMagnetometer');
                 setHeadingAccuracy(0.7); // Magnetometer accuracy varies
               })
             );
@@ -100,7 +116,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
           } else {
             // If no sensors available, show static compass
             console.warn('No compass sensors available');
-            setCalibrationStatus('⚠️ No sensors available - Static compass');
+            setCalibrationStatus('compass.status.noSensors');
             setIsCalibrated(true); // Show static compass
             setHeadingAccuracy(0);
           }
@@ -109,7 +125,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
     }).catch((error) => {
       console.warn('Error initializing compass sensors:', error);
       // Fallback to static compass if sensor initialization fails
-      setCalibrationStatus('⚠️ Sensor error - Static compass');
+      setCalibrationStatus('compass.status.sensorError');
       setIsCalibrated(true); // Show static compass
       setHeadingAccuracy(0);
     });
@@ -162,9 +178,9 @@ export const RealCompass: React.FC<RealCompassProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Compass</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t('compass.title')}</Text>
       <Text style={[styles.subtitle, { color: colors.text + '80' }]}>
-        {calibrationStatus}
+        {t(calibrationStatus)}
       </Text>
       
       <View style={styles.compassContainer}>
@@ -222,7 +238,7 @@ export const RealCompass: React.FC<RealCompassProps> = ({
                   fill={color}
                   textAnchor="middle"
                 >
-                  {dir.label}
+                  {t('compass.dir.' + dir.label.toLowerCase())}
                 </SvgText>
               </React.Fragment>
             );
@@ -253,28 +269,28 @@ export const RealCompass: React.FC<RealCompassProps> = ({
             fill={colors.primary}
             textAnchor="middle"
           >
-            Wind: {windDirection}
+            {t('compass.windLabel', { direction: localizeWindDirection(windDirection) })}
           </SvgText>
         </Svg>
       </View>
       
       <View style={styles.infoContainer}>
         <Text style={[styles.windSpeed, { color: colors.text }]}>
-          {Math.round(windSpeed)} km/h
+          {t('weather.kmhValue', { value: Math.round(windSpeed) })}
         </Text>
         <Text style={[styles.deviceHeading, { color: colors.text + '80' }]}>
-          Device heading: {Math.round(deviceHeading)}°
+          {t('compass.deviceHeading', { value: Math.round(deviceHeading) })}
         </Text>
         <Text style={[
           styles.accuracyText,
           { color: headingAccuracy > 0.8 ? '#27ae60' : headingAccuracy > 0.5 ? '#d4a017' : '#e74c3c' }
         ]}>
-          {headingAccuracy > 0.8 ? '● High accuracy' : headingAccuracy > 0.5 ? '● Medium accuracy' : '● Low accuracy - move away from metal objects'}
+          {headingAccuracy > 0.8 ? t('compass.accuracy.high') : headingAccuracy > 0.5 ? t('compass.accuracy.medium') : t('compass.accuracy.low')}
         </Text>
       </View>
-      
+
       <Text style={[styles.instruction, { color: colors.text + '60' }]}>
-        For best accuracy: Hold phone flat, away from metal objects, and move in figure-8 pattern to calibrate
+        {t('compass.instruction')}
       </Text>
     </View>
   );

@@ -3,6 +3,7 @@ import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WeatherWidget } from './WeatherWidget';
 import { WIDGET_DATA_KEY, fetchAndCacheWidgetData } from './widget-utils';
+import { loadActiveLanguage } from '../i18n';
 
 const nameToWidget = {
   WeatherWidget: WeatherWidget,
@@ -12,6 +13,8 @@ interface WidgetData {
   temperature?: string;
   location?: string;
   conditions?: string;
+  conditionCode?: string;
+  isNight?: boolean;
   high?: string;
   low?: string;
   rainChance?: string;
@@ -38,6 +41,10 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     nameToWidget[widgetInfo.widgetName as keyof typeof nameToWidget];
 
   if (!Widget) return;
+
+  // Headless entry point — load the user's language before the widget tree
+  // builds any user-visible text (labels rendered via t() in WeatherWidget)
+  await loadActiveLanguage();
 
   switch (props.widgetAction) {
     case 'WIDGET_ADDED':

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherService, WeatherData, DailyForecast, HourlyForecast } from './types';
+import { mapOwmIcon, owmIconIsNight } from './conditions';
 
 export class OpenWeatherMapService implements WeatherService {
   private apiKey: string;
@@ -42,7 +43,8 @@ export class OpenWeatherMapService implements WeatherService {
       time: new Date(item.dt * 1000).toISOString(),
       temperature: item.main.temp,
       condition: item.weather[0].description,
-      icon: `https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`,
+      conditionCode: mapOwmIcon(item.weather[0].icon),
+      isNight: owmIconIsNight(item.weather[0].icon),
       humidity: item.main.humidity,
       windSpeed: item.wind.speed * 3.6,
       precipitationChance: (item.pop || 0) * 100,
@@ -76,7 +78,7 @@ export class OpenWeatherMapService implements WeatherService {
           maxTemp: Math.max(...temps),
           minTemp: Math.min(...temps),
           condition: items[0].weather[0].description,
-          icon: `https://openweathermap.org/img/wn/${items[0].weather[0].icon}@2x.png`,
+          conditionCode: mapOwmIcon(items[0].weather[0].icon),
           humidity: Math.round(humidities.reduce((a: number, b: number) => a + b, 0) / humidities.length),
           windSpeed: Math.max(...winds),
           precipitationChance: Math.max(...precipChances),
@@ -94,7 +96,8 @@ export class OpenWeatherMapService implements WeatherService {
       current: {
         temperature: data.list[0].main.temp,
         condition: data.list[0].weather[0].description,
-        icon: `https://openweathermap.org/img/wn/${data.list[0].weather[0].icon}@2x.png`,
+        conditionCode: mapOwmIcon(data.list[0].weather[0].icon),
+        isNight: owmIconIsNight(data.list[0].weather[0].icon),
         humidity: data.list[0].main.humidity,
         windSpeed: data.list[0].wind.speed * 3.6,
         windDirection: this.getWindDirection(data.list[0].wind.deg || 0),

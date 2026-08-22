@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { t as translate } from '../i18n';
 
 type IconLib = 'ion' | 'mci';
 interface FeatureIconSpec {
@@ -33,11 +34,31 @@ function parseTimeToMinutes(time?: string): number | null {
 function formatDaylight(sunrise?: string, sunset?: string): string {
   const start = parseTimeToMinutes(sunrise);
   const end = parseTimeToMinutes(sunset);
-  if (start === null || end === null) return 'Data not available';
+  if (start === null || end === null) return translate('common.notAvailable');
 
   // Guard against a sunset past midnight (polar regions)
   const total = end >= start ? end - start : end + 24 * 60 - start;
-  return `${Math.floor(total / 60)}h ${total % 60}m`;
+  return translate('smart.daylightDuration', { hours: Math.floor(total / 60), minutes: total % 60 });
+}
+
+/** Known English moon phase names (as returned by providers) mapped to i18n keys. */
+const MOON_PHASE_KEYS: Record<string, string> = {
+  'New Moon': 'smart.moon.newMoon',
+  'Waxing Crescent': 'smart.moon.waxingCrescent',
+  'First Quarter': 'smart.moon.firstQuarter',
+  'Waxing Gibbous': 'smart.moon.waxingGibbous',
+  'Full Moon': 'smart.moon.fullMoon',
+  'Waning Gibbous': 'smart.moon.waningGibbous',
+  'Last Quarter': 'smart.moon.lastQuarter',
+  'Third Quarter': 'smart.moon.lastQuarter',
+  'Waning Crescent': 'smart.moon.waningCrescent',
+};
+
+/** Localize a provider moon phase name; unknown values pass through unchanged. */
+function localizeMoonPhase(phase?: string): string {
+  if (!phase) return translate('common.notAvailable');
+  const key = MOON_PHASE_KEYS[phase.trim()];
+  return key ? translate(key) : phase;
 }
 
 const FeatureIcon: React.FC<{ spec: FeatureIconSpec }> = ({ spec }) =>
@@ -48,6 +69,7 @@ const FeatureIcon: React.FC<{ spec: FeatureIconSpec }> = ({ spec }) =>
   );
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SmartFeaturesCardProps {
   weatherData: WeatherData;
@@ -57,6 +79,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
   weatherData
 }) => {
   const { colors } = useTheme();
+  const { t, ln } = useLanguage();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showAstronomyDetail, setShowAstronomyDetail] = useState<string | null>(null);
 
@@ -87,11 +110,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       : weatherData.forecast.daily[0]?.precipitationChance || 0;
 
     if (precipChance > 70) {
-      return { text: "Definitely bring an umbrella!", icon: "umbrella", lib: "ion" as IconLib, color: "#e17055", chance: precipChance };
+      return { text: t('smart.umbrella.definitely'), icon: "umbrella", lib: "ion" as IconLib, color: "#e17055", chance: precipChance };
     } else if (precipChance > 30) {
-      return { text: "Consider bringing an umbrella", icon: "umbrella-outline", lib: "ion" as IconLib, color: "#fdcb6e", chance: precipChance };
+      return { text: t('smart.umbrella.consider'), icon: "umbrella-outline", lib: "ion" as IconLib, color: "#fdcb6e", chance: precipChance };
     } else {
-      return { text: "No umbrella needed today", icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894", chance: precipChance };
+      return { text: t('smart.umbrella.none'), icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894", chance: precipChance };
     }
   };
 
@@ -104,13 +127,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       : currentTemp;
 
     if (minTemp < 5) {
-      return { text: "Heavy winter coat, scarf, gloves", icon: "snow", lib: "ion" as IconLib, color: "#74b9ff" };
+      return { text: t('smart.clothing.winter'), icon: "snow", lib: "ion" as IconLib, color: "#74b9ff" };
     } else if (minTemp < 15) {
-      return { text: "Jacket or warm sweater", icon: "tshirt-crew", lib: "mci" as IconLib, color: "#81ecec" };
+      return { text: t('smart.clothing.jacket'), icon: "tshirt-crew", lib: "mci" as IconLib, color: "#81ecec" };
     } else if (minTemp < 25) {
-      return { text: "Light sweater or long sleeves", icon: "shirt", lib: "ion" as IconLib, color: "#00b894" };
+      return { text: t('smart.clothing.sweater'), icon: "shirt", lib: "ion" as IconLib, color: "#00b894" };
     } else {
-      return { text: "T-shirt or light clothing", icon: "thermometer-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
+      return { text: t('smart.clothing.tshirt'), icon: "thermometer-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
     }
   };
 
@@ -123,13 +146,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       : currentUV;
     
     if (maxUV >= 8) {
-      return { text: "Wear sunglasses & sunscreen SPF 30+", icon: "glasses", lib: "ion" as IconLib, color: "#e17055" };
+      return { text: t('smart.uv.high'), icon: "glasses", lib: "ion" as IconLib, color: "#e17055" };
     } else if (maxUV >= 6) {
-      return { text: "Consider sunglasses & sunscreen", icon: "glasses-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
+      return { text: t('smart.uv.medium'), icon: "glasses-outline", lib: "ion" as IconLib, color: "#fdcb6e" };
     } else if (maxUV >= 3) {
-      return { text: "Light sun protection recommended", icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894" };
+      return { text: t('smart.uv.light'), icon: "sunny-outline", lib: "ion" as IconLib, color: "#00b894" };
     } else {
-      return { text: "No sun protection needed", icon: "partly-sunny-outline", lib: "ion" as IconLib, color: "#74b9ff" };
+      return { text: t('smart.uv.none'), icon: "partly-sunny-outline", lib: "ion" as IconLib, color: "#74b9ff" };
     }
   };
 
@@ -137,11 +160,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     // AQI is now 0-500 scale (EPA standard)
     const aqi = weatherData.airQuality?.aqi || 0;
     if (aqi > 150) {
-      return { text: "Wear a mask outdoors" };
+      return { text: t('smart.mask.wear') };
     } else if (aqi > 100) {
-      return { text: "Consider wearing a mask" };
+      return { text: t('smart.mask.consider') };
     } else {
-      return { text: "No mask needed" };
+      return { text: t('smart.mask.none') };
     }
   };
 
@@ -149,13 +172,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
     // AQI is now 0-500 scale (EPA standard)
     const aqi = weatherData.airQuality?.aqi || 0;
     if (aqi <= 50) {
-      return { text: "Air quality is good", icon: "lungs", lib: "mci" as IconLib, color: "#00b894" };
+      return { text: t('smart.air.good'), icon: "lungs", lib: "mci" as IconLib, color: "#00b894" };
     } else if (aqi <= 100) {
-      return { text: "Moderate air quality", icon: "lungs", lib: "mci" as IconLib, color: "#fdcb6e" };
+      return { text: t('smart.air.moderate'), icon: "lungs", lib: "mci" as IconLib, color: "#fdcb6e" };
     } else if (aqi <= 150) {
-      return { text: "Unhealthy for sensitive", icon: "lungs", lib: "mci" as IconLib, color: "#e17055" };
+      return { text: t('smart.air.sensitive'), icon: "lungs", lib: "mci" as IconLib, color: "#e17055" };
     } else {
-      return { text: "Unhealthy air quality", icon: "lungs", lib: "mci" as IconLib, color: "#d63031" };
+      return { text: t('smart.air.unhealthy'), icon: "lungs", lib: "mci" as IconLib, color: "#d63031" };
     }
   };
 
@@ -221,7 +244,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  Daily Air Quality
+                  {t('smart.dailyAirQuality')}
                 </Text>
                 <TouchableOpacity onPress={() => setExpandedItem(null)}>
                   <Ionicons name="close" size={24} color={colors.text} />
@@ -232,11 +255,11 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                 {weatherData.airQuality && (
                   <View style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
                     <Text style={[styles.hourlyTime, { color: colors.text }]}>
-                      {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {ln(new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))}
                     </Text>
                     <View style={styles.hourlyDetail}>
                       <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        AQI {weatherData.airQuality.aqi}
+                        {t('smart.aqiValue', { value: weatherData.airQuality.aqi })}
                       </Text>
                     </View>
                   </View>
@@ -259,9 +282,9 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {type === 'umbrella' && 'Hourly Rain Forecast'}
-                {type === 'clothing' && 'Hourly Temperature'}
-                {type === 'uv' && 'Hourly UV Index'}
+                {type === 'umbrella' && t('smart.hourlyRain')}
+                {type === 'clothing' && t('smart.hourlyTemperature')}
+                {type === 'uv' && t('smart.hourlyUvIndex')}
               </Text>
               <TouchableOpacity onPress={() => setExpandedItem(null)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -283,37 +306,37 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                     { color: isCurrent ? colors.primary : colors.text },
                     isCurrent && { fontWeight: 'bold' }
                   ]}>
-                    {isCurrent ? 'Now' : new Date(hour.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    {isCurrent ? t('smart.now') : ln(new Date(hour.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))}
                   </Text>
                   {type === 'umbrella' && (
                     <View style={styles.hourlyDetail}>
                       <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        {hour.precipitationChance}%
+                        {ln(hour.precipitationChance)}%
                       </Text>
                       <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        {hour.condition}
+                        {t('conditions.' + hour.conditionCode)}
                       </Text>
                     </View>
                   )}
                   {type === 'clothing' && (
                     <View style={styles.hourlyDetail}>
                       <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        {Math.round(hour.temperature)}°C
+                        {t('smart.tempC', { temp: Math.round(hour.temperature) })}
                       </Text>
                       <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        {hour.condition}
+                        {t('conditions.' + hour.conditionCode)}
                       </Text>
                     </View>
                   )}
                   {type === 'uv' && (
                     <View style={styles.hourlyDetail}>
                       <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                        UV {hour.uvIndex || 0}
+                        {t('smart.uvValue', { value: hour.uvIndex || 0 })}
                       </Text>
                       <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                        {hour.uvIndex && hour.uvIndex >= 8 ? 'Very High' : 
-                         hour.uvIndex && hour.uvIndex >= 6 ? 'High' : 
-                         hour.uvIndex && hour.uvIndex >= 3 ? 'Moderate' : 'Low'}
+                        {hour.uvIndex && hour.uvIndex >= 8 ? t('smart.uvLevel.veryHigh') :
+                         hour.uvIndex && hour.uvIndex >= 6 ? t('smart.uvLevel.high') :
+                         hour.uvIndex && hour.uvIndex >= 3 ? t('smart.uvLevel.moderate') : t('smart.uvLevel.low')}
                       </Text>
                     </View>
                   )}
@@ -341,8 +364,8 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {type === 'sun' && 'Daily Sun Times'}
-                {type === 'moon' && 'Moon Phases'}
+                {type === 'sun' && t('smart.dailySunTimes')}
+                {type === 'moon' && t('smart.moonPhases')}
               </Text>
               <TouchableOpacity onPress={() => setShowAstronomyDetail(null)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -359,22 +382,22 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                 return (
                   <View key={index} style={[styles.hourlyItem, { borderBottomColor: colors.border }]}>
                     <Text style={[styles.hourlyTime, { color: colors.text }]}>
-                      {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {ln(new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))}
                     </Text>
                     {type === 'sun' && (
                       <View style={styles.hourlyDetail}>
                         {hasSunData ? (
                           <>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              <MaterialCommunityIcons name="weather-sunset-up" size={14} color={colors.text} /> {dayAstronomy.sunrise}
+                              <MaterialCommunityIcons name="weather-sunset-up" size={14} color={colors.text} /> {ln(dayAstronomy.sunrise)}
                             </Text>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              <MaterialCommunityIcons name="weather-sunset-down" size={14} color={colors.text} /> {dayAstronomy.sunset}
+                              <MaterialCommunityIcons name="weather-sunset-down" size={14} color={colors.text} /> {ln(dayAstronomy.sunset)}
                             </Text>
                           </>
                         ) : (
                           <Text style={[styles.hourlyValue, { color: colors.textSecondary }]}>
-                            Data not available
+                            {t('common.notAvailable')}
                           </Text>
                         )}
                       </View>
@@ -384,15 +407,15 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
                         {hasMoonData ? (
                           <>
                             <Text style={[styles.hourlyValue, { color: colors.text }]}>
-                              {dayAstronomy.moonPhase}
+                              {localizeMoonPhase(dayAstronomy.moonPhase)}
                             </Text>
                             <Text style={[styles.hourlyCondition, { color: colors.textSecondary }]}>
-                              {Math.round(dayAstronomy.moonIllumination * 100)}% illuminated
+                              {t('smart.illuminatedPercent', { percent: Math.round(dayAstronomy.moonIllumination * 100) })}
                             </Text>
                           </>
                         ) : (
                           <Text style={[styles.hourlyValue, { color: colors.textSecondary }]}>
-                            Data not available
+                            {t('common.notAvailable')}
                           </Text>
                         )}
                       </View>
@@ -413,7 +436,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
         <View style={styles.titleRow}>
           <Ionicons name="bulb-outline" size={20} color={colors.text} />
-          <Text style={[styles.title, { color: colors.text }]}>Recommendations</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('smart.recommendations')}</Text>
         </View>
         
         <TouchableOpacity 
@@ -424,10 +447,10 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <FeatureIcon spec={umbrella} />
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Umbrella Alert</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.umbrellaAlert')}</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{umbrella.text}</Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              Up to {umbrella.chance}% chance of rain in the next 24 hours
+              {t('smart.umbrellaChance', { percent: umbrella.chance })}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -441,10 +464,10 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <FeatureIcon spec={clothing} />
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Clothing Suggestion</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.clothingSuggestion')}</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{clothing.text}</Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              {Math.round(weatherData.current.temperature)}°C, feels like {Math.round(weatherData.current.feelsLike)}°C
+              {t('smart.tempFeelsLike', { temp: Math.round(weatherData.current.temperature), feels: Math.round(weatherData.current.feelsLike) })}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -458,10 +481,10 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <FeatureIcon spec={uvProtection} />
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>UV Protection</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.uvProtection')}</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{uvProtection.text}</Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              UV Index: {weatherData.current.uvIndex}
+              {t('smart.uvIndexLabel', { value: weatherData.current.uvIndex })}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -477,10 +500,13 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
               <FeatureIcon spec={airQuality} />
             </View>
             <View style={styles.featureContent}>
-              <Text style={[styles.featureTitle, { color: colors.text }]}>Air Quality</Text>
+              <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.airQuality')}</Text>
               <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>{maskAdvice.text}</Text>
               <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-                AQI: {weatherData.airQuality?.aqi || 'N/A'} • PM2.5: {weatherData.airQuality ? Math.round(weatherData.airQuality.pm2_5) : 'N/A'}μg/m³
+                {t('smart.aqiPmDetail', {
+                  aqi: weatherData.airQuality?.aqi || t('smart.na'),
+                  pm25: weatherData.airQuality ? Math.round(weatherData.airQuality.pm2_5) : t('smart.na'),
+                })}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -500,7 +526,7 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
         <View style={styles.titleRow}>
           <MaterialCommunityIcons name="telescope" size={20} color={colors.text} />
-          <Text style={[styles.title, { color: colors.text }]}>Astronomy</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('smart.astronomy')}</Text>
         </View>
         
         <TouchableOpacity 
@@ -511,14 +537,14 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <Ionicons name="sunny" size={24} color="#fdcb6e" />
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Sun Times</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.sunTimes')}</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
               {weatherData.astronomy.sunrise && weatherData.astronomy.sunset
-                ? `Sunrise: ${weatherData.astronomy.sunrise} • Sunset: ${weatherData.astronomy.sunset}`
-                : 'Data not available'}
+                ? t('smart.sunriseSunset', { sunrise: weatherData.astronomy.sunrise, sunset: weatherData.astronomy.sunset })
+                : t('common.notAvailable')}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              Daylight: {formatDaylight(weatherData.astronomy.sunrise, weatherData.astronomy.sunset)}
+              {t('smart.daylightLabel', { duration: formatDaylight(weatherData.astronomy.sunrise, weatherData.astronomy.sunset) })}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -532,14 +558,14 @@ export const SmartFeaturesCard: React.FC<SmartFeaturesCardProps> = ({
             <Ionicons name="moon" size={24} color="#74b9ff" />
           </View>
           <View style={styles.featureContent}>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Moon Phase</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('smart.moonPhase')}</Text>
             <Text style={[styles.featureDescription, { color: colors.text + '80' }]}>
-              {weatherData.astronomy.moonPhase || 'Data not available'}
+              {localizeMoonPhase(weatherData.astronomy.moonPhase)}
             </Text>
             <Text style={[styles.featureDetail, { color: colors.text + '60' }]}>
-              {weatherData.astronomy.moonIllumination >= 0 
-                ? `Illumination: ${Math.round(weatherData.astronomy.moonIllumination * 100)}%`
-                : 'Illumination: Data not available'}
+              {weatherData.astronomy.moonIllumination >= 0
+                ? t('smart.illumination', { percent: Math.round(weatherData.astronomy.moonIllumination * 100) })
+                : t('smart.illuminationUnavailable')}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
