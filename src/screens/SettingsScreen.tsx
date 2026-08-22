@@ -1293,6 +1293,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
           />
           <SettingItem
+            title="ThinkWell"
+            description={t('settings.thinkwellDesc')}
+            onPress={() => handleOpenPlayListing('com.thinkwell.app')}
+            rightElement={<Ionicons name="logo-google-playstore" size={20} color={colors.primary} />}
+          />
+          <SettingItem
             title={t('settings.allSemoLabApps')}
             description={t('settings.allSemoLabAppsSubtitle')}
             onPress={handleOpenDeveloperPage}

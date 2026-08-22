@@ -231,6 +231,7 @@ export const hi: Record<string, string> = {
   'settings.moreFromSemoLab': 'SeMo Lab से और भी',
   'settings.feedwellDesc': 'विज्ञापन-मुक्त RSS रीडर। बिना ध्यान भटकाए साफ़-सुथरा पठन।',
   'settings.ledgerwellDesc': 'व्यक्तिगत लेन-देन और उधार का हिसाब रखें, बहु-मुद्रा समर्थन।',
+  'settings.thinkwellDesc': 'ऑफ़लाइन AI चैट। लोकल मॉडल, पूरी तरह निजी।',
   'settings.allSemoLabApps': 'SeMo Lab के सभी ऐप',
   'settings.allSemoLabAppsSubtitle': 'Google Play पर हमारे सभी ऐप देखें',
 

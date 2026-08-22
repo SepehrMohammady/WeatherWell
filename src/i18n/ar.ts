@@ -231,6 +231,7 @@ export const ar: Record<string, string> = {
   'settings.moreFromSemoLab': 'المزيد من SeMo Lab',
   'settings.feedwellDesc': 'قارئ RSS بلا إعلانات. قراءة نقية دون مشتتات.',
   'settings.ledgerwellDesc': 'تتبّع الديون والمستحقات الشخصية، بعملات متعددة.',
+  'settings.thinkwellDesc': 'دردشة ذكاء اصطناعي دون إنترنت. نماذج محلية وخصوصية كاملة.',
   'settings.allSemoLabApps': 'جميع تطبيقات SeMo Lab',
   'settings.allSemoLabAppsSubtitle': 'اطّلع على كل ما نصنعه على Google Play',
 

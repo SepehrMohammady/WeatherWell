@@ -231,6 +231,7 @@ export const fa: Record<string, string> = {
   'settings.moreFromSemoLab': 'محصولات دیگر SeMo Lab',
   'settings.feedwellDesc': 'خبرخوان RSS بدون تبلیغ. مطالعه‌ای پاک، بدون حواس‌پرتی.',
   'settings.ledgerwellDesc': 'پیگیری بدهی‌ها و طلب‌های شخصی، با پشتیبانی چند ارز.',
+  'settings.thinkwellDesc': 'گفتگوی هوش مصنوعی آفلاین. مدل‌های محلی، کاملاً خصوصی.',
   'settings.allSemoLabApps': 'همه برنامه‌های SeMo Lab',
   'settings.allSemoLabAppsSubtitle': 'همه ساخته‌های ما را در Google Play ببینید',
 

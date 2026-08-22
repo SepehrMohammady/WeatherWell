@@ -13,7 +13,7 @@ interface TutorialModalProps {
 const PAGES: { icon: keyof typeof MaterialCommunityIcons.glyphMap; titleKey: string; bodyKey: string }[] = [
   { icon: 'weather-partly-cloudy', titleKey: 'tutorial.page1.title', bodyKey: 'tutorial.page1.body' },
   { icon: 'map-marker-star', titleKey: 'tutorial.page2.title', bodyKey: 'tutorial.page2.body' },
-  { icon: 'compare-horizontal', titleKey: 'tutorial.page3.title', bodyKey: 'tutorial.page3.body' },
+  { icon: 'scale-balance', titleKey: 'tutorial.page3.title', bodyKey: 'tutorial.page3.body' },
   { icon: 'lightbulb-on-outline', titleKey: 'tutorial.page4.title', bodyKey: 'tutorial.page4.body' },
   { icon: 'palette-outline', titleKey: 'tutorial.page5.title', bodyKey: 'tutorial.page5.body' },
 ];

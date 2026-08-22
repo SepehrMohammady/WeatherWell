@@ -231,6 +231,7 @@ export const it: Record<string, string> = {
   'settings.moreFromSemoLab': 'Altro da SeMo Lab',
   'settings.feedwellDesc': 'Lettore RSS senza pubblicità. Lettura pulita, senza distrazioni.',
   'settings.ledgerwellDesc': 'Tieni traccia di debiti e crediti personali, multivaluta.',
+  'settings.thinkwellDesc': 'Chat IA offline. Modelli locali, totalmente privata.',
   'settings.allSemoLabApps': 'Tutte le app SeMo Lab',
   'settings.allSemoLabAppsSubtitle': 'Scopri tutto ciò che creiamo su Google Play',
 

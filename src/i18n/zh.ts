@@ -231,6 +231,7 @@ export const zh: Record<string, string> = {
   'settings.moreFromSemoLab': 'SeMo Lab 的更多应用',
   'settings.feedwellDesc': '无广告 RSS 阅读器，纯净阅读无干扰。',
   'settings.ledgerwellDesc': '记录个人借入借出，支持多币种。',
+  'settings.thinkwellDesc': '离线 AI 聊天。本地模型，完全私密。',
   'settings.allSemoLabApps': '全部 SeMo Lab 应用',
   'settings.allSemoLabAppsSubtitle': '在 Google Play 查看我们的所有作品',
 
