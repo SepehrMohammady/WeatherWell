@@ -27,6 +27,7 @@ import { useFavorites } from '../contexts/FavoritesContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { AppLanguage } from '../i18n';
 import { TutorialModal } from '../components/TutorialModal';
+import { AppPicker } from '../components/AppPicker';
 import { APP_VERSION } from '../config/version';
 import { refreshWidgetSettings } from '../widgets/widget-utils';
 
@@ -54,20 +55,22 @@ const CUSTOM_METRICS: { key: keyof CustomSourceConfig; labelKey: string }[] = [
   { key: 'astronomy', labelKey: 'settings.metricAstronomy' },
 ];
 
+// Languages sorted alphabetically by the romanization of their native name
+// (shown in the trailing comment) so non-Latin scripts have a stable place.
 const LANGUAGE_OPTIONS: { key: AppLanguage; labelKey: string }[] = [
   { key: 'system', labelKey: 'language.system' },
-  { key: 'en', labelKey: 'language.en' },
-  { key: 'zh', labelKey: 'language.zh' },
-  { key: 'es', labelKey: 'language.es' },
-  { key: 'hi', labelKey: 'language.hi' },
-  { key: 'ar', labelKey: 'language.ar' },
-  { key: 'fa', labelKey: 'language.fa' },
-  { key: 'it', labelKey: 'language.it' },
+  { key: 'ar', labelKey: 'language.ar' }, // al-Arabiya (Arabic)
+  { key: 'en', labelKey: 'language.en' }, // English
+  { key: 'es', labelKey: 'language.es' }, // Espanol (Spanish)
+  { key: 'fa', labelKey: 'language.fa' }, // Farsi (Persian)
+  { key: 'hi', labelKey: 'language.hi' }, // Hindi
+  { key: 'it', labelKey: 'language.it' }, // Italiano (Italian)
+  { key: 'zh', labelKey: 'language.zh' }, // Zhongwen (Chinese, Simplified)
 ];
 
 const PROVIDER_OPTIONS: { key: WeatherProvider; short: string }[] = [
   { key: 'weatherapi', short: 'WA' },
-  { key: 'openweathermap', short: 'OWM' },
+  { key: 'openweathermap', short: 'OW' },
   { key: 'visualcrossing', short: 'VC' },
   { key: 'openmeteo', short: 'OM' },
   { key: 'qweather', short: 'QW' },
@@ -235,6 +238,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         exportDate: new Date().toISOString(),
         settings: JSON.parse(exportSettings()),
         favorites: favorites,
+        // Appearance and language persist outside AppSettings, so carry them
+        // explicitly or a restore would silently drop them.
+        appearance: { themeMode, themeColor },
+        language,
       };
       const backupJson = JSON.stringify(backupData, null, 2);
       const fileName = `WeatherWell_Backup_${new Date().toISOString().split('T')[0]}.weatherwell`;
@@ -278,6 +285,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       // Handle .weatherwell backup format
       if (parsed.type === 'weatherwell-backup') {
         const settingsSuccess = await importSettings(JSON.stringify(parsed.settings));
+
+        if (parsed.appearance?.themeMode) {
+          setThemeMode(parsed.appearance.themeMode);
+        }
+        if (parsed.appearance?.themeColor) {
+          setThemeColor(parsed.appearance.themeColor);
+        }
+        if (parsed.language) {
+          await setLanguage(parsed.language);
+        }
         
         if (parsed.favorites && Array.isArray(parsed.favorites)) {
           await clearFavorites();
@@ -431,18 +448,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               ))}
             </View>
           </View>
-          <SettingItem
-            title={t('settings.weatherAnimations')}
-            subtitle={t('settings.weatherAnimationsSubtitle')}
-            rightElement={
-              <Switch
-                value={settings.enableWeatherAnimations}
-                onValueChange={(value) => updateSetting('enableWeatherAnimations', value)}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={settings.enableWeatherAnimations ? colors.accent : '#f4f3f4'}
-              />
-            }
-          />
           <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, { color: colors.text }]}>{t('settings.themeColor')}</Text>
@@ -461,25 +466,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               </View>
             </View>
           </View>
+          <SettingItem
+            title={t('settings.weatherAnimations')}
+            subtitle={t('settings.weatherAnimationsSubtitle')}
+            rightElement={
+              <Switch
+                value={settings.enableWeatherAnimations}
+                onValueChange={(value) => updateSetting('enableWeatherAnimations', value)}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={settings.enableWeatherAnimations ? colors.accent : '#f4f3f4'}
+              />
+            }
+          />
           <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, { color: colors.text }]}>{t('language.title')}</Text>
-              <View style={styles.languageChipRow}>
-                {LANGUAGE_OPTIONS.map(({ key, labelKey }) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.languageChip,
-                      { backgroundColor: language === key ? colors.primary : colors.card },
-                    ]}
-                    onPress={() => setLanguage(key)}
-                  >
-                    <Text style={[styles.languageChipText, { color: language === key ? '#FFFFFF' : colors.text }]}>
-                      {t(labelKey)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <AppPicker
+                selectedValue={language}
+                onValueChange={(value) => setLanguage(value as AppLanguage)}
+                options={LANGUAGE_OPTIONS.map(({ key, labelKey }) => ({ value: key, label: t(labelKey) }))}
+                title={t('language.title')}
+              />
             </View>
           </View>
         </View>
@@ -1224,6 +1231,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
         </View>
 
+        {/* Tutorial Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {t('tutorial.sectionTitle')}
+          </Text>
+          <SettingItem
+            title={t('tutorial.settingsRow')}
+            subtitle={t('tutorial.settingsRowSubtitle')}
+            onPress={() => setShowTutorial(true)}
+            rightElement={<Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
+            isLast
+          />
+        </View>
+
         {/* About Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -1233,12 +1254,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
             title="WeatherWell"
             description={t('settings.appTagline')}
             rightElement={null}
-          />
-          <SettingItem
-            title={t('tutorial.settingsRow')}
-            subtitle={t('tutorial.settingsRowSubtitle')}
-            onPress={() => setShowTutorial(true)}
-            rightElement={<Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
           />
           <SettingItem
             title={t('settings.version')}
@@ -1505,21 +1520,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  languageChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  languageChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 16,
-  },
-  languageChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
   appearanceModeRow: {
     flex: 1,
     flexDirection: 'row',

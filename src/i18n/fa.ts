@@ -48,6 +48,7 @@ export const fa: Record<string, string> = {
   'tutorial.next': 'بعدی',
   'tutorial.back': 'قبلی',
   'tutorial.done': 'شروع کنید',
+  'tutorial.sectionTitle': 'آموزش',
   'tutorial.settingsRow': 'آموزش برنامه',
   'tutorial.settingsRowSubtitle': 'پخش دوباره معرفی WeatherWell',
   'tutorial.page1.title': 'هوای شما، به سبک شما',
@@ -84,7 +85,7 @@ export const fa: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - فقط داده‌های تاریخی، نه برای پیش‌بینی',
   'settings.providerCustomDesc': 'سفارشی - برای هر سنجه در پایین یک ارائه‌دهنده انتخاب کنید',
   'settings.providerCustom': 'سفارشی (ترکیب ارائه‌دهنده‌ها)',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Settings — custom source metric labels
   'settings.metricForecast': 'پیش‌بینی (ساعتی و روزانه)',

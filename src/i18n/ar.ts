@@ -48,6 +48,7 @@ export const ar: Record<string, string> = {
   'tutorial.next': 'التالي',
   'tutorial.back': 'السابق',
   'tutorial.done': 'ابدأ الآن',
+  'tutorial.sectionTitle': 'الجولة التعريفية',
   'tutorial.settingsRow': 'جولة تعريفية بالتطبيق',
   'tutorial.settingsRowSubtitle': 'إعادة عرض المقدمة التعريفية بتطبيق WeatherWell',
   'tutorial.page1.title': 'طقسك، على طريقتك',
@@ -84,7 +85,7 @@ export const ar: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - بيانات تاريخية فقط، غير مناسب للتوقعات',
   'settings.providerCustomDesc': 'مخصص - اختر مزوّداً لكل مقياس أدناه',
   'settings.providerCustom': 'مخصص (مزيج من المزوّدين)',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Settings — custom source metric labels
   'settings.metricForecast': 'التوقعات (بالساعة واليومية)',

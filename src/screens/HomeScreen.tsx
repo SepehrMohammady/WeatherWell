@@ -10,7 +10,7 @@ import {
   Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CurrentWeatherCard } from '../components/CurrentWeatherCard';
 import { HourlyForecastList } from '../components/HourlyForecastList';
@@ -32,7 +32,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { backgroundTaskService } from '../services/BackgroundTaskService';
-import { updateWidgetWithWeatherData } from '../widgets/widget-utils';
+import { updateWidgetWithWeatherData, fetchAndCacheWidgetData, refreshWidgetSettings } from '../widgets/widget-utils';
 import { notificationService } from '../services/NotificationService';
 
 export const HomeScreen: React.FC = () => {
@@ -108,7 +108,10 @@ export const HomeScreen: React.FC = () => {
       const isHome = !!customLocation && !!settings.homeLocation &&
         settings.homeLocation.latitude === customLocation.latitude &&
         settings.homeLocation.longitude === customLocation.longitude;
-      if (!customLocation || isHome) {
+      // The main location is the pinned one, or the device location when
+      // nothing is pinned. Browsing any other city is transient.
+      const isMainLocation = !customLocation || isHome;
+      if (isMainLocation) {
         await backgroundTaskService.saveLocationForBackground(
           latitude,
           longitude,
@@ -143,22 +146,23 @@ export const HomeScreen: React.FC = () => {
       setApiSource(result.source);
       console.log('Using weather source:', result.source);
 
-      // Cache weather data for notifications to use
-      await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(result.data)).catch(() => {});
+      // Only the main location drives the widget, the cached payload that
+      // notifications read, and the alerts themselves.
+      if (isMainLocation) {
+        await AsyncStorage.setItem('weatherwell_last_weather', JSON.stringify(result.data)).catch(() => {});
+        await updateWidgetWithWeatherData(result.data);
 
-      // Update widget with fresh weather data
-      await updateWidgetWithWeatherData(result.data);
-      
-      // Schedule notifications with real weather data for configured times
-      if (settings.enableNotifications) {
-        await notificationService.scheduleDailyForecastWithData(result.data);
-        await notificationService.scheduleHourlyForecastWithData(result.data);
-      }
+        // Schedule notifications with real weather data for configured times
+        if (settings.enableNotifications) {
+          await notificationService.scheduleDailyForecastWithData(result.data);
+          await notificationService.scheduleHourlyForecastWithData(result.data);
+        }
 
-      // Check for weather alerts when app is opened
-      // Background alerts are handled by BackgroundTaskService
-      if (isInitialized && settings.enableNotifications) {
-        await checkWeatherAlerts(result.data);
+        // Check for weather alerts when app is opened
+        // Background alerts are handled by BackgroundTaskService
+        if (isInitialized && settings.enableNotifications) {
+          await checkWeatherAlerts(result.data);
+        }
       }
     } catch (err) {
       console.error('Error loading weather data:', err);
@@ -242,6 +246,15 @@ export const HomeScreen: React.FC = () => {
       await backgroundTaskService.saveLocationForBackground(
         selectedLocation.latitude, selectedLocation.longitude, selectedLocation.name, true);
     }
+
+    // Point the widget at whatever is now the main location, without
+    // waiting for its next scheduled refresh.
+    try {
+      await fetchAndCacheWidgetData();
+      await refreshWidgetSettings();
+    } catch {
+      // Widget may not be placed on the home screen; nothing to update
+    }
   };
 
   const handleToggleFavorite = async () => {
@@ -317,6 +330,10 @@ export const HomeScreen: React.FC = () => {
     ? t('home.locationFormat', { name: selectedLocation.name, country: selectedLocation.country })
     : weatherData?.location.name || t('home.currentLocation');
 
+  const selectedLocationId = selectedLocation
+    ? [selectedLocation.name, selectedLocation.country, selectedLocation.latitude, selectedLocation.longitude].join('-')
+    : null;
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={colors.gradient as [string, string, ...string[]]} style={styles.container}>
@@ -328,70 +345,61 @@ export const HomeScreen: React.FC = () => {
           />
         )}
 
-        {/* Header with buttons */}
+        {/* Header: title row, then the location row underneath */}
         <View style={styles.headerContainer}>
-          <View style={styles.headerButtons}>
+          <View style={styles.headerTopRow}>
             <TouchableOpacity
               style={styles.headerButton}
               onPress={() => setShowSearch(true)}
             >
               <Ionicons name="search-outline" size={24} color="white" />
             </TouchableOpacity>
-            
-            <View style={styles.headerCenter}>
-              <Text style={styles.appTitle}>WeatherWell</Text>
-              <View style={styles.locationContainer}>
-                <View style={styles.locationWithFavorite}>
-                  {selectedLocation && (
-                    <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
-                      <Ionicons 
-                        name={isFavorite(`${selectedLocation.name}-${selectedLocation.country}-${selectedLocation.latitude}-${selectedLocation.longitude}`) ? "heart" : "heart-outline"} 
-                        size={16} 
-                        color="rgba(255, 255, 255, 0.8)" 
-                      />
-                    </TouchableOpacity>
-                  )}
-                  <Text style={styles.locationText}>{locationName}</Text>
-                </View>
-                {selectedLocation && (
-                  <TouchableOpacity
-                    onPress={handleTogglePin}
-                    style={[styles.pinChip, isPinned && styles.pinChipActive]}
-                  >
-                    <Ionicons
-                      name={isPinned ? "pin" : "pin-outline"}
-                      size={15}
-                      color={isPinned ? "#3D2E22" : "#FFFFFF"}
-                    />
-                    <Text style={[styles.pinChipText, isPinned && styles.pinChipTextActive]}>
-                      {isPinned ? t('home.pinned') : t('home.pinAsMain')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {selectedLocation && (
-                  <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationButton}>
-                    <Text style={styles.currentLocationText}>{t('home.useCurrentLocation')}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-            
-            <View style={styles.headerRight}>
-              {weatherData && (
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={() => setShowCompare(true)}
-                >
-                  <MaterialCommunityIcons name="compare-horizontal" size={24} color="white" />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={() => setShowSettings(true)}
-              >
-                <Ionicons name="settings-outline" size={24} color="white" />
+
+            <Text style={styles.appTitle}>WeatherWell</Text>
+
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => setShowSettings(true)}
+            >
+              <Ionicons name="settings-outline" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.headerLocationRow}>
+            {selectedLocation && (
+              <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
+                <Ionicons
+                  name={selectedLocationId && isFavorite(selectedLocationId) ? "heart" : "heart-outline"}
+                  size={18}
+                  color="rgba(255, 255, 255, 0.9)"
+                />
               </TouchableOpacity>
-            </View>
+            )}
+
+            <Text style={styles.locationText} numberOfLines={1}>{locationName}</Text>
+
+            {selectedLocation && (
+              <TouchableOpacity
+                onPress={handleTogglePin}
+                style={[styles.pinChip, isPinned && styles.pinChipActive]}
+              >
+                <Ionicons
+                  name={isPinned ? "pin" : "pin-outline"}
+                  size={14}
+                  color={isPinned ? "#3D2E22" : "#FFFFFF"}
+                />
+                <Text style={[styles.pinChipText, isPinned && styles.pinChipTextActive]}>
+                  {isPinned ? t('home.pinned') : t('home.pinAsMain')}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {selectedLocation && (
+              <TouchableOpacity onPress={handleBackToCurrentLocation} style={styles.currentLocationChip}>
+                <Ionicons name="location-outline" size={14} color="#FFFFFF" />
+                <Text style={styles.currentLocationText}>{t('home.useCurrentLocation')}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -407,7 +415,7 @@ export const HomeScreen: React.FC = () => {
             />
           }
         >
-          <CurrentWeatherCard weatherData={weatherData} apiSource={apiSource} />
+          <CurrentWeatherCard weatherData={weatherData} apiSource={apiSource} onCompare={() => setShowCompare(true)} />
           <HourlyForecastList hourlyData={weatherData.forecast.hourly} />
           <DailyForecastList dailyData={weatherData.forecast.daily} />
           <SmartFeaturesCard weatherData={weatherData} />
@@ -470,7 +478,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     paddingHorizontal: 20,
   },
-  headerButtons: {
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -483,40 +491,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
   appTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 4,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
   },
-  locationContainer: {
-    alignItems: 'center',
-  },
-  locationWithFavorite: {
+  // Second header line: favourite · location · pin · back-to-current
+  headerLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
   },
   locationText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.92)',
+    maxWidth: '55%',
   },
   pinChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginTop: 6,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 15,
@@ -534,12 +535,16 @@ const styles = StyleSheet.create({
     color: '#3D2E22',
   },
   favoriteButton: {
-    marginRight: 6,
     padding: 2,
   },
-  currentLocationButton: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
+  currentLocationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   currentLocationText: {
     fontSize: 12,

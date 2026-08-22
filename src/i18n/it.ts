@@ -48,6 +48,7 @@ export const it: Record<string, string> = {
   'tutorial.next': 'Avanti',
   'tutorial.back': 'Indietro',
   'tutorial.done': 'Inizia',
+  'tutorial.sectionTitle': 'Tutorial',
   'tutorial.settingsRow': 'Tutorial dell\'app',
   'tutorial.settingsRowSubtitle': 'Rivedi l\'introduzione a WeatherWell',
   'tutorial.page1.title': 'Il tuo meteo, a modo tuo',
@@ -84,7 +85,7 @@ export const it: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - Solo dati storici, non per previsioni',
   'settings.providerCustomDesc': 'Personalizzato - Scegli un provider per ogni dato qui sotto',
   'settings.providerCustom': 'Personalizzato (combina provider)',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Settings — custom source metric labels
   'settings.metricForecast': 'Previsioni (orarie e giornaliere)',

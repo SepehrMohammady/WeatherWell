@@ -48,6 +48,7 @@ export const zh: Record<string, string> = {
   'tutorial.next': '下一步',
   'tutorial.back': '上一步',
   'tutorial.done': '开始使用',
+  'tutorial.sectionTitle': '教程',
   'tutorial.settingsRow': '应用教程',
   'tutorial.settingsRowSubtitle': '重新观看 WeatherWell 的功能介绍',
   'tutorial.page1.title': '你的天气，由你做主',
@@ -84,7 +85,7 @@ export const zh: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - 仅历史数据，不适用于预报',
   'settings.providerCustomDesc': '自定义 - 为下方每项指标选择服务商',
   'settings.providerCustom': '自定义（混合服务商）',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Settings — custom source metric labels
   'settings.metricForecast': '预报（逐小时和逐日）',

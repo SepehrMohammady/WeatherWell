@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   BackHandler
@@ -17,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { AppAlert } from '../components/AppAlert';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { LocationSearchService, Location } from '../services/LocationSearchService';
 
@@ -34,6 +34,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
   const [recentSearches, setRecentSearches] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const searchService = LocationSearchService.getInstance();
 
@@ -104,22 +105,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
   };
 
   const clearRecentSearches = () => {
-    Alert.alert(
-      t('search.clearRecentTitle'),
-      t('search.clearRecentMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('search.clear'),
-          style: 'destructive',
-          onPress: () => {
-            searchService.clearRecentSearches();
-            setRecentSearches([]);
-          }
-        }
-      ]
-    );
+    setShowClearConfirm(true);
   };
+
 
   const generateLocationId = (location: Location): string => {
     return `${location.name}-${location.country}-${location.latitude}-${location.longitude}`;
@@ -336,6 +324,24 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ onClose, onLocationS
         </View>
         </KeyboardAvoidingView>
       </LinearGradient>
+
+      <AppAlert
+        visible={showClearConfirm}
+        title={t('search.clearRecentTitle')}
+        message={t('search.clearRecentMessage')}
+        buttons={[
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('search.clear'),
+            style: 'destructive',
+            onPress: () => {
+              searchService.clearRecentSearches();
+              setRecentSearches([]);
+            },
+          },
+        ]}
+        onDismiss={() => setShowClearConfirm(false)}
+      />
     </SafeAreaView>
   );
 };

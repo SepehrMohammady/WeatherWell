@@ -23,7 +23,7 @@ export const settingsStrings: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - Historical data only, not for forecasts',
   'settings.providerCustomDesc': 'Custom - Pick a provider for each metric below',
   'settings.providerCustom': 'Custom (mix providers)',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Custom source metric labels
   'settings.metricForecast': 'Forecast (hourly & daily)',

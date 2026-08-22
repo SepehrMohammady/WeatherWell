@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   Modal,
   Switch,
-  Alert,
   ScrollView,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AppAlert } from './AppAlert';
 import { Share } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -43,6 +43,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
   const { t, ln } = useLanguage();
   const displayLocationName = locationName ?? t('share.currentLocation');
   const [showModal, setShowModal] = useState(false);
+  const [showError, setShowError] = useState(false);
   const [shareOptions, setShareOptions] = useState<ShareOptions>({
     includeLocation: settings.enableShareLocation,
     includeCurrent: true,
@@ -190,7 +191,7 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
       setShowModal(false);
     } catch (error: any) {
       if (error?.message !== 'User did not share') {
-        Alert.alert(t('share.errorTitle'), t('share.errorMessage'));
+        setShowError(true);
       }
     }
   };
@@ -383,6 +384,14 @@ export const ShareComponent: React.FC<ShareComponentProps> = ({
           </View>
         </View>
       </Modal>
+
+      <AppAlert
+        visible={showError}
+        title={t('share.errorTitle')}
+        message={t('share.errorMessage')}
+        okLabel={t('common.ok')}
+        onDismiss={() => setShowError(false)}
+      />
     </>
   );
 };

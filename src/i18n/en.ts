@@ -61,6 +61,7 @@ const baseStrings: Record<string, string> = {
   'tutorial.next': 'Next',
   'tutorial.back': 'Back',
   'tutorial.done': 'Get Started',
+  'tutorial.sectionTitle': 'Tutorial',
   'tutorial.settingsRow': 'App Tutorial',
   'tutorial.settingsRowSubtitle': 'Replay the introduction to WeatherWell',
   'tutorial.page1.title': 'Your Weather, Your Way',

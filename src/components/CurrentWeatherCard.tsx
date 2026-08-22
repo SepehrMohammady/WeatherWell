@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeatherIcon } from './WeatherIcon';
 import { WeatherData } from '../services/types';
 import { useTheme } from '../contexts/ThemeContext';
@@ -12,9 +12,11 @@ import { WeatherDetailModal } from './WeatherDetailModal';
 interface CurrentWeatherCardProps {
   weatherData: WeatherData;
   apiSource?: string;
+  /** Opens the side-by-side provider comparison */
+  onCompare?: () => void;
 }
 
-export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherData, apiSource }) => {
+export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherData, apiSource, onCompare }) => {
   const { location, current } = weatherData;
   const { colors } = useTheme();
   const { settings } = useSettings();
@@ -35,10 +37,21 @@ export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({ weatherD
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={[styles.location, { color: colors.text }]}>
-          <Ionicons name="location-outline" size={18} color={colors.text} /> {location.name}
-        </Text>
-        <Text style={[styles.country, { color: colors.text + '80' }]}>{location.country}</Text>
+        <View style={styles.headerText}>
+          <Text style={[styles.location, { color: colors.text }]}>
+            <Ionicons name="location-outline" size={18} color={colors.text} /> {location.name}
+          </Text>
+          <Text style={[styles.country, { color: colors.text + '80' }]}>{location.country}</Text>
+        </View>
+        {onCompare && (
+          <TouchableOpacity
+            onPress={onCompare}
+            style={[styles.compareButton, { backgroundColor: colors.primary + '1F' }]}
+            accessibilityLabel={t('compare.title')}
+          >
+            <MaterialCommunityIcons name="scale-balance" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
       
       <View style={styles.mainInfo}>
@@ -152,8 +165,23 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   header: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 20,
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
+    alignItems: 'center',
+    paddingLeft: 50,
+  },
+  compareButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   apiSourceContainer: {
     position: 'absolute',

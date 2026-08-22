@@ -48,6 +48,7 @@ export const hi: Record<string, string> = {
   'tutorial.next': 'आगे',
   'tutorial.back': 'पीछे',
   'tutorial.done': 'शुरू करें',
+  'tutorial.sectionTitle': 'ट्यूटोरियल',
   'tutorial.settingsRow': 'ऐप ट्यूटोरियल',
   'tutorial.settingsRowSubtitle': 'WeatherWell का परिचय दोबारा देखें',
   'tutorial.page1.title': 'आपका मौसम, आपके अंदाज़ में',
@@ -84,7 +85,7 @@ export const hi: Record<string, string> = {
   'settings.providerMeteostatDesc': '⚠ Meteostat - केवल ऐतिहासिक डेटा, पूर्वानुमान के लिए नहीं',
   'settings.providerCustomDesc': 'कस्टम - नीचे हर मेट्रिक के लिए प्रोवाइडर चुनें',
   'settings.providerCustom': 'कस्टम (प्रोवाइडर मिलाएं)',
-  'settings.providerHint': 'WA WeatherAPI · OWM OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
+  'settings.providerHint': 'WA WeatherAPI · OW OpenWeather · VC Visual Crossing · OM Open-Meteo · QW QWeather · MS Meteostat',
 
   // Settings — custom source metric labels
   'settings.metricForecast': 'पूर्वानुमान (प्रति घंटा और दैनिक)',

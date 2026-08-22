@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Alert, I18nManager } from 'react-native';
+import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppAlert } from '../components/AppAlert';
 import {
   AppLanguage,
   ResolvedLanguage,
@@ -35,22 +36,23 @@ export const useLanguage = () => {
 
 /**
  * Layout direction is baked into the native view hierarchy, so switching
- * to/from an RTL language only takes effect after the app restarts.
+ * to/from an RTL language only takes effect after the app restarts. Returns
+ * true when a restart is needed so the caller can show an in-app dialog.
  */
-function syncLayoutDirection(resolved: ResolvedLanguage, promptRestart: boolean) {
+function syncLayoutDirection(resolved: ResolvedLanguage): boolean {
   const wantRTL = RTL_LANGUAGES.includes(resolved);
   if (I18nManager.isRTL !== wantRTL) {
     I18nManager.allowRTL(wantRTL);
     I18nManager.forceRTL(wantRTL);
-    if (promptRestart) {
-      Alert.alert(translate('language.restartTitle'), translate('language.restartMessage'));
-    }
+    return true;
   }
+  return false;
 }
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<AppLanguage>('system');
   const [resolved, setResolved] = useState<ResolvedLanguage>(resolveLanguage('system'));
+  const [restartNeeded, setRestartNeeded] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -60,7 +62,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setActiveLanguage(lang);
         setLanguageState(lang);
         setResolved(resolveLanguage(lang));
-        syncLayoutDirection(resolveLanguage(lang), true);
+        if (syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
       } catch {
         // defaults already in place
       }
@@ -76,7 +78,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Error saving language:', error);
     }
-    syncLayoutDirection(resolveLanguage(lang), true);
+    if (syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
   }, []);
 
   // Recreated when the language changes so consumers re-render with new text
@@ -89,6 +91,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <LanguageContext.Provider value={{ language, resolved, isRTL: RTL_LANGUAGES.includes(resolved), setLanguage, t, ln }}>
       {children}
+      <AppAlert
+        visible={restartNeeded}
+        title={translate('language.restartTitle')}
+        message={translate('language.restartMessage')}
+        okLabel={translate('common.ok')}
+        onDismiss={() => setRestartNeeded(false)}
+      />
     </LanguageContext.Provider>
   );
 };
