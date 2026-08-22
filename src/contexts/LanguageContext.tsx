@@ -34,19 +34,34 @@ export const useLanguage = () => {
   return context;
 };
 
+/** Direction we last asked Android for, so a lagging isRTL cannot re-prompt */
+const RTL_APPLIED_KEY = 'rtlApplied';
+
 /**
  * Layout direction is baked into the native view hierarchy, so switching
  * to/from an RTL language only takes effect after the app restarts. Returns
  * true when a restart is needed so the caller can show an in-app dialog.
+ *
+ * I18nManager.isRTL can keep reporting the previous value for a launch after
+ * forceRTL(), which would prompt a second time for one switch. We therefore
+ * compare against the direction we recorded ourselves.
  */
-function syncLayoutDirection(resolved: ResolvedLanguage): boolean {
+async function syncLayoutDirection(resolved: ResolvedLanguage): Promise<boolean> {
   const wantRTL = RTL_LANGUAGES.includes(resolved);
-  if (I18nManager.isRTL !== wantRTL) {
-    I18nManager.allowRTL(wantRTL);
-    I18nManager.forceRTL(wantRTL);
-    return true;
+  let appliedRTL = I18nManager.isRTL;
+  try {
+    const stored = await AsyncStorage.getItem(RTL_APPLIED_KEY);
+    if (stored !== null) appliedRTL = stored === '1';
+  } catch {
+    // fall back to what the native module reports
   }
-  return false;
+
+  if (appliedRTL === wantRTL) return false;
+
+  I18nManager.allowRTL(wantRTL);
+  I18nManager.forceRTL(wantRTL);
+  await AsyncStorage.setItem(RTL_APPLIED_KEY, wantRTL ? '1' : '0').catch(() => {});
+  return true;
 }
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -62,7 +77,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setActiveLanguage(lang);
         setLanguageState(lang);
         setResolved(resolveLanguage(lang));
-        if (syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
+        if (await syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
       } catch {
         // defaults already in place
       }
@@ -78,7 +93,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Error saving language:', error);
     }
-    if (syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
+    if (await syncLayoutDirection(resolveLanguage(lang))) setRestartNeeded(true);
   }, []);
 
   // Recreated when the language changes so consumers re-render with new text
