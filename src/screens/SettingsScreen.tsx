@@ -62,7 +62,7 @@ const LANGUAGE_OPTIONS: { key: AppLanguage; labelKey: string }[] = [
   { key: 'ar', labelKey: 'language.ar' }, // al-Arabiya (Arabic)
   { key: 'en', labelKey: 'language.en' }, // English
   { key: 'es', labelKey: 'language.es' }, // Espanol (Spanish)
-  { key: 'fa', labelKey: 'language.fa' }, // Farsi (Persian)
+  { key: 'fa', labelKey: 'language.fa' }, // Farsi
   { key: 'hi', labelKey: 'language.hi' }, // Hindi
   { key: 'it', labelKey: 'language.it' }, // Italiano (Italian)
   { key: 'zh', labelKey: 'language.zh' }, // Zhongwen (Chinese, Simplified)

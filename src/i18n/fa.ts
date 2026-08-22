@@ -1,4 +1,4 @@
-/** Farsi (Persian) translations. */
+/** Farsi translations. */
 export const fa: Record<string, string> = {
   // Common
   'common.ok': 'تأیید',
